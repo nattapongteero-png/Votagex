@@ -62,7 +62,10 @@ export function TripProvider({ children }) {
     const data = { ...tripForm };
     data.members = [{ name: data.profileName, image: data.profileImage }];
     const currentUser = getCurrentUser();
-    if (currentUser) data.ownerUid = currentUser.uid;
+    if (currentUser) {
+      data.ownerUid = currentUser.uid;
+      data.memberUids = [currentUser.uid];
+    }
 
     if (data.profileName) localStorage.setItem('votagex_username', data.profileName);
     if (data.profileImage) localStorage.setItem('votagex_userimage', data.profileImage);
@@ -84,7 +87,8 @@ export function TripProvider({ children }) {
   }, [loadTrips]);
 
   const joinExistingTrip = useCallback(async (tripId, member) => {
-    await storageJoinTrip(tripId, member);
+    const currentUser = getCurrentUser();
+    await storageJoinTrip(tripId, member, currentUser?.uid);
     await loadTrips();
   }, [loadTrips]);
 

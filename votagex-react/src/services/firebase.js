@@ -9,12 +9,12 @@ import {
 import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
 
 const firebaseConfig = {
-  apiKey: "REMOVED",
-  authDomain: "votagex-7ab43.firebaseapp.com",
-  projectId: "votagex-7ab43",
-  storageBucket: "votagex-7ab43.firebasestorage.app",
-  messagingSenderId: "REMOVED",
-  appId: "1:REMOVED:web:810289c6d2fe0c05bbfa14"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 
 let auth = null;

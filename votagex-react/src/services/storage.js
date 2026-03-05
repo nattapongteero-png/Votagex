@@ -31,11 +31,11 @@ export async function updateTrip(tripId, updatedData) {
   await updateDoc(doc(db, 'trips', tripId), updatedData);
 }
 
-export async function joinTrip(tripId, member) {
+export async function joinTrip(tripId, member, uid) {
   const db = getDb();
-  await updateDoc(doc(db, 'trips', tripId), {
-    members: arrayUnion(member)
-  });
+  const updates = { members: arrayUnion(member) };
+  if (uid) updates.memberUids = arrayUnion(uid);
+  await updateDoc(doc(db, 'trips', tripId), updates);
 }
 
 export async function deleteTrip(tripId) {

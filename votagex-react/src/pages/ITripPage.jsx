@@ -69,7 +69,8 @@ export default function ITripPage() {
   const handleLeave = async (t) => {
     setActionTrip(null);
     const m = (t.members || []).filter(m => m.name !== username);
-    await updateExistingTrip(t.id, { members: m });
+    const uids = (t.memberUids || []).filter(uid => uid !== authUser?.uid);
+    await updateExistingTrip(t.id, { members: m, memberUids: uids });
   };
 
   const handleEditSave = async (data) => {

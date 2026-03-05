@@ -2,9 +2,21 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     match /trips/{tripId} {
+      // ใครก็ได้ที่ login แล้วอ่านได้
       allow read: if request.auth != null;
-      allow create: if request.auth != null;
-      allow update, delete: if request.auth != null;
+
+      // สร้าง trip ได้ แต่ต้องใส่ ownerUid เป็นของตัวเอง
+      allow create: if request.auth != null
+                    && request.resource.data.ownerUid == request.auth.uid;
+
+      // แก้ไขได้เฉพาะเจ้าของ trip หรือสมาชิก (สำหรับ join)
+      allow update: if request.auth != null
+                    && (resource.data.ownerUid == request.auth.uid
+                        || request.auth.uid in resource.data.memberUids);
+
+      // ลบได้เฉพาะเจ้าของเท่านั้น
+      allow delete: if request.auth != null
+                    && resource.data.ownerUid == request.auth.uid;
     }
   }
 }
