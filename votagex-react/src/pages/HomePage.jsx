@@ -4,7 +4,6 @@ import { useTrips } from '../contexts/TripContext';
 import { useAuth } from '../contexts/AuthContext';
 import { backfillTripDescriptions } from '../services/storage';
 import { formatISODate, activityMatchesDate, formatDateThaiShort } from '../utils/dates';
-import { escapeHtml } from '../utils/helpers';
 import { CATEGORY_CONFIG } from '../constants/categories';
 import Timeline from '@mui/lab/Timeline';
 import TimelineItem from '@mui/lab/TimelineItem';
@@ -509,7 +508,7 @@ export default function HomePage() {
                       </TimelineSeparator>
                       <TimelineContent sx={{ py: '12px', px: 2, m: 'auto 0' }}>
                         <Typography variant="subtitle2" component="span" sx={{ fontFamily: "'Google Sans', sans-serif", fontWeight: 600, color: '#1a1a2e' }}>
-                          {escapeHtml(act.name)}
+                          {act.name}
                         </Typography>
                         {act.checkedIn ? (
                           <Typography variant="caption" sx={{ display: 'block', color: act.checkedInLate ? '#EF4444' : '#22C55E', fontWeight: 600, fontFamily: "'Google Sans', sans-serif" }}>

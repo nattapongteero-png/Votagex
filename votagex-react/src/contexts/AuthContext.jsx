@@ -49,11 +49,13 @@ export function AuthProvider({ children }) {
 
   const signOut = async () => {
     await firebaseSignOut();
+    clearAuthUserData();
     setUser(null);
     setAuthUser(null);
+    setCustomImage('');
   };
 
-  const isAuthenticated = !!user || !isFirebaseConfigured();
+  const isAuthenticated = !!user || (import.meta.env.DEV && !isFirebaseConfigured());
   const username = authUser?.displayName || localStorage.getItem('votagex_username') || '';
   const [customImage, setCustomImage] = useState(localStorage.getItem('votagex_userimage') || '');
   const userImage = customImage || authUser?.photoURL || '';

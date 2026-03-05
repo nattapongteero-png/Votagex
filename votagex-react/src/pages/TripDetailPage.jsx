@@ -5,7 +5,6 @@ import { useAuth } from '../contexts/AuthContext';
 import { CATEGORY_CONFIG } from '../constants/categories';
 import { formatISODate, activityMatchesDate, getTripDays } from '../utils/dates';
 import { formatBudgetDisplay, getActivityAmountForDay } from '../utils/numbers';
-import { escapeHtml } from '../utils/helpers';
 import Timeline from '@mui/lab/Timeline';
 import TimelineItem from '@mui/lab/TimelineItem';
 import TimelineSeparator from '@mui/lab/TimelineSeparator';
@@ -278,12 +277,12 @@ export default function TripDetailPage() {
           <div className="td-trip-info">
             <div className="td-trip-top">
               <div className="td-trip-details">
-                <span className="td-trip-name">{escapeHtml(trip.name || 'Trip')}</span>
+                <span className="td-trip-name">{trip.name || 'Trip'}</span>
                 <span className="td-trip-meta">{metaText}</span>
               </div>
               <button className="td-trip-more" onClick={() => setShowActionSheet(true)}>⋯</button>
             </div>
-            {trip.description && <div className="td-trip-desc">{escapeHtml(trip.description)}</div>}
+            {trip.description && <div className="td-trip-desc">{trip.description}</div>}
             <div className="td-info-row">
               <div className="td-info-item td-info-members" style={{ cursor: 'pointer' }} onClick={() => setShowMembersModal(true)}>
                 <div className="td-info-avatars">
@@ -435,7 +434,7 @@ export default function TripDetailPage() {
                                 </TimelineSeparator>
                                 <TimelineContent sx={{ py: '12px', px: 2, m: 'auto 0' }}>
                                   <Typography variant="subtitle2" component="span" sx={{ fontFamily: "'Google Sans', sans-serif", fontWeight: 600, color: '#1a1a2e' }}>
-                                    {escapeHtml(act.name)}
+                                    {act.name}
                                   </Typography>
                                   {act.checkedIn ? (
                                     <Typography variant="caption" sx={{ display: 'block', color: act.checkedInLate ? '#EF4444' : '#22C55E', fontWeight: 600, fontFamily: "'Google Sans', sans-serif" }}>

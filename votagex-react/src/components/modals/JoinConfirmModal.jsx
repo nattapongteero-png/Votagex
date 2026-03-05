@@ -1,5 +1,4 @@
 import { useMemo } from 'react';
-import { escapeHtml } from '../../utils/helpers';
 import useModalClose from '../../hooks/useModalClose';
 
 export default function JoinConfirmModal({ trip, userName, trips, joining, onConfirm, onClose }) {
@@ -50,7 +49,7 @@ export default function JoinConfirmModal({ trip, userName, trips, joining, onCon
 
         {overlappingTrip && (
           <div className="join-confirm-warning">
-            คุณมีทริป "<b>{escapeHtml(overlappingTrip.name || 'Trip')}</b>" ที่วันทับกันอยู่แล้ว ต้องออกจากทริปเก่าก่อนจึงจะเข้าร่วมได้
+            คุณมีทริป "<b>{overlappingTrip.name || 'Trip'}</b>" ที่วันทับกันอยู่แล้ว ต้องออกจากทริปเก่าก่อนจึงจะเข้าร่วมได้
           </div>
         )}
 

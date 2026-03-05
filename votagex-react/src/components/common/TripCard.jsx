@@ -1,5 +1,5 @@
 import { formatDateShort } from '../../utils/dates';
-import { escapeHtml, isTripOwner, isTripMember } from '../../utils/helpers';
+import { isTripOwner, isTripMember } from '../../utils/helpers';
 
 export default function TripCard({ trip, showEditButton, onEdit, onJoin, onView, onCardClick }) {
   const isExpired = trip.endDate ? new Date(trip.endDate) < new Date(new Date().setHours(0, 0, 0, 0)) : false;
@@ -44,9 +44,9 @@ export default function TripCard({ trip, showEditButton, onEdit, onJoin, onView,
       </div>
 
       <div className="hp-other-details">
-        <div className="hp-other-name">{escapeHtml(trip.name || 'Trip')}</div>
+        <div className="hp-other-name">{trip.name || 'Trip'}</div>
         {dateText && <div className="hp-other-date">{dateText}</div>}
-        {trip.description && <div className="hp-other-desc">{escapeHtml(trip.description)}</div>}
+        {trip.description && <div className="hp-other-desc">{trip.description}</div>}
       </div>
 
       <div className="hp-other-avatars">

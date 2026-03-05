@@ -1,7 +1,6 @@
 import { CATEGORY_CONFIG } from '../../constants/categories';
 import { formatSpend, getActivityAmountForDay } from '../../utils/numbers';
 import { getHotelNights } from '../../utils/dates';
-import { escapeHtml } from '../../utils/helpers';
 
 export default function ActivityCard({ activity, showRemove, onRemove, onClick }) {
   const cfg = CATEGORY_CONFIG[activity.category] || CATEGORY_CONFIG.other;
@@ -66,7 +65,7 @@ export default function ActivityCard({ activity, showRemove, onRemove, onClick }
         <button className="act-card-remove" onClick={(e) => { e.stopPropagation(); onRemove?.(); }}>&times;</button>
       )}
       <div className="act-card-header">
-        <span className="act-card-name">{escapeHtml(activity.name)}</span>
+        <span className="act-card-name">{activity.name}</span>
         <span className="act-card-icon" dangerouslySetInnerHTML={{ __html: cfg.icon }} />
       </div>
       <div className="act-card-info">{infoContent}</div>

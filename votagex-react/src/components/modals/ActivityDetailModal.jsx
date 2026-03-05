@@ -52,7 +52,7 @@ export default function ActivityDetailModal({ activity, onClose, onEdit, onDelet
                 <span className="detail-cat-label">ประเภท</span>
               </div>
 
-              {activity.travelLink ? (
+              {activity.travelLink && /^https?:\/\//i.test(activity.travelLink) ? (
                 <a href={activity.travelLink} target="_blank" rel="noopener noreferrer" className="detail-cat-item clickable">
                   <span className="detail-cat-icon">
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none">

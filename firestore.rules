@@ -5,14 +5,24 @@ service cloud.firestore {
       // ใครก็ได้ที่ login แล้วอ่านได้
       allow read: if request.auth != null;
 
-      // สร้าง trip ได้ แต่ต้องใส่ ownerUid เป็นของตัวเอง
+      // สร้าง trip ต้อง login + ownerUid ตรงกับตัวเอง + มีชื่อ trip
       allow create: if request.auth != null
-                    && request.resource.data.ownerUid == request.auth.uid;
+                    && request.resource.data.ownerUid == request.auth.uid
+                    && request.resource.data.name is string
+                    && request.resource.data.name.size() > 0
+                    && request.resource.data.name.size() <= 200;
 
-      // แก้ไขได้เฉพาะเจ้าของ trip หรือสมาชิก (สำหรับ join)
+      // เจ้าของแก้ได้ทุก field
+      // สมาชิกแก้ได้เฉพาะ members, memberUids, activities
       allow update: if request.auth != null
-                    && (resource.data.ownerUid == request.auth.uid
-                        || request.auth.uid in resource.data.memberUids);
+                    && (
+                      resource.data.ownerUid == request.auth.uid
+                      || (
+                        request.auth.uid in resource.data.memberUids
+                        && request.resource.data.diff(resource.data).affectedKeys()
+                           .hasOnly(['members', 'memberUids', 'activities'])
+                      )
+                    );
 
       // ลบได้เฉพาะเจ้าของเท่านั้น
       allow delete: if request.auth != null

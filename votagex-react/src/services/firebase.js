@@ -29,12 +29,8 @@ export function initFirebase() {
     const app = initializeApp(firebaseConfig);
     auth = getAuth(app);
     db = getFirestore(app);
-    // ใช้ Emulator เมื่อรันบน localhost (ฐานข้อมูลทดสอบ)
-    if (location.hostname === 'localhost') {
+    if (import.meta.env.DEV && location.hostname === 'localhost') {
       connectFirestoreEmulator(db, 'localhost', 8080);
-      console.log('Firebase initialized (Emulator mode)');
-    } else {
-      console.log('Firebase initialized (Production)');
     }
     return true;
   } catch (e) {
@@ -95,9 +91,16 @@ export function storeAuthUserData(user) {
 
 export function clearAuthUserData() {
   localStorage.removeItem('votagex_auth_user');
+  localStorage.removeItem('votagex_username');
+  localStorage.removeItem('votagex_google_photo');
+  localStorage.removeItem('votagex_userimage');
 }
 
 export function getStoredAuthUser() {
-  const data = localStorage.getItem('votagex_auth_user');
-  return data ? JSON.parse(data) : null;
+  try {
+    const data = localStorage.getItem('votagex_auth_user');
+    return data ? JSON.parse(data) : null;
+  } catch {
+    return null;
+  }
 }

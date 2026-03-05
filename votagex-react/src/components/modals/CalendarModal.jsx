@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useTrips } from '../../contexts/TripContext';
 import { formatDateThaiShort, formatISODate } from '../../utils/dates';
-import { escapeHtml } from '../../utils/helpers';
 import useModalClose from '../../hooks/useModalClose';
 
 const CAL_MONTHS = ['January', 'February', 'March', 'April', 'May', 'June',
@@ -88,7 +87,7 @@ export default function CalendarModal({ startDate, endDate, onConfirm, onClose }
 
       const overlap = doesRangeOverlapBlocked(newStart, newEnd);
       if (overlap) {
-        setWarning(`คุณมีทริป "${escapeHtml(overlap.name)}" อยู่แล้ว ไม่สามารถสร้างทริปที่วันทับกันได้`);
+        setWarning(`คุณมีทริป "${overlap.name}" อยู่แล้ว ไม่สามารถสร้างทริปที่วันทับกันได้`);
         setSelStart(null);
         setSelEnd(null);
         return;

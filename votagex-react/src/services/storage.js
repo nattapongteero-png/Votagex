@@ -43,8 +43,17 @@ export async function deleteTrip(tripId) {
   await deleteDoc(doc(db, 'trips', tripId));
 }
 
+const MAX_IMAGE_SIZE = 500 * 1024; // 500KB
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+
 export function uploadProfileImage(file) {
   return new Promise((resolve, reject) => {
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      return reject(new Error('รองรับเฉพาะไฟล์ JPG, PNG, WebP, GIF'));
+    }
+    if (file.size > MAX_IMAGE_SIZE) {
+      return reject(new Error('ไฟล์ต้องมีขนาดไม่เกิน 500KB'));
+    }
     const reader = new FileReader();
     reader.onload = () => resolve(reader.result);
     reader.onerror = reject;

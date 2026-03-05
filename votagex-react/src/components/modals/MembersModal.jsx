@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { escapeHtml } from '../../utils/helpers';
 import useModalClose from '../../hooks/useModalClose';
 import ConfirmModal from './ConfirmModal';
 
@@ -55,7 +54,7 @@ export default function MembersModal({ trip, onClose, onRemoveMember }) {
                     )}
                   </div>
                   <span className="member-row-name">
-                    {escapeHtml(member.name)}{member.isCreator ? ' (เจ้าของทริป)' : ''}
+                    {member.name}{member.isCreator ? ' (เจ้าของทริป)' : ''}
                   </span>
                   {!member.isCreator && (
                     <button className="member-row-delete" title="ลบ" onClick={() => handleRemove(member.name)}>
