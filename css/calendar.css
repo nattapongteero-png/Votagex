@@ -1,0 +1,247 @@
+/* ===== Calendar Date Range Picker Bottom Sheet ===== */
+#calendar-modal {
+  z-index: 350;
+}
+
+.calendar-sheet {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  border-radius: 16px 16px 0 0;
+  box-shadow: 0px 2px 6px 2px rgba(0,0,0,0.15), 0px 1px 2px 0px rgba(0,0,0,0.3);
+}
+
+/* ---- Calendar Header (Month Nav) ---- */
+.cal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.cal-nav-btn {
+  width: 34px;
+  height: 34px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background 0.15s;
+}
+
+.cal-nav-btn:hover {
+  background: #f0f0f0;
+}
+
+.cal-nav-btn:active {
+  background: #e0e0e0;
+}
+
+.cal-title {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.cal-month {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 20px;
+  font-weight: 500;
+  color: #222b45;
+  line-height: 1.2;
+}
+
+.cal-year {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 12px;
+  color: #8f9bb3;
+  line-height: 1;
+}
+
+/* ---- Weekday Headers ---- */
+.cal-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  margin-bottom: 12px;
+}
+
+.cal-weekdays span {
+  text-align: center;
+  font-family: 'Google Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: #8f9bb3;
+  line-height: 16px;
+}
+
+/* ---- Calendar Grid ---- */
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  grid-template-rows: repeat(6, 30px);
+  row-gap: 22px;
+  /* Fixed height: 6 rows × 30px + 5 gaps × 22px = 290px */
+  min-height: 290px;
+}
+
+/* Cell wrapper (for range background) */
+.cal-cell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 30px;
+}
+
+/* Range: in-between dates */
+.cal-cell.in-range {
+  background: #e8eefd;
+}
+
+/* Range: start date cell background */
+.cal-cell.range-start {
+  background: linear-gradient(to right, transparent 50%, #e8eefd 50%);
+}
+
+/* Range: end date cell background */
+.cal-cell.range-end {
+  background: linear-gradient(to left, transparent 50%, #e8eefd 50%);
+}
+
+/* When start == end, no range background */
+.cal-cell.range-start.range-end {
+  background: transparent;
+}
+
+/* Row boundary rounding for range */
+.cal-cell.range-start,
+.cal-cell.row-start {
+  border-top-left-radius: 10px;
+  border-bottom-left-radius: 10px;
+}
+
+.cal-cell.range-end,
+.cal-cell.row-end {
+  border-top-right-radius: 10px;
+  border-bottom-right-radius: 10px;
+}
+
+.cal-cell.range-start.range-end {
+  border-radius: 0;
+}
+
+/* ---- Day Number ---- */
+.cal-day {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  font-family: 'Google Sans', sans-serif;
+  font-size: 15px;
+  font-weight: 500;
+  color: #222b45;
+  cursor: pointer;
+  position: relative;
+  z-index: 1;
+  line-height: 20px;
+  transition: background 0.15s;
+  user-select: none;
+}
+
+.cal-day:hover {
+  background: rgba(36, 99, 235, 0.1);
+}
+
+.cal-day.other-month {
+  color: #8f9bb3;
+}
+
+.cal-day.today {
+  font-weight: 700;
+}
+
+.cal-day.selected {
+  background: #2463eb;
+  color: white;
+  font-weight: 700;
+}
+
+.cal-day.selected:hover {
+  background: #1d4fd8;
+}
+
+/* ---- Summary Cards ---- */
+.cal-summary {
+  display: flex;
+  gap: 16px;
+}
+
+.cal-summary-card {
+  flex: 1;
+  background: #fff;
+  border-radius: 16px;
+  padding: 12px;
+  box-shadow: 0 1px 4px rgba(12, 12, 13, 0.1), 0 1px 4px rgba(12, 12, 13, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cal-summary-label {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: #a3a3a3;
+}
+
+.cal-summary-value {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: #000;
+}
+
+/* ---- Blocked dates (existing trip) ---- */
+.cal-day.blocked {
+  color: #ccc;
+  pointer-events: none;
+  position: relative;
+}
+
+.cal-cell.blocked-range {
+  background: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 3px,
+    rgba(0,0,0,0.04) 3px,
+    rgba(0,0,0,0.04) 6px
+  );
+}
+
+/* ---- Overlap Warning ---- */
+.cal-overlap-warning {
+  background: #fff3f3;
+  border: 1px solid #fca5a5;
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-family: 'Google Sans', sans-serif;
+  font-size: 12px;
+  color: #dc2626;
+  text-align: center;
+  line-height: 1.5;
+}
+
+/* ---- Confirm Button ---- */
+.cal-confirm-btn {
+  width: 100%;
+  max-width: 100%;
+  height: 48px;
+
+}

@@ -1,0 +1,984 @@
+/* ===== Homepage ===== */
+.homepage {
+  max-width: 430px;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  margin: 0 auto;
+  background: #fff;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 0 40px rgba(0,0,0,0.08);
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---- Header (with background image) ---- */
+.hp-header {
+  position: relative;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 48px 24px 20px;
+}
+
+.hp-header-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 40px; /* stop at center of 48px button */
+  z-index: 0;
+  overflow: hidden;
+  border-radius: 0 0 24px 24px;
+}
+
+.hp-header-bg img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center -108px;
+}
+
+.hp-header-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  position: relative;
+  z-index: 2;
+  margin-bottom: 16px;
+}
+
+.hp-header-top > div:first-child {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.hp-logo {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 30px;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  background: linear-gradient(to right, #0a296b, #092834);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0px 4px 8px rgba(0,0,0,0.1));
+}
+
+.hp-profile-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #e0e0e0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 1px solid #06173d;
+  box-shadow: 0 1px 4px rgba(12,12,13,0.1), 0 1px 4px rgba(12,12,13,0.05);
+}
+
+.hp-profile-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.hp-profile-avatar svg {
+  width: 20px;
+  height: 20px;
+  color: #999;
+}
+
+.hp-welcome {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  color: #666;
+  display: block;
+}
+
+/* ---- Calendar Card (overlaid on header) ---- */
+.hp-calendar-card {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  background: rgba(255,255,255,0.9);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-radius: 16px;
+  padding: 12px 12px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  box-shadow: 0 1px 4px rgba(12,12,13,0.1), 0 1px 4px rgba(12,12,13,0.05);
+  overflow: hidden;
+  touch-action: pan-y;
+}
+
+.hp-countdown-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hp-countdown-icon {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.hp-countdown-num {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  color: #1a1a2e;
+  line-height: 1;
+}
+
+.hp-countdown-label {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  color: #1a1a2e;
+}
+
+.hp-trip-subtitle {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  color: #a3a3a3;
+  margin-top: 4px;
+  margin-left: 4px;
+  margin-bottom: 12px;
+}
+
+/* Calendar Dates Container (only ~200px wide) */
+.hp-calendar-dates {
+  width: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Mini Week View (compact row) */
+.hp-week-labels {
+  display: flex;
+  gap: 8px;
+  overflow: hidden;
+}
+
+.hp-week-labels span {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+  font-family: 'Google Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  color: #8f9bb3;
+  line-height: 16px;
+}
+
+.hp-week-row {
+  display: flex;
+  gap: 8px;
+  touch-action: pan-y;
+}
+
+.hp-week-day {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.hp-week-day:active {
+  opacity: 0.7;
+}
+
+.hp-week-day-num {
+  width: 27px;
+  height: 27px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  font-family: 'Google Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  color: #a3a3a3;
+}
+
+.hp-week-day.today .hp-week-day-num {
+  font-weight: 700;
+  color: #2463eb;
+}
+
+.hp-week-day.selected .hp-week-day-num {
+  background: #902fc1;
+  color: #fff;
+  font-weight: 700;
+}
+
+.hp-week-dots {
+  display: flex;
+  gap: 2px;
+  height: 4px;
+  align-items: center;
+  justify-content: center;
+}
+
+.hp-week-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: transparent;
+}
+
+.hp-week-dot.has-activity {
+  background: #2463eb;
+}
+
+/* ---- Scrollable Content ---- */
+.hp-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 24px 100px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.hp-content::-webkit-scrollbar {
+  display: none;
+}
+
+/* ---- Add Activity Button ---- */
+.hp-add-btn {
+  width: 100%;
+  height: 48px;
+  border-radius: 100px;
+  border: none;
+  background: linear-gradient(to top, #2463eb, #36bffa);
+  color: #fff;
+  font-family: 'Google Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: opacity 0.2s;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 4;
+  margin-top: 20px;
+}
+
+.hp-add-btn:hover {
+  opacity: 0.9;
+}
+
+.hp-add-btn:active {
+  transform: scale(0.98);
+}
+
+/* ---- Section ---- */
+.hp-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.hp-section-title {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a1a2e;
+}
+
+/* ---- Recent Activities (reusing act-card from page 5) ---- */
+.hp-recent-scroll {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  margin: 0 -24px;
+  padding-left: 24px;
+  padding-right: 24px;
+}
+
+.hp-recent-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.hp-recent-scroll > .act-card {
+  flex-shrink: 0;
+}
+
+.hp-recent-empty {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 13px;
+  color: #a3a3a3;
+  text-align: center;
+  padding: 24px;
+  width: 100%;
+  flex-shrink: 0;
+}
+
+/* ---- Travel Schedule (Card-based) ---- */
+.hp-schedule {
+  background: #fafafa;
+  border-radius: 16px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.hp-schedule-day-header {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: #2463eb;
+  padding: 8px 0 8px;
+}
+
+.hp-schedule-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+}
+
+/* Status circle (40px with icon inside) */
+.hp-status-circle {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.hp-status-circle svg {
+  width: 20px;
+  height: 20px;
+}
+
+.hp-status-circle.checked-in {
+  background: #4ca30d;
+}
+
+.hp-status-circle.checked-in svg path[stroke],
+.hp-status-circle.checked-in svg circle[stroke],
+.hp-status-circle.checked-in svg rect[stroke] {
+  stroke: #fff;
+}
+
+.hp-status-circle.checked-in svg path[fill]:not([fill="none"]):not([fill-opacity]),
+.hp-status-circle.checked-in svg circle[fill]:not([fill="none"]):not([fill-opacity]) {
+  fill: #fff;
+}
+
+.hp-status-circle.checked-in svg path[fill-opacity] {
+  fill: rgba(255,255,255,0.3);
+}
+
+.hp-status-circle.missed {
+  background: #e62e05;
+}
+
+.hp-status-circle.missed svg path[stroke],
+.hp-status-circle.missed svg circle[stroke],
+.hp-status-circle.missed svg rect[stroke] {
+  stroke: #fff;
+}
+
+.hp-status-circle.missed svg path[fill]:not([fill="none"]):not([fill-opacity]),
+.hp-status-circle.missed svg circle[fill]:not([fill="none"]):not([fill-opacity]) {
+  fill: #fff;
+}
+
+.hp-status-circle.missed svg path[fill-opacity] {
+  fill: rgba(255,255,255,0.3);
+}
+
+.hp-status-circle.pending {
+  background: #d0defb;
+}
+
+.hp-status-circle.pending svg path[stroke],
+.hp-status-circle.pending svg circle[stroke],
+.hp-status-circle.pending svg rect[stroke] {
+  stroke: #0A296B;
+}
+
+.hp-status-circle.pending svg path[fill]:not([fill="none"]):not([fill-opacity]),
+.hp-status-circle.pending svg circle[fill]:not([fill="none"]):not([fill-opacity]) {
+  fill: #0A296B;
+}
+
+.hp-status-circle.default {
+  background: #d0defb;
+}
+
+.hp-status-circle.default svg path[stroke],
+.hp-status-circle.default svg circle[stroke],
+.hp-status-circle.default svg rect[stroke] {
+  stroke: #0A296B;
+}
+
+.hp-status-circle.default svg path[fill]:not([fill="none"]):not([fill-opacity]),
+.hp-status-circle.default svg circle[fill]:not([fill="none"]):not([fill-opacity]) {
+  fill: #0A296B;
+}
+
+.hp-schedule-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.hp-schedule-name {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a1a2e;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hp-schedule-detail-link {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 10px;
+  font-weight: 400;
+  color: #2463eb;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.hp-schedule-time {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  color: #a3a3a3;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* Divider between schedule items */
+.hp-schedule-divider {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding-left: 12px;
+  height: 24px;
+}
+
+.hp-schedule-divider-line {
+  width: 2px;
+  height: 100%;
+  background: #e5e7eb;
+  margin-left: 7px;
+}
+
+.hp-schedule-day-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 0 4px;
+}
+
+.hp-schedule-day-num {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: #2463eb;
+}
+
+.hp-schedule-day-date {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.hp-schedule-empty {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 13px;
+  color: #a3a3a3;
+  text-align: center;
+  padding: 24px;
+}
+
+/* ---- Bottom Tab Bar ---- */
+.hp-tab-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 80px;
+  background: #fff;
+  border-radius: 24px 24px 0 0;
+  box-shadow: 0 -4px 20px rgba(0,0,0,0.06);
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding-bottom: env(safe-area-inset-bottom, 0);
+  z-index: 10;
+}
+
+.hp-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 8px 16px;
+  transition: color 0.15s;
+}
+
+.hp-tab-icon-wrap {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+
+.hp-tab.active .hp-tab-icon-wrap {
+  background: #2463eb;
+}
+
+.hp-tab svg {
+  width: 20px;
+  height: 20px;
+}
+
+.hp-tab span {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 10px;
+  font-weight: 500;
+  color: #a3a3a3;
+}
+
+.hp-tab.active span {
+  color: #2463eb;
+}
+
+.hp-tab svg path[stroke] {
+  stroke: #a3a3a3;
+}
+
+.hp-tab svg path[fill="black"] {
+  fill: #a3a3a3;
+}
+
+.hp-tab svg path[fill-opacity] {
+  fill: #a3a3a3;
+  fill-opacity: 0.15;
+}
+
+.hp-tab.active svg path[stroke] {
+  stroke: #fff;
+}
+
+.hp-tab.active svg path[fill="black"] {
+  fill: #fff;
+}
+
+.hp-tab.active svg path[fill-opacity] {
+  fill: #fff;
+  fill-opacity: 0.15;
+}
+
+/* ---- Section Arrow Button ---- */
+.hp-section-arrow {
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ---- Other Trip Section (2-column grid) ---- */
+.hp-other-trip-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+}
+
+/* Horizontal scroll variant for homepage */
+.hp-other-trip-scroll {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding-bottom: 4px;
+}
+
+.hp-other-trip-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.hp-other-trip-scroll .hp-other-card {
+  min-width: 160px;
+  max-width: 160px;
+  scroll-snap-align: start;
+  flex-shrink: 0;
+}
+
+.hp-other-card {
+  background: linear-gradient(to bottom, #fff, #e8eefd);
+  border: 0.5px solid #f5f5f5;
+  border-radius: 24px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(12,12,13,0.1), 0 1px 4px rgba(12,12,13,0.05);
+  cursor: pointer;
+}
+
+.hp-other-card.disabled {
+  background: linear-gradient(to bottom, #fff, #f5f5f5);
+  border-color: #e5e5e5;
+}
+
+.hp-other-card.disabled .hp-other-flag {
+  border-color: #d4d4d4;
+  background: #e0e0e0;
+}
+
+.hp-other-card.disabled .hp-other-name {
+  color: #000;
+}
+
+.hp-other-card.disabled .hp-other-date {
+  color: #666;
+}
+
+.hp-other-card.disabled .hp-other-desc {
+  color: #737373;
+}
+
+.hp-other-card.disabled .hp-other-avatar {
+  border-color: #d4d4d4;
+  background: #e0e0e0;
+  color: #999;
+}
+
+.hp-other-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.hp-other-edit-btn {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: #737373;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.hp-other-edit-btn:active {
+  background: rgba(0,0,0,0.06);
+}
+
+.hp-other-flag {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #d0defb;
+  border: 2px solid #0a296b;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.hp-other-flag img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.hp-other-flag svg {
+  width: 24px;
+  height: 24px;
+  margin: 6px;
+  color: #0a296b;
+}
+
+.hp-other-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow: hidden;
+}
+
+.hp-other-name {
+  font-family: 'IBM Plex Sans Thai', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: #000;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hp-other-date {
+  font-family: 'Inter', 'Noto Sans Thai', sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  color: #666;
+  white-space: nowrap;
+}
+
+.hp-other-desc {
+  font-family: 'IBM Plex Sans Thai', sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  color: #737373;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.4;
+}
+
+.hp-other-avatars {
+  display: flex;
+  align-items: center;
+  padding-right: 10px;
+}
+
+.hp-other-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1px solid #a2bcf6;
+  background: #d0defb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  margin-right: -10px;
+  font-family: 'IBM Plex Sans Thai', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  color: #0a296b;
+}
+
+.hp-other-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.hp-other-avatar.extra {
+  background: #a2bcf6;
+  color: #0a296b;
+  font-size: 9px;
+}
+
+.hp-other-join-btn {
+  width: 100%;
+  height: 48px;
+  border-radius: 100px;
+  border: none;
+  background: linear-gradient(to top, #2463eb, #36bffa);
+  color: #fff;
+  font-family: 'Google Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: auto;
+  transition: opacity 0.2s;
+}
+
+.hp-other-join-btn:hover {
+  opacity: 0.9;
+}
+
+.hp-other-join-btn:active {
+  transform: scale(0.98);
+}
+
+.hp-other-join-btn:disabled {
+  background: #e5e5e5;
+  color: #737373;
+  cursor: not-allowed;
+}
+
+.hp-other-join-btn svg {
+  flex-shrink: 0;
+}
+
+/* "ดูข้อมูลทริป" button for joined trips */
+.hp-other-view-btn {
+  background: linear-gradient(135deg, #4a7dff 0%, #2463eb 100%);
+}
+
+/* Expired my-trip button — grey but still clickable */
+.hp-expired-view {
+  background: #e5e5e5;
+  color: #737373;
+  cursor: pointer;
+}
+
+/* ===== Join Confirmation Modal ===== */
+.join-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.join-confirm-card {
+  background: #fff;
+  border-radius: 24px;
+  padding: 32px 24px 24px;
+  width: 100%;
+  max-width: 320px;
+  text-align: center;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.18);
+  animation: joinModalIn 0.25s ease-out;
+}
+
+@keyframes joinModalIn {
+  from { opacity: 0; transform: scale(0.9) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.join-confirm-icon {
+  margin-bottom: 16px;
+}
+
+.join-confirm-trip-name {
+  font-family: 'IBM Plex Sans Thai', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin-bottom: 8px;
+  word-break: break-word;
+}
+
+.join-confirm-text {
+  font-family: 'IBM Plex Sans Thai', sans-serif;
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 24px;
+}
+
+.join-confirm-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.join-confirm-cancel {
+  flex: 1;
+  padding: 12px 0;
+  border: 1.5px solid #ddd;
+  border-radius: 14px;
+  background: #fff;
+  font-family: 'IBM Plex Sans Thai', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: #666;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.join-confirm-cancel:hover {
+  background: #f5f5f5;
+}
+
+.join-confirm-ok {
+  flex: 1;
+  padding: 12px 0;
+  border: none;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #4a7dff 0%, #2463eb 100%);
+  font-family: 'IBM Plex Sans Thai', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.join-confirm-ok:hover {
+  opacity: 0.9;
+}
+
+.join-confirm-ok:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.join-confirm-warning {
+  background: #fff3f3;
+  border: 1px solid #fcc;
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 20px;
+  font-family: 'IBM Plex Sans Thai', sans-serif;
+  font-size: 13px;
+  color: #c0392b;
+  line-height: 1.5;
+  text-align: left;
+}
+
+.join-confirm-warning svg {
+  vertical-align: -3px;
+  margin-right: 4px;
+}

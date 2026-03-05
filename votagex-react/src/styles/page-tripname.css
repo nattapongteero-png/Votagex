@@ -1,0 +1,160 @@
+/* ===== Page 2: Trip Name Layout ===== */
+.page2-layout {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  padding: 20px 24px 100px;
+  gap: 16px;
+  position: relative;
+  background: white;
+}
+
+.trip-image-placeholder {
+  width: 200px;
+  height: 200px;
+  border-radius: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 32px 0 40px;
+}
+
+/* ===== Travel Card (Banner) ===== */
+.travel-card {
+  position: relative;
+  width: 295px;
+  transform: rotate(-1deg);
+}
+
+.travel-card-inner {
+  background: white;
+  border-radius: 2px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+  overflow: visible;
+  position: relative;
+  padding-top: 40px;
+}
+
+.travel-card-texture {
+  position: absolute;
+  inset: 0;
+  background: url('../assets/noise-texture.png') center/cover;
+  opacity: 0.08;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.travel-card-header {
+  width: 100px;
+  height: 40px;
+  background: #3f3f3f;
+  border-radius: 1px;
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+}
+
+.travel-card-title {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 30px;
+  font-weight: 400;
+  color: black;
+  text-align: center;
+  margin: 12px 0 0;
+  position: relative;
+  z-index: 2;
+}
+
+.travel-card-desc {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 10px;
+  color: var(--text);
+  text-align: center;
+  line-height: 1.6;
+  padding: 8px 24px 4px;
+  white-space: pre-line;
+}
+
+.travel-card-left,
+.travel-card-right {
+  position: absolute;
+  height: 172px;
+  width: auto;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+}
+
+.travel-card-left {
+  left: -22px;
+}
+
+.travel-card-right {
+  right: -21px;
+}
+
+/* ===== Cover Image Upload (Page 2) ===== */
+.cover-upload-area {
+  width: 64px;
+  height: 64px;
+  border-radius: 100px;
+  background: #fafafa;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  overflow: hidden;
+  transition: opacity 0.2s;
+  position: relative;
+}
+
+.cover-upload-area:hover {
+  opacity: 0.85;
+}
+
+.cover-upload-area img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  display: block;
+}
+
+.cover-upload-area.has-image .cover-upload-label,
+.cover-upload-area.has-image svg {
+  display: none;
+}
+
+.travel-card-dates {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 10px;
+  color: #737373;
+  text-align: center;
+  padding: 0 24px 12px;
+  min-height: 12px;
+}
+
+.travel-card-owner {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 10px;
+  color: var(--text);
+  position: absolute;
+  left: 16px;
+  top: 28px;
+  z-index: 2;
+}
+
+.cover-upload-label {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  padding-bottom: 8px;
+}

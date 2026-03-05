@@ -1,0 +1,47 @@
+/* ===== Page 4: Profile Layout ===== */
+.page4-layout {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  padding: 20px 24px 100px;
+  gap: 16px;
+  position: relative;
+  background: white;
+}
+
+.profile-upload-circle {
+  width: 64px;
+  height: 64px;
+  border-radius: 100px;
+  background: #fafafa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  overflow: hidden;
+  transition: opacity 0.2s;
+  position: relative;
+}
+
+.profile-upload-circle:hover {
+  opacity: 0.85;
+}
+
+.profile-upload-circle img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  display: block;
+}
+
+.profile-upload-label {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}

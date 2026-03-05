@@ -1,0 +1,74 @@
+/* ===== Page 3: Date Select Layout ===== */
+.page3-layout {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  padding: 20px 24px 100px;
+  gap: 16px;
+  position: relative;
+  background: white;
+}
+
+.date-cards {
+  display: flex;
+  gap: 16px;
+  width: 100%;
+}
+
+.date-card {
+  flex: 1;
+  background: #fff;
+  border-radius: 16px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  box-shadow: 0 1px 4px rgba(12, 12, 13, 0.1), 0 1px 4px rgba(12, 12, 13, 0.05);
+}
+
+.date-card-label {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: #a3a3a3;
+}
+
+.date-card-value {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.date-card-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border: 1.5px solid #2463eb;
+  border-radius: 100px;
+  background: white;
+  color: #2463eb;
+  font-family: 'Google Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.date-card-btn svg {
+  stroke: #2463eb;
+  width: 16px;
+  height: 16px;
+}
+
+.date-card-btn:hover {
+  background: rgba(36, 99, 235, 0.05);
+}
+
+.date-card-btn:active {
+  transform: scale(0.97);
+}

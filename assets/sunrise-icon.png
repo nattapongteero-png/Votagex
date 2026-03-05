@@ -1,0 +1,9 @@
+<svg preserveAspectRatio="none" width="100%" height="100%" overflow="visible" style="display: block;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Sunrise Icon">
+<g id="Vector">
+<path d="M12 9C8.5285 9 5.71429 12.07 5.71429 15.8571H18.2857C18.2857 12.07 15.4715 9 12 9Z" fill="#363853" fill-opacity="0.15"/>
+<path d="M1 15.8571H23M5.71429 21H18.2857M5.71429 15.8571C5.71429 12.07 8.5285 9 12 9C15.4715 9 18.2857 12.07 18.2857 15.8571H5.71429Z" stroke="var(--stroke-0, #363853)" stroke-width="2" stroke-linecap="round"/>
+</g>
+<path id="Vector_2" d="M12 4V3M18 5.0622L16.7496 6M7.25041 6L6 5.06218" stroke="var(--stroke-0, #363853)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+</svg>

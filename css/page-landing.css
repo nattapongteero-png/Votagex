@@ -1,0 +1,319 @@
+/* ===== Landing Page (Page 1) ===== */
+.landing-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  background: linear-gradient(to bottom, #e8eefd, #ffffff);
+  position: relative;
+  overflow: hidden;
+}
+
+/* ===== Polaroid Collage ===== */
+.polaroid-collage {
+  position: relative;
+  width: 100%;
+  height: 440px;
+  min-height: 360px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.polaroid {
+  position: absolute;
+  will-change: transform, opacity;
+}
+
+.polaroid-frame {
+  background: white;
+  padding: 10px 10px 28px 10px;
+  border-radius: 2px;
+  box-shadow: 0 2px 6px 2px rgba(0,0,0,0.15), 0 1px 2px rgba(0,0,0,0.3);
+}
+
+.polaroid-photo {
+  width: 180px;
+  height: 228px;
+  overflow: hidden;
+  border-radius: 1px;
+}
+
+.polaroid-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Individual polaroid positions (matching Figma layout) */
+
+/* Photo 1 - Rocky coast (top-right area) */
+.polaroid-1 {
+  top: -20px;
+  right: -40px;
+  z-index: 1;
+  transform: rotate(-15deg);
+}
+
+/* Photo 2 - Forest (left area, rotated CW) */
+.polaroid-2 {
+  top: 90px;
+  left: -15px;
+  z-index: 2;
+  transform: rotate(28deg);
+}
+
+/* Photo 3 - Aurora (upper-left) */
+.polaroid-3 {
+  top: -40px;
+  left: -16px;
+  z-index: 3;
+  transform: rotate(-15deg);
+}
+
+/* Photo 4 - Worker (center) */
+.polaroid-4 {
+  top: 120px;
+  left: 40%;
+  margin-left: -60px;
+  z-index: 4;
+  transform: rotate(-15deg);
+}
+
+/* Photo 5 - River&Mountain (top-center) */
+.polaroid-5 {
+  top: -20px;
+  left: 40%;
+  margin-left: -25px;
+  z-index: 5;
+  transform: rotate(7deg);
+}
+
+/* Photo 6 - Horses (right side, rotated CW) */
+.polaroid-6 {
+  top: 70px;
+  right: -80px;
+  z-index: 6;
+  transform: rotate(37deg);
+}
+
+/* ===== Slide-in Animation ===== */
+/* Each polaroid slides in from outside the viewport, starting from the bottom layer */
+.polaroid-1 { animation: slideIn1 0.8s cubic-bezier(0.22, 0.61, 0.36, 1) 0.2s both; }
+.polaroid-2 { animation: slideIn2 0.8s cubic-bezier(0.22, 0.61, 0.36, 1) 0.4s both; }
+.polaroid-3 { animation: slideIn3 0.8s cubic-bezier(0.22, 0.61, 0.36, 1) 0.6s both; }
+.polaroid-4 { animation: slideIn4 0.8s cubic-bezier(0.22, 0.61, 0.36, 1) 0.8s both; }
+.polaroid-5 { animation: slideIn5 0.8s cubic-bezier(0.22, 0.61, 0.36, 1) 1.0s both; }
+.polaroid-6 { animation: slideIn6 0.8s cubic-bezier(0.22, 0.61, 0.36, 1) 1.2s both; }
+
+/* Photo 1: slide from top-right */
+@keyframes slideIn1 {
+  0% { opacity: 0; transform: rotate(-15deg) translate(250px, -250px); }
+  100% { opacity: 1; transform: rotate(-15deg) translate(0, 0); }
+}
+
+/* Photo 2: slide from bottom-left */
+@keyframes slideIn2 {
+  0% { opacity: 0; transform: rotate(28deg) translate(-250px, 250px); }
+  100% { opacity: 1; transform: rotate(28deg) translate(0, 0); }
+}
+
+/* Photo 3: slide from top-left */
+@keyframes slideIn3 {
+  0% { opacity: 0; transform: rotate(-15deg) translate(-250px, -250px); }
+  100% { opacity: 1; transform: rotate(-15deg) translate(0, 0); }
+}
+
+/* Photo 4: slide from bottom */
+@keyframes slideIn4 {
+  0% { opacity: 0; transform: rotate(-15deg) translate(0, 350px); }
+  100% { opacity: 1; transform: rotate(-15deg) translate(0, 0); }
+}
+
+/* Photo 5: slide from top */
+@keyframes slideIn5 {
+  0% { opacity: 0; transform: rotate(7deg) translate(100px, -300px); }
+  100% { opacity: 1; transform: rotate(7deg) translate(0, 0); }
+}
+
+/* Photo 6: slide from right */
+@keyframes slideIn6 {
+  0% { opacity: 0; transform: rotate(38deg) translate(300px, 150px); }
+  100% { opacity: 1; transform: rotate(38deg) translate(0, 0); }
+}
+
+/* ===== Landing Content ===== */
+.landing-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 24px 40px;
+  width: 100%;
+  flex: 1;
+  justify-content: flex-start;
+  animation: fadeInUp 0.7s ease 1.8s both;
+}
+
+@keyframes fadeInUp {
+  0% { opacity: 0; transform: translateY(30px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== Account Pill ===== */
+.landing-account-pill {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 12px 4px 4px;
+  background: #fff;
+  border-radius: 100px;
+  box-shadow: 0 2px 6px 2px rgba(0,0,0,0.15), 0 1px 2px rgba(0,0,0,0.3);
+  margin-bottom: 24px;
+}
+
+.landing-account-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 100px;
+  background: #d4d4d4;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.landing-account-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.landing-account-name {
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  font-weight: 900;
+  color: #000;
+  white-space: nowrap;
+}
+
+.landing-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: 345px;
+  margin-top: auto;
+}
+
+#landing-login {
+  margin-top: 24px;
+}
+
+/* ===== Landing Page Buttons ===== */
+.btn-primary-blue {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 47px;
+  padding: 12px 16px;
+  border-radius: 100px;
+  border: none;
+  background: #2463EB;
+  color: #fff;
+  font-family: 'Google Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px 2px rgba(0,0,0,0.15), 0 1px 2px rgba(0,0,0,0.3);
+}
+
+.btn-primary-blue:hover {
+  background: #004a75;
+}
+
+.btn-primary-blue:active {
+  transform: scale(0.97);
+}
+
+.btn-outline-blue {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 47px;
+  padding: 12px 16px;
+  border-radius: 100px;
+  border: 2px solid #2463EB;
+  background: transparent;
+  color: #2463EB;
+  font-family: 'Google Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-outline-blue:hover {
+  background: rgba(0, 89, 138, 0.05);
+}
+
+.btn-outline-blue:active {
+  transform: scale(0.97);
+}
+
+/* ===== Google Sign-in Button (Landing) ===== */
+.btn-google-signin-landing {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  height: 47px;
+  padding: 12px 16px;
+  border-radius: 100px;
+  border: 2px solid #e5e7eb;
+  background: #fff;
+  color: #1A1A2E;
+  font-family: 'Google Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.btn-google-signin-landing:hover {
+  background: #f8f9fa;
+  border-color: #d1d5db;
+}
+
+.btn-google-signin-landing:active {
+  transform: scale(0.97);
+}
+
+.btn-google-signin-landing:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-google-signin-landing .google-icon {
+  flex-shrink: 0;
+}
+
+.btn-google-signin-landing.loading span {
+  display: none;
+}
+
+.btn-google-signin-landing.loading::after {
+  content: '\0e01\0e33\0e25\0e31\0e07\0e40\0e02\0e49\0e32\0e2a\0e39\0e48\0e23\0e30\0e1a\0e1a...';
+  font-family: 'Google Sans', sans-serif;
+  font-size: 14px;
+  color: #666;
+}
+
+.landing-login-hint {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 12px;
+  color: #999;
+  text-align: center;
+}

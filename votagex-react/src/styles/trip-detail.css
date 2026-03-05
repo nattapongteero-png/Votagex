@@ -1,0 +1,752 @@
+/* ===== Trip Detail Page ===== */
+.trip-detail-page {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: none;
+  justify-content: center;
+}
+
+.trip-detail-page.active {
+  display: flex;
+}
+
+.trip-detail-container {
+  max-width: 430px;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  background: #fff;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 0 40px rgba(0,0,0,0.08);
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---- Header ---- */
+.td-header {
+  position: relative;
+  flex-shrink: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 48px 24px 24px;
+  overflow: hidden;
+  max-height: 200px;
+  transition: max-height 0.35s ease, padding 0.35s ease, opacity 0.25s ease;
+}
+
+.trip-detail-container.header-collapsed .td-header {
+  max-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  opacity: 0;
+}
+
+.td-header-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.td-header-bg img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center -108px;
+}
+
+.td-header-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  position: relative;
+  z-index: 2;
+}
+
+.td-header-title {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 30px;
+  font-weight: 900;
+  background: linear-gradient(to right, #0a296b, #092834);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0px 4px 8px rgba(0,0,0,0.1));
+}
+
+.td-header-subtitle {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  color: #666;
+}
+
+.td-close-btn {
+  position: relative;
+  z-index: 2;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+
+.td-close-btn svg {
+  width: 24px;
+  height: 24px;
+}
+
+/* ---- Scrollable Content ---- */
+.td-scroll {
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.td-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* ---- Trip Info Section ---- */
+.td-trip-info {
+  padding: 32px 24px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: #e8eefd;
+  position: sticky;
+  top: 0;
+  z-index: 6;
+  transition: padding 0.3s ease, gap 0.3s ease;
+}
+
+.trip-detail-container.desc-collapsed .td-trip-info {
+  gap: 12px;
+}
+
+.trip-detail-container.header-collapsed .td-trip-info {
+  padding-top: 16px;
+  padding-bottom: 12px;
+  gap: 8px;
+}
+
+.td-trip-flag {
+  position: relative;
+  z-index: 10;
+  width: 40px;
+  height: 40px;
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #d0defb;
+  border: 4px solid #e8eefd;
+  flex-shrink: 0;
+  margin-top: -20px;
+  margin-bottom: -20px;
+  margin-left: 24px;
+  transition: max-height 0.35s ease, margin 0.35s ease, opacity 0.25s ease;
+  max-height: 40px;
+}
+
+.trip-detail-container.header-collapsed .td-trip-flag {
+  max-height: 0;
+  margin-top: 0;
+  margin-bottom: 0;
+  opacity: 0;
+}
+
+.td-trip-flag img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.td-trip-flag .flag-emoji {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.td-trip-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.td-trip-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow: hidden;
+}
+
+.td-trip-name {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 18px;
+  font-weight: 900;
+  color: #000;
+  text-shadow: 0px 4px 8px rgba(0,0,0,0.1);
+}
+
+.td-trip-more {
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+  font-size: 18px;
+  letter-spacing: 2px;
+  flex-shrink: 0;
+}
+
+.td-trip-meta {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  color: #666;
+}
+
+.td-trip-desc {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  color: #737373;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  max-height: 60px;
+  transition: max-height 0.3s ease, opacity 0.2s ease;
+}
+
+.trip-detail-container.desc-collapsed .td-trip-desc {
+  max-height: 0;
+  opacity: 0;
+}
+
+/* Info Summary Row */
+.td-info-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.td-info-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 4px;
+  overflow: hidden;
+}
+
+.td-info-icon {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.td-info-icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.td-info-avatars {
+  display: flex;
+  align-items: center;
+  padding-right: 10px;
+}
+
+.td-info-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1px solid #a2bcf6;
+  overflow: hidden;
+  background: #d0defb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.td-info-avatar + .td-info-avatar {
+  margin-left: -10px;
+}
+
+.td-info-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.td-info-value {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 20px;
+  font-weight: 600;
+  color: #000;
+  white-space: nowrap;
+  text-shadow: 0px 4px 8px rgba(0,0,0,0.1);
+}
+
+.td-info-value.budget {
+  color: #026aa2;
+}
+
+.td-info-value.spent {
+  color: #bc1b06;
+}
+
+.td-info-value.remaining {
+  color: #3b7c0f;
+}
+
+.td-info-label {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  color: #666;
+  white-space: nowrap;
+}
+
+/* ---- Content Tab Bar ---- */
+.td-tabs-wrapper {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: #fff;
+  padding: 24px 24px 24px 24px;
+  box-shadow: 0 0 0 rgba(0,0,0,0);
+  transition: box-shadow 0.3s ease;
+}
+
+.td-tabs-wrapper.sticky {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.td-tabs {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 4px;
+  background: #fafafa;
+  border-radius: 100px;
+  height: 56px;
+}
+
+.td-tab {
+  flex: 1;
+  height: 48px;
+  border: none;
+  border-radius: 100px;
+  font-family: 'Google Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: transparent;
+  color: #666;
+}
+
+.td-tab.active {
+  background: #134cc9;
+  color: #fff;
+}
+
+/* ---- Tab Content Transition ---- */
+.td-tab-visible {
+  animation: tdFadeIn 0.25s ease forwards;
+}
+
+.td-tab-hidden {
+  animation: tdFadeOut 0.2s ease forwards;
+}
+
+@keyframes tdFadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes tdFadeOut {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(-8px); }
+}
+
+/* ---- Day Selector ---- */
+.td-days {
+  display: flex;
+  gap: 12px;
+  padding: 0 24px 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.td-days::-webkit-scrollbar {
+  display: none;
+}
+
+.td-day-card {
+  flex-shrink: 0;
+  min-width: 140px;
+  padding: 12px 16px;
+  border-radius: 16px;
+  border: 1.5px solid transparent;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.td-day-card.active {
+  border-color: #134cc9;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(19,76,201,0.15);
+}
+
+.td-day-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.td-day-label {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: #000;
+}
+
+.td-day-total {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: #026aa2;
+}
+
+.td-day-total.has-expense {
+  color: #bc1b06;
+}
+
+.td-day-date {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 400;
+  color: #a3a3a3;
+}
+
+.td-day-total-label {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 10px;
+  font-weight: 400;
+  color: #a3a3a3;
+  text-align: right;
+}
+
+/* ---- Daily Expense Summary Card ---- */
+.td-expense-card {
+  margin: 20px 24px 24px 24px;
+  border-radius: 24px;
+  background: linear-gradient(180deg, #ffffff 0%, #fef4d8 50%, #fdedbf 100%);
+  padding: 16px 16px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+}
+
+.td-expense-title {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: #000;
+  position: relative;
+  z-index: 1;
+}
+
+.td-expense-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  position: relative;
+  z-index: 1;
+  margin-top: 8px;
+}
+
+.td-expense-row {
+  display: flex;
+  gap: 8px;
+}
+
+.td-expense-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: rgba(255,255,255,0.9);
+  border: 0.5px solid #f5f5f5;
+  border-radius: 12px;
+  padding: 8px;
+}
+
+.td-expense-value {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: #026aa2;
+}
+
+.td-expense-value.has-expense {
+  color: #bc1b06;
+}
+
+.td-expense-cat {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.td-expense-cat-icon {
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.td-expense-cat-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.td-expense-cat-label {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 10px;
+  font-weight: 400;
+  color: #666;
+}
+
+.td-expense-bg {
+  position: absolute;
+  top: 32px;
+  right: -54px;
+  width: 200px;
+  height: 150px;
+  pointer-events: none;
+  z-index: 0;
+  transform: rotate(-11deg);
+}
+
+.td-expense-bg img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ---- Activities Section ---- */
+.td-activities {
+  padding: 0 24px 24px;
+}
+
+.td-activities-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.td-activities-title {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: #000;
+}
+
+/* Unified Add Button (Figma style) */
+.td-btn-add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 32px;
+  padding: 12px 12px 12px 4px;
+  border-radius: 100px;
+  border: none;
+  background: #2463eb;
+  color: #fff;
+  font-family: 'Google Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  flex-shrink: 0;
+}
+
+.td-btn-add:hover {
+  opacity: 0.9;
+}
+
+.td-btn-add:active {
+  transform: scale(0.97);
+}
+
+.td-btn-add svg {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+/* Category Chips */
+.td-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-bottom: 16px;
+}
+
+.td-chips::-webkit-scrollbar {
+  display: none;
+}
+
+.td-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 100px;
+  border: 1px solid #2463eb;
+  background: #e8eefd;
+  font-family: 'Google Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  color: #2463eb;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.td-chip.active {
+  border-color: #0A296B;
+  background: #0A296B;
+  color: #fff;
+}
+
+.td-chip svg {
+  width: 16px;
+  height: 16px;
+}
+
+.td-chip svg path[stroke],
+.td-chip svg circle[stroke] {
+  stroke: #2463eb;
+}
+
+.td-chip svg path[fill-opacity],
+.td-chip svg circle[fill-opacity] {
+  fill: #2463eb;
+}
+
+.td-chip svg path[fill]:not([fill="none"]):not([fill-opacity]),
+.td-chip svg circle[fill]:not([fill="none"]):not([fill-opacity]) {
+  fill: #2463eb;
+}
+
+.td-chip.active svg path[stroke],
+.td-chip.active svg circle[stroke] {
+  stroke: #fff;
+}
+
+.td-chip.active svg path[fill-opacity],
+.td-chip.active svg circle[fill-opacity] {
+  fill: #fff;
+}
+
+.td-chip.active svg path[fill]:not([fill="none"]):not([fill-opacity]),
+.td-chip.active svg circle[fill]:not([fill="none"]):not([fill-opacity]) {
+  fill: #fff;
+}
+
+/* Activity Cards List */
+.td-activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.td-activity-list .activity-section {
+  margin-bottom: 16px;
+}
+
+.td-activity-list .activity-section:last-child {
+  margin-bottom: 0;
+}
+
+/* Empty state */
+.td-empty {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 13px;
+  color: #a3a3a3;
+  text-align: center;
+  padding: 32px 0;
+}
+
+/* ---- Travel Plan Tab Content ---- */
+.td-plan-content {
+  padding: 20px 24px 0 24px;
+}
+
+/* Schedule Header */
+.td-schedule-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.td-schedule-title {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: #000;
+}
+
+.td-plan-content .hp-schedule {
+  width: 100%;
+}
+
+.hp-schedule-meta {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 10px;
+  font-weight: 400;
+  color: #a3a3a3;
+}

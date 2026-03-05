@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#FFFFFF">
+  <title>VOTAGEX - Travel Together</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700;800;900&family=Suwannaphum&family=Inter:wght@400;600;700;800;900&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/pageview.css">
+  <link rel="stylesheet" href="css/page-landing.css">
+  <link rel="stylesheet" href="css/page-tripname.css">
+  <link rel="stylesheet" href="css/page-dates.css">
+  <link rel="stylesheet" href="css/page-profile.css">
+  <link rel="stylesheet" href="css/page-activities.css">
+  <link rel="stylesheet" href="css/page-members.css">
+  <link rel="stylesheet" href="css/modals.css">
+  <link rel="stylesheet" href="css/join-screen.css">
+  <link rel="stylesheet" href="css/calendar.css">
+  <link rel="stylesheet" href="css/homepage.css">
+  <link rel="stylesheet" href="css/itrip.css">
+  <link rel="stylesheet" href="css/me-page.css">
+  <link rel="stylesheet" href="css/login.css">
+  <link rel="stylesheet" href="css/trip-detail.css">
+</head>
+
+<body>
+
+  <!-- Backdrop for create trip bottom sheet -->
+  <div id="create-trip-backdrop" class="create-trip-backdrop"></div>
+
+  <div class="app-container">
+    <!-- Drag handle (visible only in bottom sheet mode) -->
+    <div class="sheet-drag-handle"></div>
+    <div class="pageview">
+
+      <!-- Dots Indicator (pages 2-6 only, hidden on landing) -->
+      <div class="dots-indicator">
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+      </div>
+
+      <!-- Slides Wrapper -->
+      <div class="slides-wrapper">
+
+        <!-- ========== Page 1: Landing ========== -->
+        <div class="slide">
+          <div class="landing-page">
+
+            <!-- Polaroid Photo Collage -->
+            <div class="polaroid-collage">
+              <!-- Layer 1 (bottom) - Aurora -->
+              <div class="polaroid polaroid-1">
+                <div class="polaroid-frame">
+                  <div class="polaroid-photo">
+                    <img src="assets/photo1.jpg" alt="">
+                  </div>
+                </div>
+              </div>
+              <!-- Layer 2 - Workers -->
+              <div class="polaroid polaroid-2">
+                <div class="polaroid-frame">
+                  <div class="polaroid-photo">
+                    <img src="assets/photo2.jpg" alt="">
+                  </div>
+                </div>
+              </div>
+              <!-- Layer 3 - Waterfall -->
+              <div class="polaroid polaroid-3">
+                <div class="polaroid-frame">
+                  <div class="polaroid-photo">
+                    <img src="assets/photo3.jpg" alt="">
+                  </div>
+                </div>
+              </div>
+              <!-- Layer 4 - River/Mountain -->
+              <div class="polaroid polaroid-4">
+                <div class="polaroid-frame">
+                  <div class="polaroid-photo">
+                    <img src="assets/photo4.jpg" alt="">
+                  </div>
+                </div>
+              </div>
+              <!-- Layer 5 - Landscape -->
+              <div class="polaroid polaroid-5">
+                <div class="polaroid-frame">
+                  <div class="polaroid-photo">
+                    <img src="assets/photo5.jpg" alt="">
+                  </div>
+                </div>
+              </div>
+              <!-- Layer 6 (top) - Horses -->
+              <div class="polaroid polaroid-6">
+                <div class="polaroid-frame">
+                  <div class="polaroid-photo">
+                    <img src="assets/photo6.jpg" alt="">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Content Section -->
+            <div class="landing-content">
+              <h1 class="app-title-gradient">VOTAGEX</h1>
+              <p class="app-tagline">" Traveling together builds more than memories "</p>
+
+              <!-- Account pill (shown when logged in) -->
+              <div class="landing-account-pill" id="landing-account-pill" style="display:none;">
+                <div class="landing-account-avatar" id="landing-account-avatar"></div>
+                <span class="landing-account-name" id="landing-account-name">Google Account</span>
+              </div>
+
+              <div class="landing-buttons" id="landing-buttons">
+                <button id="btn-create" class="btn-primary-blue">Create Journey</button>
+                <button id="btn-join" class="btn-outline-blue">Join Trip</button>
+              </div>
+
+              <!-- Google Sign-in (shown when not logged in) -->
+              <div class="landing-buttons" id="landing-login" style="display:none;">
+                <button id="btn-google-signin-landing" class="btn-google-signin-landing">
+                  <svg class="google-icon" viewBox="0 0 24 24" width="20" height="20">
+                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
+                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                  </svg>
+                  <span>Sign in with Google</span>
+                </button>
+                <p class="landing-login-hint">เข้าสู่ระบบเพื่อเริ่มวางแผนทริป</p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- ========== Page 2: Profile Setup ========== -->
+        <div class="slide">
+          <div class="page4-layout">
+
+            <!-- Header with background image -->
+            <div class="page-header-bg">
+              <img src="assets/illustratorheader.png" alt="" class="page-header-img">
+              <div class="page-header-overlay">
+                <button id="page4-back" class="btn-back-pill">ย้อนกลับ</button>
+              </div>
+            </div>
+
+            <!-- Travel Card Banner -->
+            <div class="banner-image">
+              <div class="travel-card">
+                <img class="travel-card-left" src="assets/ticket-left.png" alt="">
+                <img class="travel-card-right" src="assets/ticket-right.png" alt="">
+                <div class="travel-card-inner">
+                  <div class="travel-card-texture"></div>
+                  <div class="travel-card-header"></div>
+                  <span class="travel-card-owner" id="card-owner-p4"></span>
+                  <h3 class="travel-card-title" id="card-title-p4">Trip</h3>
+                  <p class="travel-card-desc" id="card-desc-p4">Description</p>
+                  <p class="travel-card-dates" id="card-dates-p4"></p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Title & Subtitle -->
+            <h2 class="page2-title">เจ้าของ Trip</h2>
+            <p class="page2-subtitle">" กรอกชื่อของคุณเพื่อเดินทาง "</p>
+
+            <!-- Profile photo upload -->
+            <div id="profile-upload" class="profile-upload-circle">
+              <img id="profile-preview" src="" alt="" style="display:none;">
+              <svg id="upload-icon" width="17" height="17" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path
+                  d="M20 30.3333H12C4.75996 30.3333 1.66663 27.24 1.66663 20V12C1.66663 4.75996 4.75996 1.66663 12 1.66663H20C27.24 1.66663 30.3333 4.75996 30.3333 12V20C30.3333 27.24 27.24 30.3333 20 30.3333ZM12 3.66663C5.85329 3.66663 3.66663 5.85329 3.66663 12V20C3.66663 26.1466 5.85329 28.3333 12 28.3333H20C26.1466 28.3333 28.3333 26.1466 28.3333 20V12C28.3333 5.85329 26.1466 3.66663 20 3.66663H12Z"
+                  fill="#747474" />
+                <path
+                  d="M12 14.3333C9.97337 14.3333 8.33337 12.6933 8.33337 10.6667C8.33337 8.64 9.97337 7 12 7C14.0267 7 15.6667 8.64 15.6667 10.6667C15.6667 12.6933 14.0267 14.3333 12 14.3333ZM12 9C11.08 9 10.3334 9.74667 10.3334 10.6667C10.3334 11.5867 11.08 12.3333 12 12.3333C12.92 12.3333 13.6667 11.5867 13.6667 10.6667C13.6667 9.74667 12.92 9 12 9Z"
+                  fill="#747474" />
+                <path
+                  d="M3.55998 26.2667C3.23998 26.2667 2.91998 26.1067 2.73331 25.8267C2.42665 25.3734 2.54665 24.7467 3.01331 24.44L9.58665 20.0267C11.0266 19.0534 13.0133 19.1734 14.32 20.28L14.76 20.6667C15.4266 21.24 16.56 21.24 17.2133 20.6667L22.76 15.9067C24.1733 14.6934 26.4 14.6934 27.8266 15.9067L30 17.7734C30.4133 18.1334 30.4666 18.76 30.1066 19.1867C29.7466 19.6 29.12 19.6534 28.6933 19.2934L26.52 17.4267C25.8533 16.8534 24.72 16.8534 24.0533 17.4267L18.5066 22.1867C17.0933 23.4 14.8666 23.4 13.44 22.1867L13 21.8C12.3866 21.28 11.3733 21.2267 10.6933 21.6934L4.11998 26.1067C3.94665 26.2134 3.74665 26.2667 3.55998 26.2667Z"
+                  fill="#747474" />
+              </svg>
+            </div>
+            <input type="file" id="profile-file" accept="image/*" style="display:none;">
+            <p class="profile-upload-label">เพิ่มภาพโปรไฟล์</p>
+
+            <!-- Input field -->
+            <div class="page2-form">
+              <input type="text" id="profile-name" class="input-pill" placeholder="Username">
+            </div>
+
+            <div class="spacer"></div>
+
+            <!-- Next button -->
+            <div class="page2-bottom-fade">
+              <button id="page4-next" class="btn-gradient">ถัดไป</button>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- ========== Page 3: Trip Name & Description ========== -->
+        <div class="slide">
+          <div class="page2-layout">
+
+            <!-- Header with background image -->
+            <div class="page-header-bg">
+              <img src="assets/illustratorheader.png" alt="" class="page-header-img">
+              <div class="page-header-overlay">
+                <button id="page2-back" class="btn-back-pill">ย้อนกลับ</button>
+              </div>
+            </div>
+
+            <!-- Travel Card Banner -->
+            <div class="banner-image">
+              <div class="travel-card">
+                <img class="travel-card-left" src="assets/ticket-left.png" alt="">
+                <img class="travel-card-right" src="assets/ticket-right.png" alt="">
+                <div class="travel-card-inner">
+                  <div class="travel-card-texture"></div>
+                  <div class="travel-card-header"></div>
+                  <span class="travel-card-owner" id="card-owner-p2"></span>
+                  <h3 class="travel-card-title" id="card-title-p2">Trip</h3>
+                  <p class="travel-card-desc" id="card-desc-p2">Description</p>
+                  <p class="travel-card-dates" id="card-dates-p2"></p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Title & Subtitle -->
+            <h2 class="page2-title">ชื่อการท่องเที่ยว</h2>
+            <p class="page2-subtitle">" กรอกชื่อทริปการเดินทาง "</p>
+
+            <!-- Cover image upload -->
+            <div id="cover-upload" class="cover-upload-area">
+              <img id="cover-preview" src="" alt="" style="display:none;">
+              <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path
+                  d="M20 30.3333H12C4.75996 30.3333 1.66663 27.24 1.66663 20V12C1.66663 4.75996 4.75996 1.66663 12 1.66663H20C27.24 1.66663 30.3333 4.75996 30.3333 12V20C30.3333 27.24 27.24 30.3333 20 30.3333ZM12 3.66663C5.85329 3.66663 3.66663 5.85329 3.66663 12V20C3.66663 26.1466 5.85329 28.3333 12 28.3333H20C26.1466 28.3333 28.3333 26.1466 28.3333 20V12C28.3333 5.85329 26.1466 3.66663 20 3.66663H12Z"
+                  fill="#747474" />
+                <path
+                  d="M12 14.3333C9.97337 14.3333 8.33337 12.6933 8.33337 10.6667C8.33337 8.64 9.97337 7 12 7C14.0267 7 15.6667 8.64 15.6667 10.6667C15.6667 12.6933 14.0267 14.3333 12 14.3333ZM12 9C11.08 9 10.3334 9.74667 10.3334 10.6667C10.3334 11.5867 11.08 12.3333 12 12.3333C12.92 12.3333 13.6667 11.5867 13.6667 10.6667C13.6667 9.74667 12.92 9 12 9Z"
+                  fill="#747474" />
+                <path
+                  d="M3.55998 26.2667C3.23998 26.2667 2.91998 26.1067 2.73331 25.8267C2.42665 25.3734 2.54665 24.7467 3.01331 24.44L9.58665 20.0267C11.0266 19.0534 13.0133 19.1734 14.32 20.28L14.76 20.6667C15.4266 21.24 16.56 21.24 17.2133 20.6667L22.76 15.9067C24.1733 14.6934 26.4 14.6934 27.8266 15.9067L30 17.7734C30.4133 18.1334 30.4666 18.76 30.1066 19.1867C29.7466 19.6 29.12 19.6534 28.6933 19.2934L26.52 17.4267C25.8533 16.8534 24.72 16.8534 24.0533 17.4267L18.5066 22.1867C17.0933 23.4 14.8666 23.4 13.44 22.1867L13 21.8C12.3866 21.28 11.3733 21.2267 10.6933 21.6934L4.11998 26.1067C3.94665 26.2134 3.74665 26.2667 3.55998 26.2667Z"
+                  fill="#747474" />
+              </svg>
+            </div>
+            <span class="cover-upload-label">เพิ่มภาพประกอบ</span>
+            <input type="file" id="cover-file" accept="image/*" style="display:none;">
+
+            <!-- Input fields -->
+            <div class="page2-form">
+              <input type="text" id="trip-name" class="input-pill" placeholder="ชื่อทริป">
+              <input type="text" id="trip-desc" class="input-pill" placeholder="Description">
+              <input type="text" id="trip-budget" class="input-pill" placeholder="งบประมาณทั้งหมด (บาท)" inputmode="decimal">
+            </div>
+
+            <div class="spacer"></div>
+
+            <!-- Next button -->
+            <div class="page2-bottom-fade">
+              <button id="page2-next" class="btn-gradient">ถัดไป</button>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- ========== Page 3: Select Dates ========== -->
+        <div class="slide">
+          <div class="page3-layout">
+
+            <!-- Header with background image -->
+            <div class="page-header-bg">
+              <img src="assets/illustratorheader.png" alt="" class="page-header-img">
+              <div class="page-header-overlay">
+                <button id="page3-back" class="btn-back-pill">ย้อนกลับ</button>
+              </div>
+            </div>
+
+            <!-- Travel Card Banner -->
+            <div class="banner-image">
+              <div class="travel-card">
+                <img class="travel-card-left" src="assets/ticket-left.png" alt="">
+                <img class="travel-card-right" src="assets/ticket-right.png" alt="">
+                <div class="travel-card-inner">
+                  <div class="travel-card-texture"></div>
+                  <div class="travel-card-header"></div>
+                  <span class="travel-card-owner" id="card-owner-p3"></span>
+                  <h3 class="travel-card-title" id="card-title-p3">Trip</h3>
+                  <p class="travel-card-desc" id="card-desc-p3">Description</p>
+                  <p class="travel-card-dates" id="card-dates-p3"></p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Title & Subtitle -->
+            <h2 class="page2-title">เดินทางไป - กลับ</h2>
+            <p class="page2-subtitle">" เลือกวันที่เดินทางไป-กลับ "</p>
+
+            <!-- Date cards -->
+            <div class="date-cards">
+              <div class="date-card">
+                <span class="date-card-label">ขาไป</span>
+                <span class="date-card-value" id="start-date-display">--</span>
+                <button class="date-card-btn" id="start-date-btn">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path fill-rule="evenodd" clip-rule="evenodd"
+                      d="M1.8335 8.51714C1.8335 3.87981 3.3795 2.33447 8.01616 2.33447C12.6535 2.33447 14.1995 3.87981 14.1995 8.51714C14.1995 13.1545 12.6535 14.6998 8.01616 14.6998C3.3795 14.6998 1.8335 13.1545 1.8335 8.51714Z"
+                      stroke="#2463EB" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                    <path opacity="0.4" d="M2.01709 6.21615H14.0224" stroke="#2463EB" stroke-width="1.5"
+                      stroke-linecap="round" stroke-linejoin="round" />
+                    <path opacity="0.4" d="M10.9524 8.84066H10.9584" stroke="#2463EB" stroke-width="1.5"
+                      stroke-linecap="round" stroke-linejoin="round" />
+                    <path opacity="0.4" d="M8.01979 8.84066H8.02579" stroke="#2463EB" stroke-width="1.5"
+                      stroke-linecap="round" stroke-linejoin="round" />
+                    <path opacity="0.4" d="M5.08131 8.84066H5.08731" stroke="#2463EB" stroke-width="1.5"
+                      stroke-linecap="round" stroke-linejoin="round" />
+                    <path opacity="0.4" d="M10.9524 11.409H10.9584" stroke="#2463EB" stroke-width="1.5"
+                      stroke-linecap="round" stroke-linejoin="round" />
+                    <path opacity="0.4" d="M8.01979 11.409H8.02579" stroke="#2463EB" stroke-width="1.5"
+                      stroke-linecap="round" stroke-linejoin="round" />
+                    <path opacity="0.4" d="M5.08131 11.409H5.08731" stroke="#2463EB" stroke-width="1.5"
+                      stroke-linecap="round" stroke-linejoin="round" />
+                    <path d="M10.6888 1.3667V3.54137" stroke="#2463EB" stroke-width="1.5" stroke-linecap="round"
+                      stroke-linejoin="round" />
+                    <path d="M5.34993 1.3667V3.54137" stroke="#2463EB" stroke-width="1.5" stroke-linecap="round"
+                      stroke-linejoin="round" />
+                  </svg>
+                  เลือกวัน
+                </button>
+                <input type="date" id="start-date" style="display:none;">
+              </div>
+              <div class="date-card">
+                <span class="date-card-label">ขากลับ</span>
+                <span class="date-card-value" id="end-date-display">--</span>
+                <button class="date-card-btn" id="end-date-btn">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path fill-rule="evenodd" clip-rule="evenodd"
+                      d="M1.8335 8.51714C1.8335 3.87981 3.3795 2.33447 8.01616 2.33447C12.6535 2.33447 14.1995 3.87981 14.1995 8.51714C14.1995 13.1545 12.6535 14.6998 8.01616 14.6998C3.3795 14.6998 1.8335 13.1545 1.8335 8.51714Z"
+                      stroke="#2463EB" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                    <path opacity="0.4" d="M2.01709 6.21615H14.0224" stroke="#2463EB" stroke-width="1.5"
+                      stroke-linecap="round" stroke-linejoin="round" />
+                    <path opacity="0.4" d="M10.9524 8.84066H10.9584" stroke="#2463EB" stroke-width="1.5"
+                      stroke-linecap="round" stroke-linejoin="round" />
+                    <path opacity="0.4" d="M8.01979 8.84066H8.02579" stroke="#2463EB" stroke-width="1.5"
+                      stroke-linecap="round" stroke-linejoin="round" />
+                    <path opacity="0.4" d="M5.08131 8.84066H5.08731" stroke="#2463EB" stroke-width="1.5"
+                      stroke-linecap="round" stroke-linejoin="round" />
+                    <path opacity="0.4" d="M10.9524 11.409H10.9584" stroke="#2463EB" stroke-width="1.5"
+                      stroke-linecap="round" stroke-linejoin="round" />
+                    <path opacity="0.4" d="M8.01979 11.409H8.02579" stroke="#2463EB" stroke-width="1.5"
+                      stroke-linecap="round" stroke-linejoin="round" />
+                    <path opacity="0.4" d="M5.08131 11.409H5.08731" stroke="#2463EB" stroke-width="1.5"
+                      stroke-linecap="round" stroke-linejoin="round" />
+                    <path d="M10.6888 1.3667V3.54137" stroke="#2463EB" stroke-width="1.5" stroke-linecap="round"
+                      stroke-linejoin="round" />
+                    <path d="M5.34993 1.3667V3.54137" stroke="#2463EB" stroke-width="1.5" stroke-linecap="round"
+                      stroke-linejoin="round" />
+                  </svg>
+                  เลือกวัน
+                </button>
+                <input type="date" id="end-date" style="display:none;">
+              </div>
+            </div>
+
+            <div class="spacer"></div>
+
+            <!-- Next button -->
+            <div class="page2-bottom-fade">
+              <button id="page3-next" class="btn-gradient">ถัดไป</button>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- ========== Page 5: Add Activities ========== -->
+        <div class="slide">
+          <div class="page5-layout">
+
+            <!-- Header with background image -->
+            <div class="page-header-bg">
+              <img src="assets/illustratorheader.png" alt="" class="page-header-img">
+              <div class="page-header-overlay">
+                <button id="page5-back" class="btn-back-pill">ย้อนกลับ</button>
+              </div>
+            </div>
+
+            <!-- Travel Card Banner -->
+            <div class="banner-image">
+              <div class="travel-card">
+                <img class="travel-card-left" src="assets/ticket-left.png" alt="">
+                <img class="travel-card-right" src="assets/ticket-right.png" alt="">
+                <div class="travel-card-inner">
+                  <div class="travel-card-texture"></div>
+                  <div class="travel-card-header"></div>
+                  <span class="travel-card-owner" id="card-owner-p5"></span>
+                  <h3 class="travel-card-title" id="card-title-p5">Trip</h3>
+                  <p class="travel-card-desc" id="card-desc-p5">Description</p>
+                  <p class="travel-card-dates" id="card-dates-p5"></p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Title & Subtitle -->
+            <h2 class="page2-title" id="page5-title">เพิ่มกิจกรรม</h2>
+            <p class="page2-subtitle" id="page5-subtitle">" เพิ่มกิจกรรมให้กับ Trip ของคุณ "</p>
+
+            <!-- Add button -->
+            <button id="add-activity-btn" class="btn-add-pill">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                stroke-linecap="round">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              เพิ่ม
+            </button>
+
+            <!-- Activity list (grouped by category) -->
+            <div id="activity-list" class="activity-list"></div>
+
+            <div class="spacer"></div>
+
+            <!-- Next button -->
+            <div class="page2-bottom-fade">
+              <button id="page5-next" class="btn-gradient">ถัดไป</button>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- ========== Page 6: Trip Members ========== -->
+        <div class="slide">
+          <div class="page6-layout">
+
+            <!-- Header with background image -->
+            <div class="page-header-bg">
+              <img src="assets/illustratorheader.png" alt="" class="page-header-img">
+              <div class="page-header-overlay">
+                <button id="page6-back" class="btn-back-pill">ย้อนกลับ</button>
+              </div>
+            </div>
+
+            <!-- Member Ticket Card -->
+            <div class="banner-image">
+              <div class="travel-card">
+                <img class="travel-card-left" src="assets/ticket-left.png" alt="">
+                <img class="travel-card-right" src="assets/ticket-right.png" alt="">
+                <div class="travel-card-inner">
+                  <div class="travel-card-texture"></div>
+                  <div class="travel-card-header"></div>
+                  <p class="member-ticket-title">ผู้ร่วมเดินทาง</p>
+                  <div id="member-icons-grid" class="member-icons-grid">
+                    <!-- Person icons rendered by JS -->
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Slider -->
+            <div class="slider-container">
+              <div id="member-value" class="slider-value">1</div>
+              <input type="range" id="member-slider" min="1" max="8" value="1">
+            </div>
+
+            <div class="spacer"></div>
+
+            <!-- Save button -->
+            <div class="page2-bottom-fade">
+              <button id="start-journey-btn" class="btn-gradient">บันทึก</button>
+            </div>
+
+          </div>
+        </div>
+
+      </div><!-- .slides-wrapper -->
+    </div><!-- .pageview -->
+  </div><!-- .app-container -->
+
+  <!-- ========== Homepage ========== -->
+  <div id="homepage" class="homepage" style="display:none;">
+    <!-- Header with background image -->
+    <div class="hp-header">
+      <div class="hp-header-bg" id="hp-header-bg">
+        <img src="assets/header-bg.png" alt="">
+      </div>
+
+      <div class="hp-header-top">
+        <div>
+          <span class="hp-logo">VOTAGEX</span>
+          <span class="hp-welcome" id="hp-welcome">Welcome , Nattapong</span>
+        </div>
+        <div class="hp-profile-avatar" id="hp-avatar">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+        </div>
+      </div>
+
+      <!-- Calendar Countdown Card (inside header) -->
+      <div class="hp-calendar-card">
+        <div class="hp-countdown-row">
+          <span class="hp-countdown-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M12 9C8.5285 9 5.71429 12.07 5.71429 15.8571H18.2857C18.2857 12.07 15.4715 9 12 9Z" fill="#363853" fill-opacity="0.15"/>
+              <path d="M1 15.8571H23M5.71429 21H18.2857M5.71429 15.8571C5.71429 12.07 8.5285 9 12 9C15.4715 9 18.2857 12.07 18.2857 15.8571H5.71429Z" stroke="#363853" stroke-width="2" stroke-linecap="round"/>
+              <path d="M12 4V3M18 5.0622L16.7496 6M7.25041 6L6 5.06218" stroke="#363853" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          <span class="hp-countdown-num" id="hp-countdown">--</span>
+          <span class="hp-countdown-label" id="hp-countdown-label">Days</span>
+        </div>
+        <span class="hp-trip-subtitle" id="hp-trip-subtitle"></span>
+
+        <!-- Calendar dates (compact ~200px) -->
+        <div class="hp-calendar-dates">
+          <!-- Day labels -->
+          <div class="hp-week-labels" id="hp-week-labels">
+            <span>จ.</span><span>อ.</span><span>พ.</span><span>พฤ.</span><span>ศ.</span><span>ส.</span><span>อา.</span>
+          </div>
+          <!-- Date numbers -->
+          <div class="hp-week-row" id="hp-week-row"></div>
+        </div>
+      </div>
+
+      <!-- Add Activity Button (stacked over bottom of image) -->
+      <button class="hp-add-btn" id="hp-add-activity">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+          <line x1="12" y1="5" x2="12" y2="19"/>
+          <line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        เพิ่ม Activity
+      </button>
+    </div>
+
+    <!-- Scrollable Content -->
+    <div class="hp-content">
+      <!-- Recent Activities (uses act-card from page 5) -->
+      <div class="hp-section">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <span class="hp-section-title">กิจกรรมล่าสุด</span>
+          <button class="hp-section-arrow" id="hp-activity-arrow">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M3.35288 8.95043C4.00437 6.17301 6.17301 4.00437 8.95043 3.35288C10.9563 2.88237 13.0437 2.88237 15.0496 3.35288C17.827 4.00437 19.9956 6.17301 20.6471 8.95044C21.1176 10.9563 21.1176 13.0437 20.6471 15.0496C19.9956 17.827 17.827 19.9956 15.0496 20.6471C13.0437 21.1176 10.9563 21.1176 8.95044 20.6471C6.17301 19.9956 4.00437 17.827 3.35288 15.0496C2.88237 13.0437 2.88237 10.9563 3.35288 8.95043Z" fill="#363853" fill-opacity="0.15" stroke="#363853" stroke-width="1.5"/><path d="M8.5 12L15.5 12M15.5 12L13 9.5M15.5 12L13 14.5" stroke="#363853" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+        <div class="hp-recent-scroll" id="hp-recent-list"></div>
+      </div>
+
+      <!-- Travel Schedule -->
+      <div class="hp-section">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <span class="hp-section-title">ตารางเที่ยว</span>
+          <button class="hp-section-arrow" id="hp-view-detail">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M3.35288 8.95043C4.00437 6.17301 6.17301 4.00437 8.95043 3.35288C10.9563 2.88237 13.0437 2.88237 15.0496 3.35288C17.827 4.00437 19.9956 6.17301 20.6471 8.95044C21.1176 10.9563 21.1176 13.0437 20.6471 15.0496C19.9956 17.827 17.827 19.9956 15.0496 20.6471C13.0437 21.1176 10.9563 21.1176 8.95044 20.6471C6.17301 19.9956 4.00437 17.827 3.35288 15.0496C2.88237 13.0437 2.88237 10.9563 3.35288 8.95043Z" fill="#363853" fill-opacity="0.15" stroke="#363853" stroke-width="1.5"/><path d="M8.5 12L15.5 12M15.5 12L13 9.5M15.5 12L13 14.5" stroke="#363853" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+        <div class="hp-schedule" id="hp-schedule"></div>
+      </div>
+
+      <!-- Other Trip (joinable trips) -->
+      <div class="hp-section" id="hp-other-trip-section" style="display:none;">
+        <span class="hp-section-title">Other Trip</span>
+        <div class="hp-other-trip-grid" id="hp-other-trip-grid"></div>
+      </div>
+    </div>
+
+    <!-- Bottom Tab Bar -->
+    <div class="hp-tab-bar">
+      <button class="hp-tab active" data-tab="home">
+        <div class="hp-tab-icon-wrap">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M4.31367 9.28927C4.89278 6.82045 6.82045 4.89277 9.28927 4.31367C11.0722 3.89544 12.9278 3.89544 14.7107 4.31367C17.1796 4.89278 19.1072 6.82045 19.6863 9.28928C20.1046 11.0722 20.1046 12.9278 19.6863 14.7107C19.1072 17.1795 17.1796 19.1072 14.7107 19.6863C12.9278 20.1046 11.0722 20.1046 9.28928 19.6863C6.82045 19.1072 4.89278 17.1796 4.31367 14.7107C3.89544 12.9278 3.89544 11.0722 4.31367 9.28927Z" fill="#363853" fill-opacity="0.15"/>
+            <path d="M4.31367 14.7107L5.04385 14.5395C4.65205 12.8692 4.65205 11.1308 5.04385 9.46055L4.31367 9.28927L3.58349 9.11799C3.13884 11.0136 3.13884 12.9864 3.58349 14.882L4.31367 14.7107ZM19.6863 9.28928L18.9562 9.46055C19.3479 11.1308 19.3479 12.8692 18.9562 14.5394L19.6863 14.7107L20.4165 14.882C20.8612 12.9864 20.8612 11.0136 20.4165 9.118L19.6863 9.28928ZM14.7107 19.6863L14.5394 18.9562C12.8692 19.3479 11.1308 19.3479 9.46055 18.9562L9.28928 19.6863L9.118 20.4165C11.0136 20.8612 12.9864 20.8612 14.882 20.4165L14.7107 19.6863ZM9.28927 4.31367L9.46055 5.04385C11.1308 4.65205 12.8692 4.65205 14.5395 5.04385L14.7107 4.31367L14.882 3.58349C12.9864 3.13884 11.0136 3.13884 9.118 3.58349L9.28927 4.31367ZM9.28928 19.6863L9.46055 18.9562C7.26905 18.4421 5.55791 16.731 5.04385 14.5395L4.31367 14.7107L3.58349 14.882C4.22765 17.6281 6.37186 19.7724 9.118 20.4165L9.28928 19.6863ZM14.7107 19.6863L14.882 20.4165C17.6281 19.7724 19.7724 17.6281 20.4165 14.882L19.6863 14.7107L18.9562 14.5394C18.4421 16.731 16.731 18.4421 14.5394 18.9562L14.7107 19.6863ZM14.7107 4.31367L14.5395 5.04385C16.731 5.55791 18.4421 7.26905 18.9562 9.46055L19.6863 9.28928L20.4165 9.118C19.7724 6.37186 17.6281 4.22764 14.882 3.58349L14.7107 4.31367ZM9.28927 4.31367L9.118 3.58349C6.37186 4.22764 4.22765 6.37185 3.58349 9.11799L4.31367 9.28927L5.04385 9.46055C5.55791 7.26905 7.26905 5.55791 9.46055 5.04385L9.28927 4.31367ZM13.8494 4.60251L13.1786 4.93792L13.6495 5.87977L14.3203 5.54436L14.9911 5.20895L14.5202 4.2671L13.8494 4.60251ZM18.4556 9.6797L18.1202 10.3505L19.0621 10.8214L19.3975 10.1506L19.7329 9.47981L18.791 9.00888L18.4556 9.6797ZM14.3203 5.54436L13.6495 5.87977C14.6168 7.81445 16.1856 9.38318 18.1202 10.3505L18.4556 9.6797L18.791 9.00888C17.1467 8.18669 15.8133 6.85334 14.9911 5.20895L14.3203 5.54436ZM10.1506 4.6025L9.4798 4.2671L9.00888 5.20895L9.6797 5.54436L10.3505 5.87977L10.8214 4.93791L10.1506 4.6025ZM5.54437 9.6797L5.20896 9.00888L4.2671 9.4798L4.60251 10.1506L4.93792 10.8214L5.87978 10.3505L5.54437 9.6797ZM9.6797 5.54436L9.00888 5.20895C8.18669 6.85333 6.85334 8.18669 5.20896 9.00888L5.54437 9.6797L5.87978 10.3505C7.81445 9.38318 9.38319 7.81444 10.3505 5.87977L9.6797 5.54436ZM9.89026 17.5856L10.6272 17.7249L10.6451 17.6303L9.90814 17.491L9.17119 17.3517L9.15331 17.4463L9.89026 17.5856ZM14.0919 17.491L13.3549 17.6303L13.3728 17.7249L14.1097 17.5856L14.8467 17.4463L14.8288 17.3517L14.0919 17.491ZM13.8418 19.6345L13.1654 19.3104L13.0575 19.5357L13.7338 19.8598L14.4101 20.184L14.5181 19.9587L13.8418 19.6345ZM10.1582 19.6345L9.4819 19.9587L9.58988 20.184L10.2662 19.8598L10.9425 19.5357L10.8346 19.3104L10.1582 19.6345ZM14.1097 17.5856L13.3728 17.7249C13.4743 18.262 13.4017 18.8175 13.1654 19.3104L13.8418 19.6345L14.5181 19.9587C14.8925 19.1776 15.0076 18.2974 14.8467 17.4463L14.1097 17.5856ZM9.89026 17.5856L9.15331 17.4463C8.99242 18.2974 9.10754 19.1776 9.4819 19.9587L10.1582 19.6345L10.8346 19.3104C10.5983 18.8175 10.5257 18.262 10.6272 17.7249L9.89026 17.5856ZM11.4092 15.8615L11.6084 16.5846C11.8647 16.514 12.1353 16.514 12.3916 16.5846L12.5908 15.8615L12.79 15.1385C12.273 14.996 11.727 14.996 11.21 15.1385L11.4092 15.8615ZM14.0919 17.491L14.8288 17.3517C14.6272 16.2853 13.8363 15.4267 12.79 15.1385L12.5908 15.8615L12.3916 16.5846C12.886 16.7208 13.2597 17.1265 13.3549 17.6303L14.0919 17.491ZM9.90814 17.491L10.6451 17.6303C10.7403 17.1265 11.114 16.7208 11.6084 16.5846L11.4092 15.8615L11.21 15.1385C10.1637 15.4267 9.37277 16.2853 9.17119 17.3517L9.90814 17.491Z" fill="black"/>
+          </svg>
+        </div>
+        <span>หน้าหลัก</span>
+      </button>
+      <button class="hp-tab" data-tab="itrip">
+        <div class="hp-tab-icon-wrap">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M6 14.4623H16.1909C17.6066 14.4623 18.472 12.7739 17.7261 11.4671L17.2365 10.6092C16.7547 9.76504 16.7547 8.69728 17.2365 7.85309L17.7261 6.99524C18.472 5.68842 17.6066 4 16.1909 4L6 4L6 14.4623Z" fill="#363853" fill-opacity="0.15"/>
+            <path d="M6 14.4623H16.1909C17.6066 14.4623 18.472 12.7739 17.7261 11.4671L17.2365 10.6092C16.7547 9.76504 16.7547 8.69728 17.2365 7.85309L17.7261 6.99524C18.472 5.68842 17.6066 4 16.1909 4L6 4L6 14.4623ZM6 14.4623L6 20" stroke="black" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <span>iTrip</span>
+      </button>
+      <button class="hp-tab" data-tab="profile">
+        <div class="hp-tab-icon-wrap">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M5 19.1115C5 16.6984 6.69732 14.643 9.00404 14.2627L9.21182 14.2284C11.0589 13.9239 12.9411 13.9239 14.7882 14.2284L14.996 14.2627C17.3027 14.643 19 16.6984 19 19.1115C19 20.1545 18.1815 21 17.1719 21H6.82813C5.81848 21 5 20.1545 5 19.1115Z" fill="#363853" fill-opacity="0.15"/>
+            <path d="M16.0834 6.9375C16.0834 9.11212 14.2552 10.875 12 10.875C9.74486 10.875 7.91669 9.11212 7.91669 6.9375C7.91669 4.76288 9.74486 3 12 3C14.2552 3 16.0834 4.76288 16.0834 6.9375Z" fill="#363853" fill-opacity="0.15"/>
+            <path d="M5 19.1115C5 16.6984 6.69732 14.643 9.00404 14.2627L9.21182 14.2284C11.0589 13.9239 12.9411 13.9239 14.7882 14.2284L14.996 14.2627C17.3027 14.643 19 16.6984 19 19.1115C19 20.1545 18.1815 21 17.1719 21H6.82813C5.81848 21 5 20.1545 5 19.1115Z" stroke="black" stroke-width="1.5"/>
+            <path d="M16.0834 6.9375C16.0834 9.11212 14.2552 10.875 12 10.875C9.74486 10.875 7.91669 9.11212 7.91669 6.9375C7.91669 4.76288 9.74486 3 12 3C14.2552 3 16.0834 4.76288 16.0834 6.9375Z" stroke="black" stroke-width="1.5"/>
+          </svg>
+        </div>
+        <span>ฉัน</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ========== iTrip Page ========== -->
+  <div id="itrip-page" class="itrip-page" style="display:none;">
+    <!-- Header with background image -->
+    <div class="itrip-header">
+      <div class="itrip-header-bg" id="itrip-header-bg">
+        <img src="assets/header-bg.png" alt="">
+      </div>
+
+      <div class="itrip-header-top">
+        <div>
+          <span class="itrip-title">iTrip</span>
+          <span class="itrip-welcome" id="itrip-welcome">Welcome , Nattapong</span>
+        </div>
+      </div>
+
+      <!-- Add Trip Button -->
+      <button class="itrip-add-btn" id="itrip-add-trip">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+          <line x1="12" y1="5" x2="12" y2="19"/>
+          <line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        เพิ่ม Trip
+      </button>
+    </div>
+
+    <!-- Scrollable Content -->
+    <div class="itrip-content">
+      <!-- My Trips Section -->
+      <div class="itrip-section">
+        <div class="hp-other-trip-grid" id="itrip-my-grid"></div>
+      </div>
+
+      <!-- Other Trips Section -->
+      <div class="itrip-section" id="itrip-other-section" style="display:none;">
+        <span class="itrip-section-title">Other Trip</span>
+        <div class="hp-other-trip-grid" id="itrip-other-grid"></div>
+      </div>
+    </div>
+
+    <!-- Bottom Tab Bar (shared layout) -->
+    <div class="hp-tab-bar">
+      <button class="hp-tab" data-tab="home">
+        <div class="hp-tab-icon-wrap">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M4.31367 9.28927C4.89278 6.82045 6.82045 4.89277 9.28927 4.31367C11.0722 3.89544 12.9278 3.89544 14.7107 4.31367C17.1796 4.89278 19.1072 6.82045 19.6863 9.28928C20.1046 11.0722 20.1046 12.9278 19.6863 14.7107C19.1072 17.1795 17.1796 19.1072 14.7107 19.6863C12.9278 20.1046 11.0722 20.1046 9.28928 19.6863C6.82045 19.1072 4.89278 17.1796 4.31367 14.7107C3.89544 12.9278 3.89544 11.0722 4.31367 9.28927Z" fill="#363853" fill-opacity="0.15"/>
+            <path d="M4.31367 14.7107L5.04385 14.5395C4.65205 12.8692 4.65205 11.1308 5.04385 9.46055L4.31367 9.28927L3.58349 9.11799C3.13884 11.0136 3.13884 12.9864 3.58349 14.882L4.31367 14.7107ZM19.6863 9.28928L18.9562 9.46055C19.3479 11.1308 19.3479 12.8692 18.9562 14.5394L19.6863 14.7107L20.4165 14.882C20.8612 12.9864 20.8612 11.0136 20.4165 9.118L19.6863 9.28928ZM14.7107 19.6863L14.5394 18.9562C12.8692 19.3479 11.1308 19.3479 9.46055 18.9562L9.28928 19.6863L9.118 20.4165C11.0136 20.8612 12.9864 20.8612 14.882 20.4165L14.7107 19.6863ZM9.28927 4.31367L9.46055 5.04385C11.1308 4.65205 12.8692 4.65205 14.5395 5.04385L14.7107 4.31367L14.882 3.58349C12.9864 3.13884 11.0136 3.13884 9.118 3.58349L9.28927 4.31367ZM9.28928 19.6863L9.46055 18.9562C7.26905 18.4421 5.55791 16.731 5.04385 14.5395L4.31367 14.7107L3.58349 14.882C4.22765 17.6281 6.37186 19.7724 9.118 20.4165L9.28928 19.6863ZM14.7107 19.6863L14.882 20.4165C17.6281 19.7724 19.7724 17.6281 20.4165 14.882L19.6863 14.7107L18.9562 14.5394C18.4421 16.731 16.731 18.4421 14.5394 18.9562L14.7107 19.6863ZM14.7107 4.31367L14.5395 5.04385C16.731 5.55791 18.4421 7.26905 18.9562 9.46055L19.6863 9.28928L20.4165 9.118C19.7724 6.37186 17.6281 4.22764 14.882 3.58349L14.7107 4.31367ZM9.28927 4.31367L9.118 3.58349C6.37186 4.22764 4.22765 6.37185 3.58349 9.11799L4.31367 9.28927L5.04385 9.46055C5.55791 7.26905 7.26905 5.55791 9.46055 5.04385L9.28927 4.31367ZM13.8494 4.60251L13.1786 4.93792L13.6495 5.87977L14.3203 5.54436L14.9911 5.20895L14.5202 4.2671L13.8494 4.60251ZM18.4556 9.6797L18.1202 10.3505L19.0621 10.8214L19.3975 10.1506L19.7329 9.47981L18.791 9.00888L18.4556 9.6797ZM14.3203 5.54436L13.6495 5.87977C14.6168 7.81445 16.1856 9.38318 18.1202 10.3505L18.4556 9.6797L18.791 9.00888C17.1467 8.18669 15.8133 6.85334 14.9911 5.20895L14.3203 5.54436ZM10.1506 4.6025L9.4798 4.2671L9.00888 5.20895L9.6797 5.54436L10.3505 5.87977L10.8214 4.93791L10.1506 4.6025ZM5.54437 9.6797L5.20896 9.00888L4.2671 9.4798L4.60251 10.1506L4.93792 10.8214L5.87978 10.3505L5.54437 9.6797ZM9.6797 5.54436L9.00888 5.20895C8.18669 6.85333 6.85334 8.18669 5.20896 9.00888L5.54437 9.6797L5.87978 10.3505C7.81445 9.38318 9.38319 7.81444 10.3505 5.87977L9.6797 5.54436ZM9.89026 17.5856L10.6272 17.7249L10.6451 17.6303L9.90814 17.491L9.17119 17.3517L9.15331 17.4463L9.89026 17.5856ZM14.0919 17.491L13.3549 17.6303L13.3728 17.7249L14.1097 17.5856L14.8467 17.4463L14.8288 17.3517L14.0919 17.491ZM13.8418 19.6345L13.1654 19.3104L13.0575 19.5357L13.7338 19.8598L14.4101 20.184L14.5181 19.9587L13.8418 19.6345ZM10.1582 19.6345L9.4819 19.9587L9.58988 20.184L10.2662 19.8598L10.9425 19.5357L10.8346 19.3104L10.1582 19.6345ZM14.1097 17.5856L13.3728 17.7249C13.4743 18.262 13.4017 18.8175 13.1654 19.3104L13.8418 19.6345L14.5181 19.9587C14.8925 19.1776 15.0076 18.2974 14.8467 17.4463L14.1097 17.5856ZM9.89026 17.5856L9.15331 17.4463C8.99242 18.2974 9.10754 19.1776 9.4819 19.9587L10.1582 19.6345L10.8346 19.3104C10.5983 18.8175 10.5257 18.262 10.6272 17.7249L9.89026 17.5856ZM11.4092 15.8615L11.6084 16.5846C11.8647 16.514 12.1353 16.514 12.3916 16.5846L12.5908 15.8615L12.79 15.1385C12.273 14.996 11.727 14.996 11.21 15.1385L11.4092 15.8615ZM14.0919 17.491L14.8288 17.3517C14.6272 16.2853 13.8363 15.4267 12.79 15.1385L12.5908 15.8615L12.3916 16.5846C12.886 16.7208 13.2597 17.1265 13.3549 17.6303L14.0919 17.491ZM9.90814 17.491L10.6451 17.6303C10.7403 17.1265 11.114 16.7208 11.6084 16.5846L11.4092 15.8615L11.21 15.1385C10.1637 15.4267 9.37277 16.2853 9.17119 17.3517L9.90814 17.491Z" fill="black"/>
+          </svg>
+        </div>
+        <span>หน้าหลัก</span>
+      </button>
+      <button class="hp-tab active" data-tab="itrip">
+        <div class="hp-tab-icon-wrap">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M6 14.4623H16.1909C17.6066 14.4623 18.472 12.7739 17.7261 11.4671L17.2365 10.6092C16.7547 9.76504 16.7547 8.69728 17.2365 7.85309L17.7261 6.99524C18.472 5.68842 17.6066 4 16.1909 4L6 4L6 14.4623Z" fill="#363853" fill-opacity="0.15"/>
+            <path d="M6 14.4623H16.1909C17.6066 14.4623 18.472 12.7739 17.7261 11.4671L17.2365 10.6092C16.7547 9.76504 16.7547 8.69728 17.2365 7.85309L17.7261 6.99524C18.472 5.68842 17.6066 4 16.1909 4L6 4L6 14.4623ZM6 14.4623L6 20" stroke="black" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <span>iTrip</span>
+      </button>
+      <button class="hp-tab" data-tab="profile">
+        <div class="hp-tab-icon-wrap">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M5 19.1115C5 16.6984 6.69732 14.643 9.00404 14.2627L9.21182 14.2284C11.0589 13.9239 12.9411 13.9239 14.7882 14.2284L14.996 14.2627C17.3027 14.643 19 16.6984 19 19.1115C19 20.1545 18.1815 21 17.1719 21H6.82813C5.81848 21 5 20.1545 5 19.1115Z" fill="#363853" fill-opacity="0.15"/>
+            <path d="M16.0834 6.9375C16.0834 9.11212 14.2552 10.875 12 10.875C9.74486 10.875 7.91669 9.11212 7.91669 6.9375C7.91669 4.76288 9.74486 3 12 3C14.2552 3 16.0834 4.76288 16.0834 6.9375Z" fill="#363853" fill-opacity="0.15"/>
+            <path d="M5 19.1115C5 16.6984 6.69732 14.643 9.00404 14.2627L9.21182 14.2284C11.0589 13.9239 12.9411 13.9239 14.7882 14.2284L14.996 14.2627C17.3027 14.643 19 16.6984 19 19.1115C19 20.1545 18.1815 21 17.1719 21H6.82813C5.81848 21 5 20.1545 5 19.1115Z" stroke="black" stroke-width="1.5"/>
+            <path d="M16.0834 6.9375C16.0834 9.11212 14.2552 10.875 12 10.875C9.74486 10.875 7.91669 9.11212 7.91669 6.9375C7.91669 4.76288 9.74486 3 12 3C14.2552 3 16.0834 4.76288 16.0834 6.9375Z" stroke="black" stroke-width="1.5"/>
+          </svg>
+        </div>
+        <span>ฉัน</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ========== ME (Profile) Page ========== -->
+  <div id="me-page" class="me-page" style="display:none;">
+    <!-- Header with background image -->
+    <div class="me-header">
+      <div class="me-header-bg">
+        <img src="assets/header-bg.png" alt="">
+      </div>
+
+      <div class="me-header-top">
+        <div>
+          <span class="me-title">ME</span>
+          <span class="me-welcome" id="me-welcome">Welcome , Nattapong</span>
+        </div>
+        <div class="me-profile-avatar" id="me-avatar">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- Scrollable Content -->
+    <div class="me-content">
+      <!-- User Info Menu Item -->
+      <button class="me-menu-item" id="me-user-info">
+        <span class="me-menu-icon">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M5 19.1115C5 16.6984 6.69732 14.643 9.00404 14.2627L9.21182 14.2284C11.0589 13.9239 12.9411 13.9239 14.7882 14.2284L14.996 14.2627C17.3027 14.643 19 16.6984 19 19.1115C19 20.1545 18.1815 21 17.1719 21H6.82813C5.81848 21 5 20.1545 5 19.1115Z" fill="#363853" fill-opacity="0.15"/>
+            <path d="M16.0834 6.9375C16.0834 9.11212 14.2552 10.875 12 10.875C9.74486 10.875 7.91669 9.11212 7.91669 6.9375C7.91669 4.76288 9.74486 3 12 3C14.2552 3 16.0834 4.76288 16.0834 6.9375Z" fill="#363853" fill-opacity="0.15"/>
+            <path d="M5 19.1115C5 16.6984 6.69732 14.643 9.00404 14.2627L9.21182 14.2284C11.0589 13.9239 12.9411 13.9239 14.7882 14.2284L14.996 14.2627C17.3027 14.643 19 16.6984 19 19.1115C19 20.1545 18.1815 21 17.1719 21H6.82813C5.81848 21 5 20.1545 5 19.1115Z" stroke="#363853" stroke-width="1.5"/>
+            <path d="M16.0834 6.9375C16.0834 9.11212 14.2552 10.875 12 10.875C9.74486 10.875 7.91669 9.11212 7.91669 6.9375C7.91669 4.76288 9.74486 3 12 3C14.2552 3 16.0834 4.76288 16.0834 6.9375Z" stroke="#363853" stroke-width="1.5"/>
+          </svg>
+        </span>
+        <span class="me-menu-label">ข้อมูลผู้ใช้</span>
+      </button>
+      <div class="me-divider"></div>
+      <p class="me-user-email" id="me-user-email" style="display:none;"></p>
+      <button class="me-menu-item me-logout-item" id="me-logout-btn" style="display:none;">
+        <span class="me-menu-icon">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M15 3H7C5.89543 3 5 3.89543 5 5V19C5 20.1046 5.89543 21 7 21H15" stroke="#EF4444" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M19 12H9M19 12L16 9M19 12L16 15" stroke="#EF4444" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
+        <span class="me-menu-label" style="color:#EF4444;">ออกจากระบบ</span>
+      </button>
+    </div>
+
+    <!-- Bottom Tab Bar -->
+    <div class="hp-tab-bar">
+      <button class="hp-tab" data-tab="home">
+        <div class="hp-tab-icon-wrap">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M4.31367 9.28927C4.89278 6.82045 6.82045 4.89277 9.28927 4.31367C11.0722 3.89544 12.9278 3.89544 14.7107 4.31367C17.1796 4.89278 19.1072 6.82045 19.6863 9.28928C20.1046 11.0722 20.1046 12.9278 19.6863 14.7107C19.1072 17.1795 17.1796 19.1072 14.7107 19.6863C12.9278 20.1046 11.0722 20.1046 9.28928 19.6863C6.82045 19.1072 4.89278 17.1796 4.31367 14.7107C3.89544 12.9278 3.89544 11.0722 4.31367 9.28927Z" fill="#363853" fill-opacity="0.15"/>
+            <path d="M4.31367 14.7107L5.04385 14.5395C4.65205 12.8692 4.65205 11.1308 5.04385 9.46055L4.31367 9.28927L3.58349 9.11799C3.13884 11.0136 3.13884 12.9864 3.58349 14.882L4.31367 14.7107ZM19.6863 9.28928L18.9562 9.46055C19.3479 11.1308 19.3479 12.8692 18.9562 14.5394L19.6863 14.7107L20.4165 14.882C20.8612 12.9864 20.8612 11.0136 20.4165 9.118L19.6863 9.28928ZM14.7107 19.6863L14.5394 18.9562C12.8692 19.3479 11.1308 19.3479 9.46055 18.9562L9.28928 19.6863L9.118 20.4165C11.0136 20.8612 12.9864 20.8612 14.882 20.4165L14.7107 19.6863ZM9.28927 4.31367L9.46055 5.04385C11.1308 4.65205 12.8692 4.65205 14.5395 5.04385L14.7107 4.31367L14.882 3.58349C12.9864 3.13884 11.0136 3.13884 9.118 3.58349L9.28927 4.31367ZM9.28928 19.6863L9.46055 18.9562C7.26905 18.4421 5.55791 16.731 5.04385 14.5395L4.31367 14.7107L3.58349 14.882C4.22765 17.6281 6.37186 19.7724 9.118 20.4165L9.28928 19.6863ZM14.7107 19.6863L14.882 20.4165C17.6281 19.7724 19.7724 17.6281 20.4165 14.882L19.6863 14.7107L18.9562 14.5394C18.4421 16.731 16.731 18.4421 14.5394 18.9562L14.7107 19.6863ZM14.7107 4.31367L14.5395 5.04385C16.731 5.55791 18.4421 7.26905 18.9562 9.46055L19.6863 9.28928L20.4165 9.118C19.7724 6.37186 17.6281 4.22764 14.882 3.58349L14.7107 4.31367ZM9.28927 4.31367L9.118 3.58349C6.37186 4.22764 4.22765 6.37185 3.58349 9.11799L4.31367 9.28927L5.04385 9.46055C5.55791 7.26905 7.26905 5.55791 9.46055 5.04385L9.28927 4.31367ZM13.8494 4.60251L13.1786 4.93792L13.6495 5.87977L14.3203 5.54436L14.9911 5.20895L14.5202 4.2671L13.8494 4.60251ZM18.4556 9.6797L18.1202 10.3505L19.0621 10.8214L19.3975 10.1506L19.7329 9.47981L18.791 9.00888L18.4556 9.6797ZM14.3203 5.54436L13.6495 5.87977C14.6168 7.81445 16.1856 9.38318 18.1202 10.3505L18.4556 9.6797L18.791 9.00888C17.1467 8.18669 15.8133 6.85334 14.9911 5.20895L14.3203 5.54436ZM10.1506 4.6025L9.4798 4.2671L9.00888 5.20895L9.6797 5.54436L10.3505 5.87977L10.8214 4.93791L10.1506 4.6025ZM5.54437 9.6797L5.20896 9.00888L4.2671 9.4798L4.60251 10.1506L4.93792 10.8214L5.87978 10.3505L5.54437 9.6797ZM9.6797 5.54436L9.00888 5.20895C8.18669 6.85333 6.85334 8.18669 5.20896 9.00888L5.54437 9.6797L5.87978 10.3505C7.81445 9.38318 9.38319 7.81444 10.3505 5.87977L9.6797 5.54436ZM9.89026 17.5856L10.6272 17.7249L10.6451 17.6303L9.90814 17.491L9.17119 17.3517L9.15331 17.4463L9.89026 17.5856ZM14.0919 17.491L13.3549 17.6303L13.3728 17.7249L14.1097 17.5856L14.8467 17.4463L14.8288 17.3517L14.0919 17.491ZM13.8418 19.6345L13.1654 19.3104L13.0575 19.5357L13.7338 19.8598L14.4101 20.184L14.5181 19.9587L13.8418 19.6345ZM10.1582 19.6345L9.4819 19.9587L9.58988 20.184L10.2662 19.8598L10.9425 19.5357L10.8346 19.3104L10.1582 19.6345ZM14.1097 17.5856L13.3728 17.7249C13.4743 18.262 13.4017 18.8175 13.1654 19.3104L13.8418 19.6345L14.5181 19.9587C14.8925 19.1776 15.0076 18.2974 14.8467 17.4463L14.1097 17.5856ZM9.89026 17.5856L9.15331 17.4463C8.99242 18.2974 9.10754 19.1776 9.4819 19.9587L10.1582 19.6345L10.8346 19.3104C10.5983 18.8175 10.5257 18.262 10.6272 17.7249L9.89026 17.5856ZM11.4092 15.8615L11.6084 16.5846C11.8647 16.514 12.1353 16.514 12.3916 16.5846L12.5908 15.8615L12.79 15.1385C12.273 14.996 11.727 14.996 11.21 15.1385L11.4092 15.8615ZM14.0919 17.491L14.8288 17.3517C14.6272 16.2853 13.8363 15.4267 12.79 15.1385L12.5908 15.8615L12.3916 16.5846C12.886 16.7208 13.2597 17.1265 13.3549 17.6303L14.0919 17.491ZM9.90814 17.491L10.6451 17.6303C10.7403 17.1265 11.114 16.7208 11.6084 16.5846L11.4092 15.8615L11.21 15.1385C10.1637 15.4267 9.37277 16.2853 9.17119 17.3517L9.90814 17.491Z" fill="black"/>
+          </svg>
+        </div>
+        <span>หน้าหลัก</span>
+      </button>
+      <button class="hp-tab" data-tab="itrip">
+        <div class="hp-tab-icon-wrap">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M6 14.4623H16.1909C17.6066 14.4623 18.472 12.7739 17.7261 11.4671L17.2365 10.6092C16.7547 9.76504 16.7547 8.69728 17.2365 7.85309L17.7261 6.99524C18.472 5.68842 17.6066 4 16.1909 4L6 4L6 14.4623Z" fill="#363853" fill-opacity="0.15"/>
+            <path d="M6 14.4623H16.1909C17.6066 14.4623 18.472 12.7739 17.7261 11.4671L17.2365 10.6092C16.7547 9.76504 16.7547 8.69728 17.2365 7.85309L17.7261 6.99524C18.472 5.68842 17.6066 4 16.1909 4L6 4L6 14.4623ZM6 14.4623L6 20" stroke="black" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <span>iTrip</span>
+      </button>
+      <button class="hp-tab active" data-tab="profile">
+        <div class="hp-tab-icon-wrap">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M5 19.1115C5 16.6984 6.69732 14.643 9.00404 14.2627L9.21182 14.2284C11.0589 13.9239 12.9411 13.9239 14.7882 14.2284L14.996 14.2627C17.3027 14.643 19 16.6984 19 19.1115C19 20.1545 18.1815 21 17.1719 21H6.82813C5.81848 21 5 20.1545 5 19.1115Z" fill="#363853" fill-opacity="0.15"/>
+            <path d="M16.0834 6.9375C16.0834 9.11212 14.2552 10.875 12 10.875C9.74486 10.875 7.91669 9.11212 7.91669 6.9375C7.91669 4.76288 9.74486 3 12 3C14.2552 3 16.0834 4.76288 16.0834 6.9375Z" fill="#363853" fill-opacity="0.15"/>
+            <path d="M5 19.1115C5 16.6984 6.69732 14.643 9.00404 14.2627L9.21182 14.2284C11.0589 13.9239 12.9411 13.9239 14.7882 14.2284L14.996 14.2627C17.3027 14.643 19 16.6984 19 19.1115C19 20.1545 18.1815 21 17.1719 21H6.82813C5.81848 21 5 20.1545 5 19.1115Z" stroke="black" stroke-width="1.5"/>
+            <path d="M16.0834 6.9375C16.0834 9.11212 14.2552 10.875 12 10.875C9.74486 10.875 7.91669 9.11212 7.91669 6.9375C7.91669 4.76288 9.74486 3 12 3C14.2552 3 16.0834 4.76288 16.0834 6.9375Z" stroke="black" stroke-width="1.5"/>
+          </svg>
+        </div>
+        <span>ฉัน</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ========== Trip Detail Page ========== -->
+  <div id="trip-detail-page" class="trip-detail-page">
+    <div class="trip-detail-container">
+      <!-- Header -->
+      <div class="td-header">
+        <div class="td-header-bg">
+          <img src="assets/header-bg.png" alt="">
+        </div>
+        <div class="td-header-text">
+          <span class="td-header-title">iTrip</span>
+          <span class="td-header-subtitle" id="td-header-welcome">Welcome , Nattapong</span>
+        </div>
+        <button class="td-close-btn" id="td-close">
+          <svg viewBox="0 0 32 32" fill="none" width="24" height="24">
+            <path d="M19.1921 12.793L12.8027 19.1823" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M19.1998 19.1908L12.7998 12.7908" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path opacity="0.4" fill-rule="evenodd" clip-rule="evenodd" d="M3.6665 16.0001C3.6665 25.2494 6.7505 28.3334 15.9998 28.3334C25.2492 28.3334 28.3332 25.2494 28.3332 16.0001C28.3332 6.75075 25.2492 3.66675 15.9998 3.66675C6.7505 3.66675 3.6665 6.75075 3.6665 16.0001Z" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Trip Flag (overlaps header/content boundary) -->
+      <div class="td-trip-flag" id="td-trip-flag"></div>
+
+      <!-- Scrollable Content -->
+      <div class="td-scroll">
+        <!-- Trip Info Section -->
+        <div class="td-trip-info" id="td-trip-info"></div>
+
+        <!-- Content Tab Bar -->
+        <div class="td-tabs-wrapper">
+          <div class="td-tabs">
+            <button class="td-tab active" data-td-tab="expenses" id="td-tab-expenses">ค่าใช้จ่าย</button>
+            <button class="td-tab" data-td-tab="plan" id="td-tab-plan">แผนการเที่ยว</button>
+          </div>
+        </div>
+
+        <!-- Expenses Tab Content -->
+        <div id="td-expenses-content">
+          <!-- Day Selector -->
+          <div class="td-days" id="td-days"></div>
+
+          <!-- Daily Expense Summary -->
+          <div class="td-expense-card" id="td-expense-card"></div>
+
+          <!-- Activities Section -->
+          <div class="td-activities">
+            <div class="td-activities-header">
+              <span class="td-activities-title">กิจกรรม</span>
+              <button class="td-btn-add" id="td-add-activity">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <rect x="3" y="3" width="18" height="18" rx="9" stroke="white" stroke-width="1.5" fill-opacity="0"/>
+                  <line x1="12" y1="8" x2="12" y2="16" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+                  <line x1="8" y1="12" x2="16" y2="12" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+                เพิ่ม
+              </button>
+            </div>
+            <div class="td-chips" id="td-chips"></div>
+            <div class="td-activity-list" id="td-activity-list"></div>
+          </div>
+        </div>
+
+        <!-- Travel Plan Day Selector (outside plan content for layout) -->
+        <div class="td-days" id="td-plan-days" style="display:none;"></div>
+
+        <!-- Travel Plan Tab Content -->
+        <div id="td-plan-content" class="td-plan-content" style="display:none;">
+          <!-- Schedule Header -->
+          <div class="td-schedule-header">
+            <span class="td-schedule-title">ตารางเที่ยว</span>
+            <button class="td-btn-add" id="td-plan-add-activity">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <rect x="3" y="3" width="18" height="18" rx="9" stroke="white" stroke-width="1.5" fill-opacity="0"/>
+                <line x1="12" y1="8" x2="12" y2="16" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+                <line x1="8" y1="12" x2="16" y2="12" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+              </svg>
+              เพิ่ม
+            </button>
+          </div>
+          <div class="hp-schedule" id="td-schedule"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Members Bottom Sheet -->
+  <div id="members-modal" class="modal-overlay">
+    <div class="modal-sheet members-sheet">
+      <div class="members-sheet-header">
+        <div>
+          <h3 class="members-sheet-title">ผู้ร่วมทริป</h3>
+          <p class="members-sheet-desc">เพื่อนผู้ร่วมทริปการเดินทางกับคุณ</p>
+        </div>
+        <button id="members-modal-close" class="modal-close-btn">
+          <svg viewBox="0 0 32 32" fill="none" width="24" height="24">
+            <path d="M19.1921 12.793L12.8027 19.1823" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M19.1998 19.1908L12.7998 12.7908" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
+      <div class="members-sheet-divider"></div>
+      <div class="members-sheet-list" id="members-sheet-list"></div>
+    </div>
+  </div>
+
+  <!-- Activity Add Modal -->
+  <div id="activity-modal" class="modal-overlay">
+    <div class="modal-sheet modal-add-activity">
+      <!-- Header -->
+      <div class="modal-add-header">
+        <div class="modal-add-header-row">
+          <h3 class="modal-add-title">เพิ่ม Activity</h3>
+          <button id="modal-cancel" class="modal-close-btn">
+            <svg viewBox="0 0 32 32" fill="none" width="24" height="24">
+              <path d="M19.1921 12.793L12.8027 19.1823" stroke="black" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round" />
+              <path d="M19.1998 19.1908L12.7998 12.7908" stroke="black" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round" />
+              <path opacity="0.4" fill-rule="evenodd" clip-rule="evenodd"
+                d="M3.6665 16.0001C3.6665 25.2494 6.7505 28.3334 15.9998 28.3334C25.2492 28.3334 28.3332 25.2494 28.3332 16.0001C28.3332 6.75075 25.2492 3.66675 15.9998 3.66675C6.7505 3.66675 3.6665 6.75075 3.6665 16.0001Z"
+                stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </button>
+        </div>
+        <p class="modal-add-desc">วางแผนทริปต่างประเทศของคุณให้สมบูรณ์แบบ! เพิ่มกิจกรรมที่คุณสนใจ</p>
+      </div>
+
+      <!-- Category Chips (icons injected from CATEGORY_CONFIG via JS) -->
+      <div class="chip-group" id="category-chips">
+        <button class="chip active" data-cat="place">
+          สถานที่
+        </button>
+        <button class="chip" data-cat="food">
+          อาหาร
+        </button>
+        <button class="chip" data-cat="shopping">
+          ช็อปปิ้ง
+        </button>
+        <button class="chip" data-cat="hotel">
+          ที่พัก
+        </button>
+        <button class="chip" data-cat="travel">
+          เดินทาง
+        </button>
+        <button class="chip" data-cat="other">
+          อื่นๆ
+        </button>
+      </div>
+
+      <!-- Scrollable form sections -->
+      <div class="modal-add-scroll">
+        <!-- Activity Name card -->
+        <div class="modal-section-card">
+          <span class="modal-section-label">ชื่อกิจกรรม</span>
+          <input type="text" id="activity-name" class="modal-section-input" placeholder="รายละเอียด">
+        </div>
+
+        <!-- Description field -->
+        <div class="modal-section-card">
+          <span class="modal-section-label">คำอธิบาย</span>
+          <input type="text" id="activity-description" class="modal-section-input" placeholder="เพิ่มคำอธิบายกิจกรรม">
+        </div>
+
+        <!-- Dynamic fields (rendered by JS) -->
+        <div id="modal-dynamic-fields"></div>
+      </div>
+
+      <!-- Bottom save button -->
+      <div class="modal-add-bottom">
+        <button id="modal-add" class="btn-gradient-save">บันทึก</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Activity Detail Modal -->
+  <div id="activity-detail-modal" class="modal-overlay">
+    <div class="modal-sheet modal-detail-sheet">
+      <div id="activity-detail-content"></div>
+    </div>
+  </div>
+
+  <!-- Join Trip Screen (Full-screen Pageview) -->
+  <div id="join-screen" class="join-screen">
+    <div class="join-container">
+
+      <!-- Join Page 1: Profile -->
+      <div id="join-page-1" class="join-page active">
+        <div class="page4-layout">
+          <div class="join-topbar">
+            <button id="join-back-1" class="btn-back-pill">ย้อนกลับ</button>
+            <div class="join-dots">
+              <span class="jdot active"></span>
+              <span class="jdot"></span>
+            </div>
+          </div>
+
+          <h2 class="page2-title">ผู้ร่วม Trip</h2>
+          <p class="page2-subtitle">" กรอกชื่อของคุณเพื่อเดินทาง "</p>
+
+          <div id="join-profile-upload" class="profile-upload-circle">
+            <img id="join-profile-preview" src="" alt="" style="display:none;">
+            <svg id="join-upload-icon" width="17" height="17" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path
+                d="M20 30.3333H12C4.75996 30.3333 1.66663 27.24 1.66663 20V12C1.66663 4.75996 4.75996 1.66663 12 1.66663H20C27.24 1.66663 30.3333 4.75996 30.3333 12V20C30.3333 27.24 27.24 30.3333 20 30.3333ZM12 3.66663C5.85329 3.66663 3.66663 5.85329 3.66663 12V20C3.66663 26.1466 5.85329 28.3333 12 28.3333H20C26.1466 28.3333 28.3333 26.1466 28.3333 20V12C28.3333 5.85329 26.1466 3.66663 20 3.66663H12Z"
+                fill="#747474" />
+              <path
+                d="M12 14.3333C9.97337 14.3333 8.33337 12.6933 8.33337 10.6667C8.33337 8.64 9.97337 7 12 7C14.0267 7 15.6667 8.64 15.6667 10.6667C15.6667 12.6933 14.0267 14.3333 12 14.3333ZM12 9C11.08 9 10.3334 9.74667 10.3334 10.6667C10.3334 11.5867 11.08 12.3333 12 12.3333C12.92 12.3333 13.6667 11.5867 13.6667 10.6667C13.6667 9.74667 12.92 9 12 9Z"
+                fill="#747474" />
+              <path
+                d="M3.55998 26.2667C3.23998 26.2667 2.91998 26.1067 2.73331 25.8267C2.42665 25.3734 2.54665 24.7467 3.01331 24.44L9.58665 20.0267C11.0266 19.0534 13.0133 19.1734 14.32 20.28L14.76 20.6667C15.4266 21.24 16.56 21.24 17.2133 20.6667L22.76 15.9067C24.1733 14.6934 26.4 14.6934 27.8266 15.9067L30 17.7734C30.4133 18.1334 30.4666 18.76 30.1066 19.1867C29.7466 19.6 29.12 19.6534 28.6933 19.2934L26.52 17.4267C25.8533 16.8534 24.72 16.8534 24.0533 17.4267L18.5066 22.1867C17.0933 23.4 14.8666 23.4 13.44 22.1867L13 21.8C12.3866 21.28 11.3733 21.2267 10.6933 21.6934L4.11998 26.1067C3.94665 26.2134 3.74665 26.2667 3.55998 26.2667Z"
+                fill="#747474" />
+            </svg>
+          </div>
+          <input type="file" id="join-profile-file" accept="image/*" style="display:none;">
+          <p class="profile-upload-label">เพิ่มภาพโปรไฟล์</p>
+
+          <div class="page2-form">
+            <input type="text" id="join-profile-name" class="input-pill" placeholder="Username">
+          </div>
+
+          <div class="spacer"></div>
+
+          <div class="page2-bottom-fade">
+            <button id="join-next" class="btn-gradient" disabled>ถัดไป</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Join Page 2: Trip Cards Grid -->
+      <div id="join-page-2" class="join-page">
+        <div class="join-cards-layout">
+          <div class="join-topbar">
+            <button id="join-back-2" class="btn-back-pill">ย้อนกลับ</button>
+            <div class="join-dots">
+              <span class="jdot"></span>
+              <span class="jdot active"></span>
+            </div>
+          </div>
+          <div id="trip-cards-grid" class="hp-other-trip-grid"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Trip Action Bottom Sheet (Edit/Delete/Leave) -->
+  <div id="trip-action-modal" class="modal-overlay">
+    <div class="modal-sheet trip-action-sheet">
+      <h3 id="trip-action-title">จัดการทริป</h3>
+      <div class="trip-action-list">
+        <!-- Owner actions -->
+        <button id="trip-action-edit" class="trip-action-item owner-only">
+          <span class="action-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8.92409 4.85382L11.3177 2.4602C11.6124 2.16554 12.012 2 12.4287 2C13.2965 2 14 2.70346 14 3.57123C14 3.98794 13.8344 4.38759 13.5398 4.68225L11.1461 7.07587C10.1055 8.11647 8.80169 8.8547 7.374 9.21162L6.91137 9.32728C6.76722 9.36332 6.63664 9.23274 6.67268 9.08859L6.78834 8.62596C7.14526 7.19827 7.88349 5.89442 8.92409 4.85382Z" fill="#363853" fill-opacity="0.15"/><path d="M13.6296 4.59239C12.5186 4.96274 11.0372 3.48137 11.4076 2.37034M11.3177 2.4602L8.92409 4.85382C7.88349 5.89442 7.14526 7.19827 6.78834 8.62596L6.67268 9.08859C6.63664 9.23274 6.76722 9.36332 6.91137 9.32728L7.374 9.21162C8.80169 8.8547 10.1055 8.11647 11.1461 7.07587L13.5398 4.68225C13.8344 4.38759 14 3.98794 14 3.57123C14 2.70346 13.2965 2 12.4287 2C12.012 2 11.6124 2.16554 11.3177 2.4602Z" stroke="#363853"/><path d="M8 2C7.31778 2 6.63556 2.07842 5.96696 2.23525C4.11534 2.66958 2.66958 4.11534 2.23525 5.96695C1.92158 7.30417 1.92158 8.69583 2.23525 10.033C2.66958 11.8847 4.11534 13.3304 5.96696 13.7648C7.30417 14.0784 8.69583 14.0784 10.033 13.7648C11.8847 13.3304 13.3304 11.8847 13.7648 10.033C13.9216 9.36443 14 8.68221 14 7.99998" stroke="#363853" stroke-linecap="round"/></svg>
+          </span>
+          แก้ไขข้อมูลทริป
+        </button>
+        <button id="trip-action-delete" class="trip-action-item delete owner-only">
+          <span class="action-icon">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M5 7.03H19V12.18C19 13.75 18.78 15.32 18.34 16.83C17.74 18.92 16.01 20.47 13.88 20.83L13.72 20.86C12.58 21.05 11.42 21.05 10.28 20.86L10.12 20.83C8 20.47 6.26 18.92 5.66 16.83C5.22 15.32 5 13.75 5 12.18V7.03Z" fill="#E62E05" fill-opacity="0.15"/><path d="M3 7.03H21" stroke="#E62E05" stroke-linecap="round"/><path d="M5 7.03V12.18C5 13.75 5.22 15.32 5.66 16.83C6.26 18.92 8 20.47 10.12 20.83L10.28 20.86C11.42 21.05 12.58 21.05 13.72 20.86L13.88 20.83C16.01 20.47 17.74 18.92 18.34 16.83C18.78 15.32 19 13.75 19 12.18V7.03" stroke="#E62E05" stroke-linecap="round"/><path d="M8 7.03C8 5.8 8.85 3.5 12 3.5C15.15 3.5 16 5.8 16 7.03" stroke="#E62E05" stroke-linecap="round"/><path d="M10 12V16M14 12V16" stroke="#E62E05" stroke-linecap="round"/></svg>
+          </span>
+          ลบทริป
+        </button>
+        <!-- Member action -->
+        <button id="trip-action-leave" class="trip-action-item delete member-only">
+          <span class="action-icon">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" stroke="#E62E05" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><polyline points="16 17 21 12 16 7" stroke="#E62E05" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><line x1="21" y1="12" x2="9" y2="12" stroke="#E62E05" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+          ออกจากทริป
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Trip Modal -->
+  <div id="edit-modal" class="modal-overlay">
+    <div class="modal-sheet edit-modal-sheet">
+      <h3>แก้ไขทริป</h3>
+      <div class="edit-modal-body">
+        <input type="text" id="edit-trip-name" class="input-pill" placeholder="ชื่อทริป">
+        <input type="text" id="edit-trip-desc" class="input-pill" placeholder="Description">
+        <input type="text" id="edit-trip-budget" class="input-pill" placeholder="งบประมาณทั้งหมด (บาท)" inputmode="decimal">
+        <div class="edit-date-row">
+          <div class="edit-date-field">
+            <label>ขาไป</label>
+            <input type="date" id="edit-start-date" class="input-pill">
+          </div>
+          <div class="edit-date-field">
+            <label>ขากลับ</label>
+            <input type="date" id="edit-end-date" class="input-pill">
+          </div>
+        </div>
+        <input type="text" id="edit-profile-name" class="input-pill" placeholder="ชื่อเจ้าของ">
+        <div class="edit-member-row">
+          <label>จำนวนสมาชิก</label>
+          <input type="range" id="edit-member-slider" min="1" max="8" value="1">
+          <span id="edit-member-value">1</span>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button id="edit-cancel" class="btn btn-outline">ยกเลิก</button>
+        <button id="edit-save" class="btn btn-primary">บันทึก</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Calendar Date Range Picker Bottom Sheet -->
+  <div id="calendar-modal" class="modal-overlay">
+    <div class="modal-sheet calendar-sheet">
+      <div class="calendar-widget">
+        <!-- Month Navigation -->
+        <div class="cal-header">
+          <button class="cal-nav-btn" id="cal-prev">
+            <svg width="8" height="13" viewBox="0 0 8 13" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M7 1L1 6.5L7 12" stroke="#222B45" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          <div class="cal-title">
+            <span class="cal-month" id="cal-month-name"></span>
+            <span class="cal-year" id="cal-year-num"></span>
+          </div>
+          <button class="cal-nav-btn" id="cal-next">
+            <svg width="8" height="13" viewBox="0 0 8 13" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M1 1L7 6.5L1 12" stroke="#222B45" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </div>
+        <!-- Day Headers -->
+        <div class="cal-weekdays">
+          <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+        </div>
+        <!-- Date Grid (rendered by JS) -->
+        <div id="cal-grid" class="cal-grid"></div>
+      </div>
+      <!-- Date Summary -->
+      <div class="cal-summary">
+        <div class="cal-summary-card">
+          <span class="cal-summary-label">ขาไป</span>
+          <span class="cal-summary-value" id="cal-start-text">--</span>
+        </div>
+        <div class="cal-summary-card">
+          <span class="cal-summary-label">ขากลับ</span>
+          <span class="cal-summary-value" id="cal-end-text">--</span>
+        </div>
+      </div>
+      <!-- Overlap Warning -->
+      <div id="cal-overlap-warning" class="cal-overlap-warning" style="display:none;"></div>
+      <!-- Confirm Button -->
+      <button id="cal-confirm" class="btn-gradient cal-confirm-btn" disabled>ยืนยัน</button>
+    </div>
+  </div>
+
+  <!-- Join Trip Confirmation Modal -->
+  <div id="join-confirm-modal" class="join-confirm-overlay" style="display:none;">
+    <div class="join-confirm-card">
+      <div class="join-confirm-icon">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#2463eb" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+          <circle cx="8.5" cy="7" r="4"/>
+          <line x1="20" y1="8" x2="20" y2="14"/>
+          <line x1="23" y1="11" x2="17" y2="11"/>
+        </svg>
+      </div>
+      <div class="join-confirm-trip-name" id="join-confirm-trip-name"></div>
+      <div class="join-confirm-text" id="join-confirm-text">ยืนยันว่าจะเข้าร่วมทริปนี้?</div>
+      <div class="join-confirm-warning" id="join-confirm-warning" style="display:none;"></div>
+      <div class="join-confirm-actions" id="join-confirm-actions">
+        <button class="join-confirm-cancel" id="join-confirm-cancel">ยกเลิก</button>
+        <button class="join-confirm-ok" id="join-confirm-ok">เข้าร่วม</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase SDK (optional - app works with localStorage fallback) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+
+  <!-- Logout Bottom Sheet -->
+  <div id="logout-backdrop" class="logout-backdrop"></div>
+  <div id="logout-sheet" class="logout-sheet">
+    <div class="logout-sheet-handle"></div>
+    <div class="logout-sheet-profile" id="logout-sheet-profile">
+      <div class="logout-sheet-avatar" id="logout-sheet-avatar"></div>
+      <div class="logout-sheet-info">
+        <span class="logout-sheet-name" id="logout-sheet-name"></span>
+        <span class="logout-sheet-email" id="logout-sheet-email"></span>
+      </div>
+    </div>
+    <button class="logout-sheet-btn" id="logout-sheet-btn">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
+        <path d="M15 3H7C5.89543 3 5 3.89543 5 5V19C5 20.1046 5.89543 21 7 21H15" stroke="#EF4444" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M19 12H9M19 12L16 9M19 12L16 15" stroke="#EF4444" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>ออกจากระบบ</span>
+    </button>
+  </div>
+
+  <!-- App Scripts -->
+  <script src="js/firebase-config.js"></script>
+  <script src="js/pageview.js"></script>
+  <script src="js/app.js"></script>
+
+</body>
+
+</html>

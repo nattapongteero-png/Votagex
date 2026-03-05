@@ -1,0 +1,321 @@
+/* ===== Page 5: Activities Layout ===== */
+.page5-layout {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  padding: 20px 24px 100px;
+  gap: 16px;
+  position: relative;
+  background: white;
+}
+
+.page5-layout .page2-subtitle {
+  margin-bottom: 24px;
+}
+
+.btn-add-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 24px;
+  border-radius: 30px;
+  border: none;
+  background: var(--primary);
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: var(--font);
+  transition: background 0.2s;
+  margin-bottom: 16px;
+}
+
+.btn-add-pill:hover {
+  background: var(--primary-dark);
+}
+
+.btn-add-pill:active {
+  transform: scale(0.97);
+}
+
+/* ===== Activity Sections (grouped by category) ===== */
+.page5-layout .activity-list {
+  width: 100%;
+  max-height: 380px;
+  overflow-y: auto;
+  padding: 4px 0;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.page5-layout .activity-list::-webkit-scrollbar {
+  display: none;
+}
+
+.activity-section {
+  margin-bottom: 16px;
+}
+
+.activity-section:last-child {
+  margin-bottom: 0;
+}
+
+.activity-section-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  padding-left: 4px;
+}
+
+.activity-section-icon {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #D0DEFB 100%, #A2BCF6 100%);
+}
+
+.activity-section-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.activity-section-label {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: #1a1a2e;
+}
+
+.activity-section-row {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding: 5px;
+  scroll-snap-type: block;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.activity-section-row::-webkit-scrollbar {
+  display: none;
+}
+
+.activity-section-row > .act-card {
+  scroll-snap-align: start;
+  flex-shrink: 0;
+}
+
+/* ===== Activity Card ===== */
+.act-card {
+  position: relative;
+  width: 188px;
+  min-width: 188px;
+  height: 88px;
+  border-radius: 24px;
+  overflow: hidden;
+  background: linear-gradient(180deg, #fff 35%, #e8eefd 100%);
+  box-shadow: 0 1px 4px rgba(12, 12, 13, 0.1), 0 1px 4px rgba(12, 12, 13, 0.05);
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+
+.act-card:active {
+  transform: scale(0.97);
+}
+
+/* Red state (has expense) */
+.act-card.has-expense {
+  background: linear-gradient(180deg, #fff 35%, #fde8e8 100%);
+}
+
+/* ---- Card Header ---- */
+.act-card-header {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 23px;
+  overflow: hidden;
+}
+
+.act-card-name {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: #000;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: calc(100% - 30px);
+}
+
+.act-card-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.act-card-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* ---- Card Info ---- */
+.act-card-info {
+  position: absolute;
+  top: 43px;
+  left: 12px;
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  overflow: hidden;
+}
+
+.act-card-info-col {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.act-card-info-value {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: #000;
+  text-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.act-card-info-value.spend {
+  color: #026aa2;
+}
+
+.act-card.has-expense .act-card-info-value.spend {
+  color: #d92d20;
+}
+
+.act-card-info-label {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 10px;
+  font-weight: 400;
+  color: #666;
+}
+
+/* ---- Card Illustration ---- */
+.act-card-illust {
+  position: absolute;
+  left: 113px;
+  top: 35px;
+  width: 84px;
+  height: 84px;
+  pointer-events: none;
+}
+
+.act-card-illust img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ---- Remove button ---- */
+.act-card-remove {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.15);
+  color: #fff;
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 5;
+}
+
+
+/* ===== Category Chips ===== */
+.chip-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 100px;
+  border: 1px solid #2463eb;
+  background: #e8eefd;
+  font-family: 'Google Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: #2463eb;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.chip.active {
+  border-color: #0A296B;
+  background: #0A296B;
+  color: #fff;
+}
+
+.chip svg {
+  width: 16px;
+  height: 16px;
+}
+
+.chip svg path[stroke],
+.chip svg circle[stroke] {
+  stroke: #2463eb;
+}
+
+.chip svg path[fill-opacity],
+.chip svg circle[fill-opacity] {
+  fill: #2463eb;
+}
+
+.chip svg path[fill]:not([fill="none"]):not([fill-opacity]),
+.chip svg circle[fill]:not([fill="none"]):not([fill-opacity]) {
+  fill: #2463eb;
+}
+
+.chip.active svg path[stroke],
+.chip.active svg circle[stroke] {
+  stroke: #ffffff;
+}
+
+.chip.active svg path[fill-opacity],
+.chip.active svg circle[fill-opacity] {
+  fill: #ffffff;
+}
+
+.chip.active svg path[fill]:not([fill="none"]):not([fill-opacity]),
+.chip.active svg circle[fill]:not([fill="none"]):not([fill-opacity]) {
+  fill: #ffffff;
+}
+
+/* ===== Dynamic form container ===== */
+#modal-dynamic-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+

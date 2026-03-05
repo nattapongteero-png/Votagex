@@ -1,0 +1,289 @@
+/* ===== PageView Container ===== */
+.pageview {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ===== Dots Indicator ===== */
+.dots-indicator {
+  position: absolute;
+  top: 39px;
+  right: 24px;
+  transform: translateY(-50%);
+  display: flex;
+  gap: 8px;
+  z-index: 10;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s, visibility 0.3s;
+}
+
+.dots-indicator.visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--dot-inactive);
+  transition: all 0.3s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.dot.active {
+  background: var(--dot-active);
+  transform: scale(1.15);
+}
+
+/* ===== Slides Wrapper ===== */
+.slides-wrapper {
+  display: flex;
+  height: 100%;
+  transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  will-change: transform;
+}
+
+.slides-wrapper.no-transition {
+  transition: none;
+}
+
+/* ===== Individual Slide ===== */
+.slide {
+  min-width: 100%;
+  width: 100%;
+  height: 100%;
+  flex-shrink: 0;
+  overflow-y: auto;
+}
+
+/* ===== Shared Components ===== */
+.btn-back-pill {
+  align-self: flex-start;
+  padding: 12px 24px;
+  border-radius: 100px;
+  border: 1.5px solid #2463eb;
+  background: white;
+  color: #2463eb;
+  font-family: 'Google Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-back-pill:hover {
+  background: rgba(36, 99, 235, 0.05);
+}
+
+.btn-back-pill:active {
+  transform: scale(0.97);
+}
+
+.back-arrow {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 10;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: var(--text);
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  transition: background 0.2s;
+}
+
+.back-arrow:hover {
+  background: var(--gray-light);
+}
+
+.nav-buttons {
+  display: flex;
+  gap: 12px;
+  padding: 0 2rem;
+  width: 100%;
+  max-width: 360px;
+  margin: 0 auto;
+}
+
+.nav-buttons .btn {
+  flex: 1;
+}
+
+/* ===== Page Header Background Image ===== */
+.page-header-bg {
+  position: relative;
+  width: calc(100% + 48px);
+  margin: -20px -24px 0;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.page-header-img {
+  width: 125%;
+  margin-left: -10%;
+  margin-top: -52px;
+  display: block;
+  pointer-events: none;
+}
+
+/* Smooth fade at bottom of header image */
+.page-header-bg::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: linear-gradient(to bottom, transparent, white);
+  z-index: 1;
+  pointer-events: none;
+}
+
+.page-header-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 24px 0;
+  z-index: 2;
+}
+
+.page-header-overlay .btn-back-pill {
+  align-self: flex-start;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.page-header-overlay .sheet-close-btn {
+  align-self: flex-start;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
+}
+
+/* ===== Shared Page Layout Elements ===== */
+.banner-image {
+  width: 100%;
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.page2-title {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 24px;
+  font-weight: 900;
+  color: var(--text);
+  margin: 0;
+  text-align: center;
+  text-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.page2-subtitle {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 900;
+  color: var(--text-secondary);
+  margin: 0;
+  text-align: center;
+}
+
+.page2-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.input-pill {
+  width: 100%;
+  padding: 12px 16px;
+  border: none;
+  border-radius: 100px;
+  background: #fafafa;
+  font-family: 'Google Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  outline: none;
+  transition: box-shadow 0.2s;
+  height: 47px;
+}
+
+.input-pill:focus {
+  box-shadow: 0 0 0 2px rgba(0, 89, 138, 0.3);
+}
+
+
+
+.page2-bottom {
+  width: 100%;
+  padding: 0;
+}
+
+.btn-next-full {
+  width: 100%;
+  max-width: 100%;
+  padding: 16px;
+  border-radius: 30px;
+  font-size: 1.05rem;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.btn-next-full:disabled {
+  background: #E5E5E5;
+  border-color: #E5E5E5;
+  color: #525252;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ===== Bottom Fade + Gradient Button ===== */
+.page2-bottom-fade {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 0 0 32px;
+  background: linear-gradient(to top, white 60%, rgba(255, 255, 255, 0));
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100px;
+  width: 100%;
+}
+
+.btn-gradient {
+  width: 345px;
+  max-width: 100%;
+  height: 48px;
+  border: none;
+  border-radius: 100px;
+  background: linear-gradient(to top, #2463eb, #36bffa);
+  color: #fff;
+  font-family: 'Google Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+.btn-gradient:hover {
+  opacity: 0.9;
+}
+
+.btn-gradient:active {
+  transform: scale(0.97);
+}
+
+.btn-gradient:disabled {
+  background: #E5E5E5;
+  color: #525252;
+  cursor: not-allowed;
+  transform: none;
+}
