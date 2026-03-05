@@ -1,21 +1,26 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { isFirebaseConfigured } from '../services/firebase';
 import { uploadProfileImage } from '../services/storage';
-import TabBar from '../components/common/TabBar';
+import ConfirmModal from '../components/modals/ConfirmModal';
 
 export default function MePage() {
   const navigate = useNavigate();
   const { username, userImage, authUser, signOut, user, updateUserImage } = useAuth();
   const fileInputRef = useRef(null);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const displayName = authUser?.displayName || username || 'User';
   const displayPhoto = userImage || authUser?.photoURL;
   const showLogout = isFirebaseConfigured() && !!user;
 
-  const handleLogout = async () => {
-    if (!confirm('ต้องการออกจากระบบหรือไม่?')) return;
+  const handleLogout = () => {
+    setShowLogoutConfirm(true);
+  };
+
+  const confirmLogout = async () => {
+    setShowLogoutConfirm(false);
     try {
       await signOut();
       navigate('/');
@@ -81,7 +86,15 @@ export default function MePage() {
         </div>
       </div>
 
-      <TabBar />
+      {showLogoutConfirm && (
+        <ConfirmModal
+          icon="logout"
+          message="ต้องการออกจากระบบหรือไม่ ?"
+          confirmText="ออกจากระบบ"
+          onConfirm={confirmLogout}
+          onCancel={() => setShowLogoutConfirm(false)}
+        />
+      )}
     </div>
   );
 }

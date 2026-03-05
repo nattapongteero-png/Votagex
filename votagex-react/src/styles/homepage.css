@@ -47,6 +47,7 @@
   position: relative;
   z-index: 2;
   margin-bottom: 16px;
+  transition: margin-bottom 0.35s ease;
 }
 
 .hp-header-top > div:first-child {
@@ -118,6 +119,64 @@
   box-shadow: 0 1px 4px rgba(12,12,13,0.1), 0 1px 4px rgba(12,12,13,0.05);
   overflow: hidden;
   touch-action: pan-y;
+}
+
+/* Stamp Stack */
+.hp-stamp-stack {
+  position: absolute;
+  top: -10px;
+  right: -12px;
+  width: 120px;
+  height: 130px;
+  pointer-events: none;
+  z-index: 3;
+}
+
+.hp-stamp {
+  position: absolute;
+  height: auto;
+  object-fit: contain;
+  opacity: 0;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.12));
+}
+
+/* stamp_bg1 - Big Ben - bottom layer, back-right */
+.hp-stamp-1 {
+  width: 100px;
+  bottom: 24px;
+  right: -8px;
+  animation: stampSlideIn 0.5s 0.3s ease-out forwards;
+}
+
+/* stamp_bg2 - Flamenco - middle layer, left */
+.hp-stamp-2 {
+  width: 94px;
+  bottom: -32px;
+  right: 48px;
+  animation: stampSlideIn 0.5s 0.6s ease-out forwards;
+}
+
+/* stamp_bg3 - Sydney - top layer, front-right */
+.hp-stamp-3 {
+  width: 104px;
+  bottom: -56px;
+  right: -12px;
+  animation: stampSlideIn 0.5s 0.9s ease-out forwards;
+}
+
+@keyframes stampSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(60px) rotate(var(--r, 0deg));
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) rotate(var(--r, 0deg));
+  }
 }
 
 .hp-countdown-row {
@@ -553,10 +612,12 @@
 
 /* ---- Bottom Tab Bar ---- */
 .hp-tab-bar {
-  position: absolute;
+  position: fixed;
   bottom: 0;
-  left: 0;
-  right: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 430px;
   height: 80px;
   background: #fff;
   border-radius: 24px 24px 0 0;
@@ -569,6 +630,7 @@
 }
 
 .hp-tab {
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -576,8 +638,34 @@
   border: none;
   background: none;
   cursor: pointer;
-  padding: 8px 16px;
+  padding: 8px 0;
   transition: color 0.15s;
+  position: relative;
+  z-index: 1;
+}
+
+.hp-tab-slider {
+  position: absolute;
+  width: calc(100% / 3);
+  top: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+  z-index: 0;
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+.hp-tab-slider-dot {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #2463eb;
+  margin-bottom: 18px;
+  box-shadow: 0 2px 8px rgba(36, 99, 235, 0.35);
 }
 
 .hp-tab-icon-wrap {
@@ -591,7 +679,7 @@
 }
 
 .hp-tab.active .hp-tab-icon-wrap {
-  background: #2463eb;
+  background: transparent;
 }
 
 .hp-tab svg {
@@ -1017,4 +1105,86 @@
 .join-confirm-warning svg {
   vertical-align: -3px;
   margin-right: 4px;
+}
+
+/* ---- Header Collapse on Scroll ---- */
+.hp-header {
+  transition: padding 0.35s ease;
+}
+
+.hp-header-bg {
+  transition: bottom 0.35s ease;
+}
+
+.hp-calendar-card {
+  transition: max-height 0.35s ease, opacity 0.3s ease, margin 0.35s ease, padding 0.35s ease;
+  max-height: 300px;
+}
+
+.hp-add-btn {
+  transition: margin-top 0.35s ease;
+}
+
+.header-collapsed .hp-header-bg {
+  bottom: 40px;
+}
+
+.header-collapsed .hp-calendar-card {
+  max-height: 0;
+  opacity: 0;
+  margin: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+
+/* ---- Persistent Header Background (shared across tabs) ---- */
+.tab-persistent-bg {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 430px;
+  z-index: 0;
+  overflow: hidden;
+  border-radius: 0 0 24px 24px;
+  transition: height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+}
+
+.tab-persistent-bg img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center -108px;
+}
+
+.tab-bg-home { height: 305px; }
+.tab-bg-itrip { height: 162px; }
+.tab-bg-me { height: 122px; }
+
+/* Page enter animation */
+.homepage, .itrip-page, .me-page {
+  animation: tabPageIn 0.35s ease-out;
+}
+
+@keyframes tabPageIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ---- Tab Bar Animation ---- */
+.hp-tab:active {
+  transform: scale(0.9);
+}
+
+.hp-tab svg path {
+  transition: stroke 0.3s ease, fill 0.3s ease;
+}
+
+.hp-tab span {
+  transition: color 0.3s ease;
 }

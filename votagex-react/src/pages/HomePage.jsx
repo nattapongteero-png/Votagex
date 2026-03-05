@@ -14,7 +14,6 @@ import TimelineContent from '@mui/lab/TimelineContent';
 import TimelineOppositeContent from '@mui/lab/TimelineOppositeContent';
 import TimelineDot from '@mui/lab/TimelineDot';
 import Typography from '@mui/material/Typography';
-import TabBar from '../components/common/TabBar';
 import ActivityCard from '../components/common/ActivityCard';
 import TripCard from '../components/common/TripCard';
 import ActivityModal from '../components/modals/ActivityModal';
@@ -50,11 +49,33 @@ export default function HomePage() {
   const [slideAnim, setSlideAnim] = useState('');
   const [showActivityModal, setShowActivityModal] = useState(false);
   const [detailActivity, setDetailActivity] = useState(null);
+  const [detailActivityIndex, setDetailActivityIndex] = useState(-1);
+  const [showActivityEditModal, setShowActivityEditModal] = useState(false);
+  const [headerCollapsed, setHeaderCollapsed] = useState(false);
+  const contentRef = useRef(null);
+  const collapsedRef = useRef(false);
 
   useEffect(() => {
     backfillTripDescriptions();
     loadTrips();
   }, [loadTrips]);
+
+  useEffect(() => {
+    const el = contentRef.current;
+    if (!el) return;
+    const onScroll = () => {
+      const top = el.scrollTop;
+      if (!collapsedRef.current && top > 30) {
+        collapsedRef.current = true;
+        setHeaderCollapsed(true);
+      } else if (collapsedRef.current && top < 10) {
+        collapsedRef.current = false;
+        setHeaderCollapsed(false);
+      }
+    };
+    el.addEventListener('scroll', onScroll, { passive: true });
+    return () => el.removeEventListener('scroll', onScroll);
+  }, []);
 
   // Find the user's current/latest trip
   const homeTrip = useMemo(() => {
@@ -180,6 +201,7 @@ export default function HomePage() {
     const now = new Date();
     const todayStr = formatISODate(now);
     return homeTrip.activities
+      .map((act, i) => ({ ...act, _index: i }))
       .filter(act => {
         if (!activityMatchesDate(act, todayStr)) return false;
         if (!['place', 'food', 'shopping', 'hotel'].includes(act.category)) return false;
@@ -271,6 +293,33 @@ export default function HomePage() {
     }
   }, [homeTrip, updateExistingTrip]);
 
+  const handleDetailActivityEdit = useCallback(() => {
+    setShowActivityEditModal(true);
+  }, []);
+
+  const handleDetailActivityDelete = useCallback(async () => {
+    if (!homeTrip || detailActivityIndex < 0) return;
+    const activities = [...(homeTrip.activities || [])];
+    activities.splice(detailActivityIndex, 1);
+    await updateExistingTrip(homeTrip.id, { activities });
+    setDetailActivity(null);
+    setDetailActivityIndex(-1);
+  }, [homeTrip, detailActivityIndex, updateExistingTrip]);
+
+  const handleDetailActivitySave = useCallback(async (activity, editIndex) => {
+    if (!homeTrip) return;
+    const activities = [...(homeTrip.activities || [])];
+    if (editIndex >= 0) {
+      activities[editIndex] = activity;
+    } else {
+      activities.push(activity);
+    }
+    await updateExistingTrip(homeTrip.id, { activities });
+    setShowActivityEditModal(false);
+    setDetailActivity(null);
+    setDetailActivityIndex(-1);
+  }, [homeTrip, updateExistingTrip]);
+
   // Swipe handling for calendar (touch + mouse) with animation
   const swipeStartX = useRef(0);
   const isSwiping = useRef(false);
@@ -314,7 +363,7 @@ export default function HomePage() {
   const displayPhoto = authUser?.photoURL || userImage;
 
   return (
-    <div className="homepage" style={{ display: 'flex' }}>
+    <div className={`homepage${headerCollapsed ? ' header-collapsed' : ''}`} style={{ display: 'flex' }}>
       {/* Header */}
       <div className="hp-header">
         <div className="hp-header-bg">
@@ -338,6 +387,11 @@ export default function HomePage() {
 
         {/* Countdown Calendar Card */}
         <div className="hp-calendar-card" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} onMouseDown={handleMouseDown} onMouseUp={handleMouseUp}>
+          <div className="hp-stamp-stack">
+            <img className="hp-stamp hp-stamp-1" src="/assets/stamp_bg1.png" alt="" />
+            <img className="hp-stamp hp-stamp-2" src="/assets/stamp_bg2.png" alt="" />
+            <img className="hp-stamp hp-stamp-3" src="/assets/stamp_bg3.png" alt="" />
+          </div>
           <div className="hp-countdown-row">
             <span className="hp-countdown-icon">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -388,7 +442,7 @@ export default function HomePage() {
       </div>
 
       {/* Scrollable Content */}
-      <div className="hp-content">
+      <div className="hp-content" ref={contentRef}>
         {/* Recent Activities */}
         <div className="hp-section">
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -407,7 +461,7 @@ export default function HomePage() {
           <div className="hp-recent-scroll">
             {recentActivities.length > 0 ? (
               recentActivities.map((act, idx) => (
-                <ActivityCard key={idx} activity={act} onClick={() => setDetailActivity(act)} />
+                <ActivityCard key={idx} activity={act} onClick={() => { setDetailActivity(act); setDetailActivityIndex(act._index); }} />
               ))
             ) : (
               <div className="hp-recent-empty">ไม่มีกิจกรรมที่จะถึงเร็วๆ นี้</div>
@@ -500,8 +554,6 @@ export default function HomePage() {
         )}
       </div>
 
-      <TabBar />
-
       {showActivityModal && tripOnDate && (
         <ActivityModal
           tripForm={tripOnDate}
@@ -512,10 +564,21 @@ export default function HomePage() {
         />
       )}
 
-      {detailActivity && (
+      {detailActivity && !showActivityEditModal && (
         <ActivityDetailModal
           activity={detailActivity}
-          onClose={() => setDetailActivity(null)}
+          onClose={() => { setDetailActivity(null); setDetailActivityIndex(-1); }}
+          onEdit={handleDetailActivityEdit}
+          onDelete={handleDetailActivityDelete}
+        />
+      )}
+      {showActivityEditModal && (
+        <ActivityModal
+          tripForm={homeTrip}
+          editingActivity={detailActivity}
+          editingIndex={detailActivityIndex}
+          onSave={handleDetailActivitySave}
+          onClose={() => { setShowActivityEditModal(false); setDetailActivity(null); setDetailActivityIndex(-1); }}
         />
       )}
     </div>

@@ -7,6 +7,7 @@ import ITripPage from '../pages/ITripPage';
 import MePage from '../pages/MePage';
 import JoinScreen from '../pages/JoinScreen';
 import TripDetailPage from '../pages/TripDetailPage';
+import TabLayout from '../components/common/TabLayout';
 
 export default function AppRouter() {
   return (
@@ -15,9 +16,11 @@ export default function AppRouter() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/create" element={<CreationFlow />} />
         <Route path="/join" element={<JoinScreen />} />
-        <Route path="/home" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
-        <Route path="/itrip" element={<ProtectedRoute><ITripPage /></ProtectedRoute>} />
-        <Route path="/me" element={<ProtectedRoute><MePage /></ProtectedRoute>} />
+        <Route element={<ProtectedRoute><TabLayout /></ProtectedRoute>}>
+          <Route path="/home" element={<HomePage />} />
+          <Route path="/itrip" element={<ITripPage />} />
+          <Route path="/me" element={<MePage />} />
+        </Route>
         <Route path="/trip/:tripId" element={<ProtectedRoute><TripDetailPage /></ProtectedRoute>} />
       </Routes>
     </BrowserRouter>

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTrips } from '../contexts/TripContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -49,10 +49,30 @@ export default function TripDetailPage() {
   const [selectedActivity, setSelectedActivity] = useState(null);
   const [selectedActivityIndex, setSelectedActivityIndex] = useState(-1);
   const [showActivityEditModal, setShowActivityEditModal] = useState(false);
+  const [descCollapsed, setDescCollapsed] = useState(false);
+  const scrollRef = useRef(null);
+  const descCollapsedRef = useRef(false);
 
   useEffect(() => { loadTrips(); }, [loadTrips]);
 
   const trip = useMemo(() => trips.find(t => t.id === tripId), [trips, tripId]);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const onScroll = () => {
+      const top = el.scrollTop;
+      if (!descCollapsedRef.current && top > 30) {
+        descCollapsedRef.current = true;
+        setDescCollapsed(true);
+      } else if (descCollapsedRef.current && top < 10) {
+        descCollapsedRef.current = false;
+        setDescCollapsed(false);
+      }
+    };
+    el.addEventListener('scroll', onScroll, { passive: true });
+    return () => el.removeEventListener('scroll', onScroll);
+  }, [trip]);
 
   const displayName = authUser?.displayName || trip?.profileName || 'User';
 
@@ -231,7 +251,7 @@ export default function TripDetailPage() {
 
   return (
     <div className="trip-detail-page active">
-      <div className="trip-detail-container">
+      <div className={`trip-detail-container${descCollapsed ? ' desc-collapsed header-collapsed' : ''}`}>
         {/* Header */}
         <div className="td-header">
           <div className="td-header-bg"><img src="/assets/header-bg.png" alt="" /></div>
@@ -253,7 +273,7 @@ export default function TripDetailPage() {
           {trip.coverImage ? <img src={trip.coverImage} alt="" /> : <span className="flag-emoji">🌍</span>}
         </div>
 
-        <div className="td-scroll">
+        <div className="td-scroll" ref={scrollRef}>
           {/* Trip Info */}
           <div className="td-trip-info">
             <div className="td-trip-top">
@@ -302,14 +322,16 @@ export default function TripDetailPage() {
           {/* Tabs */}
           <div className="td-tabs-wrapper">
             <div className="td-tabs">
+              <div className="td-tabs-indicator" style={{ transform: activeTab === 'plan' ? 'translateX(100%)' : 'translateX(0)' }} />
               <button className={`td-tab${activeTab === 'expenses' ? ' active' : ''}`} onClick={() => setActiveTab('expenses')}>ค่าใช้จ่าย</button>
               <button className={`td-tab${activeTab === 'plan' ? ' active' : ''}`} onClick={() => setActiveTab('plan')}>แผนการเที่ยว</button>
             </div>
           </div>
 
-          {/* Expenses Tab */}
-          {activeTab === 'expenses' && (
-            <div>
+          {/* Tab Content Slider */}
+          <div className="td-tab-slider" style={{ transform: activeTab === 'plan' ? 'translateX(-50%)' : 'translateX(0)' }}>
+            {/* Expenses Tab */}
+            <div className="td-tab-panel">
               <div className="td-days">
                 {dayCards.map(c => (
                   <div key={c.key} className={`td-day-card${selectedDay === c.key ? ' active' : ''}`} onClick={() => setSelectedDay(c.key)}>
@@ -345,11 +367,9 @@ export default function TripDetailPage() {
                 </div>
               </div>
             </div>
-          )}
 
-          {/* Plan Tab */}
-          {activeTab === 'plan' && (
-            <>
+            {/* Plan Tab */}
+            <div className="td-tab-panel">
               <div className="td-days">
                 {dayCards.map(c => (
                   <div key={c.key} className={`td-day-card${selectedPlanDay === c.key ? ' active' : ''}`} onClick={() => setSelectedPlanDay(c.key)}>
@@ -440,8 +460,8 @@ export default function TripDetailPage() {
                   })() : <div className="hp-schedule-empty">ไม่มีกิจกรรม</div>}
                 </div>
               </div>
-            </>
-          )}
+            </div>
+          </div>
         </div>
       </div>
 

@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import { CATEGORY_CONFIG } from '../../constants/categories';
 import { convertCurrency } from '../../constants/currencies';
 import { formatDateThai } from '../../utils/dates';
 import { formatNumberComma } from '../../utils/numbers';
 import useModalClose from '../../hooks/useModalClose';
+import ConfirmModal from './ConfirmModal';
 
 const CURRENCY_SYMBOLS = {
   USD: '$', EUR: '€', JPY: '¥', GBP: '£',
@@ -11,6 +13,7 @@ const CURRENCY_SYMBOLS = {
 
 export default function ActivityDetailModal({ activity, onClose, onEdit, onDelete }) {
   const { isClosing, handleClose } = useModalClose(onClose);
+  const [showConfirm, setShowConfirm] = useState(false);
   if (!activity) return null;
 
   const cfg = CATEGORY_CONFIG[activity.category] || CATEGORY_CONFIG.other;
@@ -22,9 +25,7 @@ export default function ActivityDetailModal({ activity, onClose, onEdit, onDelet
     : '';
 
   const handleDelete = () => {
-    if (confirm('ต้องการลบกิจกรรมนี้?')) {
-      onDelete?.();
-    }
+    setShowConfirm(true);
   };
 
   return (
@@ -166,6 +167,15 @@ export default function ActivityDetailModal({ activity, onClose, onEdit, onDelet
           </div>
         </div>
       </div>
+      {showConfirm && (
+        <ConfirmModal
+          icon="delete"
+          message="ต้องการลบกิจกรรมนี้ใช่ไหม ?"
+          confirmText="ลบกิจกรรม"
+          onConfirm={() => { setShowConfirm(false); onDelete?.(); }}
+          onCancel={() => setShowConfirm(false)}
+        />
+      )}
     </div>
   );
 }

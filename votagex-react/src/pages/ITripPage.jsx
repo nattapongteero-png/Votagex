@@ -1,14 +1,17 @@
-import { useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTrips } from '../contexts/TripContext';
 import { useAuth } from '../contexts/AuthContext';
-import TabBar from '../components/common/TabBar';
 import TripCard from '../components/common/TripCard';
+import TripActionSheet from '../components/modals/TripActionSheet';
+import EditTripModal from '../components/modals/EditTripModal';
 
 export default function ITripPage() {
   const navigate = useNavigate();
-  const { trips, loadTrips, resetTripForm, setCurrentTrip } = useTrips();
+  const { trips, loadTrips, resetTripForm, setCurrentTrip, updateExistingTrip, deleteExistingTrip } = useTrips();
   const { username, authUser } = useAuth();
+  const [actionTrip, setActionTrip] = useState(null);
+  const [editTrip, setEditTrip] = useState(null);
 
   useEffect(() => {
     loadTrips();
@@ -58,6 +61,24 @@ export default function ITripPage() {
     navigate(`/trip/${trip.id}`);
   };
 
+  const handleDelete = async (t) => {
+    setActionTrip(null);
+    await deleteExistingTrip(t.id);
+  };
+
+  const handleLeave = async (t) => {
+    setActionTrip(null);
+    const m = (t.members || []).filter(m => m.name !== username);
+    await updateExistingTrip(t.id, { members: m });
+  };
+
+  const handleEditSave = async (data) => {
+    if (editTrip) {
+      await updateExistingTrip(editTrip.id, data);
+      setEditTrip(null);
+    }
+  };
+
   return (
     <div className="itrip-page" style={{ display: 'flex' }}>
       {/* Header */}
@@ -92,7 +113,7 @@ export default function ITripPage() {
                   key={trip.id}
                   trip={trip}
                   onCardClick={() => handleTripClick(trip)}
-                  onEdit={(t) => navigate(`/trip/${t.id}`)}
+                  onEdit={(t) => setActionTrip(t)}
                 />
               ))
             ) : (
@@ -121,7 +142,22 @@ export default function ITripPage() {
         )}
       </div>
 
-      <TabBar />
+      {actionTrip && (
+        <TripActionSheet
+          trip={actionTrip}
+          onClose={() => setActionTrip(null)}
+          onEdit={(t) => { setActionTrip(null); setEditTrip(t); }}
+          onDelete={handleDelete}
+          onLeave={handleLeave}
+        />
+      )}
+      {editTrip && (
+        <EditTripModal
+          trip={editTrip}
+          onClose={() => setEditTrip(null)}
+          onSave={handleEditSave}
+        />
+      )}
     </div>
   );
 }

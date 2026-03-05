@@ -9,6 +9,8 @@ export default function TabBar() {
     : location.pathname === '/me' ? 'profile'
     : 'home';
 
+  const tabIndex = currentTab === 'home' ? 0 : currentTab === 'itrip' ? 1 : 2;
+
   const handleTab = (tab) => {
     if (tab === currentTab) return;
     if (tab === 'home') navigate('/home');
@@ -18,6 +20,12 @@ export default function TabBar() {
 
   return (
     <div className="hp-tab-bar">
+      <div
+        className="hp-tab-slider"
+        style={{ transform: `translateX(${tabIndex * 100}%)` }}
+      >
+        <div className="hp-tab-slider-dot" />
+      </div>
       <button className={`hp-tab ${currentTab === 'home' ? 'active' : ''}`} data-tab="home" onClick={() => handleTab('home')}>
         <div className="hp-tab-icon-wrap">
           <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

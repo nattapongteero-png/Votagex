@@ -6,7 +6,7 @@ import {
   onAuthStateChanged,
   signOut
 } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: "REMOVED",
@@ -29,7 +29,13 @@ export function initFirebase() {
     const app = initializeApp(firebaseConfig);
     auth = getAuth(app);
     db = getFirestore(app);
-    console.log('Firebase initialized (Firestore + Auth)');
+    // ใช้ Emulator เมื่อรันบน localhost (ฐานข้อมูลทดสอบ)
+    if (location.hostname === 'localhost') {
+      connectFirestoreEmulator(db, 'localhost', 8080);
+      console.log('Firebase initialized (Emulator mode)');
+    } else {
+      console.log('Firebase initialized (Production)');
+    }
     return true;
   } catch (e) {
     console.warn('Firebase not available');

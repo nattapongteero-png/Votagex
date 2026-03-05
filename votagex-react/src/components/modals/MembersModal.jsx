@@ -1,8 +1,11 @@
+import { useState } from 'react';
 import { escapeHtml } from '../../utils/helpers';
 import useModalClose from '../../hooks/useModalClose';
+import ConfirmModal from './ConfirmModal';
 
 export default function MembersModal({ trip, onClose, onRemoveMember }) {
   const { isClosing, handleClose } = useModalClose(onClose);
+  const [confirmTarget, setConfirmTarget] = useState(null);
   const members = trip.members || [];
 
   // Build member list: creator first, then joined members
@@ -17,9 +20,7 @@ export default function MembersModal({ trip, onClose, onRemoveMember }) {
   });
 
   const handleRemove = (memberName) => {
-    if (confirm(`ลบ ${memberName} ออกจากทริปนี้?`)) {
-      onRemoveMember?.(memberName);
-    }
+    setConfirmTarget(memberName);
   };
 
   return (
@@ -71,6 +72,15 @@ export default function MembersModal({ trip, onClose, onRemoveMember }) {
           )}
         </div>
       </div>
+      {confirmTarget && (
+        <ConfirmModal
+          icon="delete"
+          message={`ต้องการลบสมาชิกรายนี้ใช่ไหม ?`}
+          confirmText="ลบสมาชิก"
+          onConfirm={() => { onRemoveMember?.(confirmTarget); setConfirmTarget(null); }}
+          onCancel={() => setConfirmTarget(null)}
+        />
+      )}
     </div>
   );
 }
