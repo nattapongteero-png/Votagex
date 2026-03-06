@@ -24,7 +24,7 @@
   position: relative;
 }
 
-.profile-upload-circle:hover {
+.profile-upload-circle:active {
   opacity: 0.85;
 }
 

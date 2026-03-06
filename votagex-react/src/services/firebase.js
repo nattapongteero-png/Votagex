@@ -29,7 +29,7 @@ export function initFirebase() {
     const app = initializeApp(firebaseConfig);
     auth = getAuth(app);
     db = getFirestore(app);
-    if (import.meta.env.DEV && location.hostname === 'localhost') {
+    if (import.meta.env.VITE_USE_EMULATOR === 'true' && location.hostname === 'localhost') {
       connectFirestoreEmulator(db, 'localhost', 8080);
     }
     return true;

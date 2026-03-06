@@ -65,7 +65,7 @@
   height: 16px;
 }
 
-.date-card-btn:hover {
+.date-card-btn:active {
   background: rgba(36, 99, 235, 0.05);
 }
 

@@ -376,7 +376,7 @@
   margin-top: 20px;
 }
 
-.hp-add-btn:hover {
+.hp-add-btn:active {
   opacity: 0.9;
 }
 
@@ -951,7 +951,7 @@
   transition: opacity 0.2s;
 }
 
-.hp-other-join-btn:hover {
+.hp-other-join-btn:active {
   opacity: 0.9;
 }
 
@@ -1062,7 +1062,7 @@
   transition: background 0.15s;
 }
 
-.join-confirm-cancel:hover {
+.join-confirm-cancel:active {
   background: #f5f5f5;
 }
 
@@ -1080,7 +1080,7 @@
   transition: opacity 0.15s;
 }
 
-.join-confirm-ok:hover {
+.join-confirm-ok:active {
   opacity: 0.9;
 }
 

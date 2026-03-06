@@ -82,10 +82,11 @@
 .travel-card-right {
   position: absolute;
   height: 172px;
-  width: auto;
+  width: 22px;
   top: 50%;
   transform: translateY(-50%);
   z-index: 2;
+  overflow: visible;
 }
 
 .travel-card-left {
@@ -112,7 +113,7 @@
   position: relative;
 }
 
-.cover-upload-area:hover {
+.cover-upload-area:active {
   opacity: 0.85;
 }
 
@@ -130,6 +131,30 @@
 .cover-upload-area.has-image .cover-upload-label,
 .cover-upload-area.has-image svg {
   display: none;
+}
+
+.cover-upload-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.cover-remove-btn {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  z-index: 10;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.6);
+  border: 2px solid #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  color: #fff;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
 }
 
 .travel-card-dates {

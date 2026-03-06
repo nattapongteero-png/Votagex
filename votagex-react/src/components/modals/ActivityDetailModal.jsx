@@ -1,15 +1,10 @@
 import { useState } from 'react';
 import { CATEGORY_CONFIG } from '../../constants/categories';
-import { convertCurrency } from '../../constants/currencies';
+import { convertCurrency, CURRENCY_SYMBOLS } from '../../constants/currencies';
 import { formatDateThai } from '../../utils/dates';
 import { formatNumberComma } from '../../utils/numbers';
 import useModalClose from '../../hooks/useModalClose';
 import ConfirmModal from './ConfirmModal';
-
-const CURRENCY_SYMBOLS = {
-  USD: '$', EUR: '€', JPY: '¥', GBP: '£',
-  KRW: '₩', CNY: '¥', AUD: '$', SGD: '$'
-};
 
 export default function ActivityDetailModal({ activity, onClose, onEdit, onDelete }) {
   const { isClosing, handleClose } = useModalClose(onClose);
@@ -37,9 +32,10 @@ export default function ActivityDetailModal({ activity, onClose, onEdit, onDelet
             <div className="detail-header-row">
               <span className="detail-title">{activity.name}</span>
               <button className="modal-close-btn" onClick={handleClose}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#222B45" strokeWidth="2" strokeLinecap="round">
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
+                <svg viewBox="0 0 32 32" fill="none" width="24" height="24">
+                  <path d="M19.1921 12.793L12.8027 19.1823" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M19.1998 19.1908L12.7998 12.7908" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path opacity="0.4" fillRule="evenodd" clipRule="evenodd" d="M3.6665 16.0001C3.6665 25.2494 6.7505 28.3334 15.9998 28.3334C25.2492 28.3334 28.3332 25.2494 28.3332 16.0001C28.3332 6.75075 25.2492 3.66675 15.9998 3.66675C6.7505 3.66675 3.6665 6.75075 3.6665 16.0001Z" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               </button>
             </div>

@@ -5,11 +5,12 @@ import {
   doc,
   updateDoc,
   deleteDoc,
-  arrayUnion
+  arrayUnion,
+  onSnapshot
 } from 'firebase/firestore';
 import { getDb } from './firebase';
 
-const DEFAULT_TRIP_DESCRIPTION = 'ออกเดินทางไปสัมผัสประสบการณ์ใหม่ๆ ด้วยกัน! วางแผนทริปสนุกๆ พร้อมเพื่อนร่วมเดินทาง สร้างความทรงจำดีๆ ที่จะอยู่ในใจตลอดไป';
+export const DEFAULT_TRIP_DESCRIPTION = 'ออกเดินทางไปสัมผัสประสบการณ์ใหม่ๆ ด้วยกัน! วางแผนทริปสนุกๆ พร้อมเพื่อนร่วมเดินทาง สร้างความทรงจำดีๆ ที่จะอยู่ในใจตลอดไป';
 
 export async function saveTrip(tripData) {
   const db = getDb();
@@ -43,24 +44,40 @@ export async function deleteTrip(tripId) {
   await deleteDoc(doc(db, 'trips', tripId));
 }
 
-const MAX_IMAGE_SIZE = 500 * 1024; // 500KB
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 
-export function uploadProfileImage(file) {
+function compressImage(file, maxWidth = 200, quality = 0.7) {
   return new Promise((resolve, reject) => {
     if (!ALLOWED_TYPES.includes(file.type)) {
       return reject(new Error('รองรับเฉพาะไฟล์ JPG, PNG, WebP, GIF'));
     }
-    if (file.size > MAX_IMAGE_SIZE) {
-      return reject(new Error('ไฟล์ต้องมีขนาดไม่เกิน 500KB'));
-    }
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(1, maxWidth / img.width);
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width * scale;
+      canvas.height = img.height * scale;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.onerror = reject;
+    img.src = URL.createObjectURL(file);
   });
 }
 
-export function backfillTripDescriptions() {
-  // No longer needed with Firestore
+export function uploadProfileImage(file) {
+  return compressImage(file, 200, 0.7);
+}
+
+export function uploadCoverImage(file) {
+  return compressImage(file, 600, 0.6);
+}
+
+export function subscribeTrips(callback) {
+  const db = getDb();
+  return onSnapshot(collection(db, 'trips'), (snapshot) => {
+    const trips = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    callback(trips);
+  });
 }

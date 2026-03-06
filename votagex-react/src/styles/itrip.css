@@ -123,7 +123,7 @@
   margin-top: 20px;
 }
 
-.itrip-add-btn:hover {
+.itrip-add-btn:active {
   opacity: 0.9;
 }
 
@@ -343,7 +343,7 @@
   transition: opacity 0.2s;
 }
 
-.itrip-card-join:hover {
+.itrip-card-join:active {
   opacity: 0.9;
 }
 

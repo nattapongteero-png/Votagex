@@ -104,7 +104,7 @@
   transition: background 0.15s;
 }
 
-.me-menu-item:hover {
+.me-menu-item:active {
   background: rgba(0,0,0,0.03);
 }
 

@@ -8,7 +8,7 @@
   --text-secondary: #6B7280;
   --border: #E5E7EB;
   --gray-light: #F3F4F6;
-  --dot-inactive: #CBD5E1;
+  --dot-inactive: #FFFFFF;
   --dot-active: #3B5BDB;
   --radius: 30px;
   --radius-sm: 16px;
@@ -197,7 +197,7 @@ html, body {
   border-color: var(--primary);
 }
 
-.btn-primary:hover {
+.btn-primary:active {
   background: var(--primary-dark);
   border-color: var(--primary-dark);
 }
@@ -212,7 +212,7 @@ html, body {
   border-color: var(--primary);
 }
 
-.btn-outline:hover {
+.btn-outline:active {
   background: rgba(74, 108, 247, 0.05);
 }
 
@@ -319,7 +319,7 @@ textarea.form-input {
   position: relative;
 }
 
-.profile-upload:hover {
+.profile-upload:active {
   border-color: var(--primary);
 }
 

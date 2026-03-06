@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useTrips } from '../../contexts/TripContext';
+import { getCurrentUser } from '../../services/firebase';
 import { formatDateThaiShort, formatISODate } from '../../utils/dates';
 import useModalClose from '../../hooks/useModalClose';
 
@@ -34,13 +35,20 @@ export default function CalendarModal({ startDate, endDate, onConfirm, onClose }
   // Build blocked date ranges from user's other trips
   const [blockedRanges, setBlockedRanges] = useState([]);
   useEffect(() => {
+    const uid = getCurrentUser()?.uid;
     const userName = tripForm.profileName || '';
     const ranges = [];
     trips.forEach(t => {
       if (!t.startDate || !t.endDate) return;
-      const isCreator = t.profileName && t.profileName === userName;
-      const isMember = (t.members || []).some(m => m.name === userName);
-      if (!isCreator && !isMember) return;
+      // UID-based matching (reliable)
+      const isCreatorUid = uid && t.ownerUid === uid;
+      const isMemberUid = uid && (t.memberUids || []).includes(uid);
+      if (!isCreatorUid && !isMemberUid) {
+        // Fallback: name-based for old trips without ownerUid
+        const isCreatorName = userName && t.profileName === userName;
+        const isMemberName = userName && (t.members || []).some(m => m.name === userName);
+        if (!isCreatorName && !isMemberName) return;
+      }
       const s = new Date(t.startDate); s.setHours(0, 0, 0, 0);
       const e = new Date(t.endDate); e.setHours(0, 0, 0, 0);
       ranges.push({ start: s, end: e, name: t.name || '' });

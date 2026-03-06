@@ -72,13 +72,9 @@ export default function ActivitiesStep({ onNext, onBack }) {
         {/* Activity Header Row */}
         <div className="activity-header-row">
           <h2 className="activity-heading">กิจกรรม</h2>
-          <button className="btn-add-pill" onClick={handleAddClick}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-              <circle cx="12" cy="12" r="10" />
-              <line x1="12" y1="8" x2="12" y2="16" />
-              <line x1="8" y1="12" x2="16" y2="12" />
-            </svg>
-            เพิ่ม
+          <button className="td-btn-add" onClick={handleAddClick}>
+            <svg width="24" height="24" viewBox="0 0 16 16" fill="none"><path d="M2.23525 5.96695C2.66958 4.11534 4.11534 2.66958 5.96696 2.23525C7.30417 1.92158 8.69583 1.92158 10.033 2.23525C11.8847 2.66958 13.3304 4.11534 13.7647 5.96696C14.0784 7.30417 14.0784 8.69583 13.7647 10.033C13.3304 11.8847 11.8847 13.3304 10.033 13.7648C8.69583 14.0784 7.30417 14.0784 5.96696 13.7647C4.11534 13.3304 2.66958 11.8847 2.23525 10.033C1.92158 8.69583 1.92158 7.30417 2.23525 5.96695Z" fill="#363853" fillOpacity="0.15" stroke="white" strokeWidth="1.5"/><path d="M9.66665 8.00016H6.33331M7.99998 9.66683L7.99998 6.3335" stroke="white" strokeWidth="1.5" strokeLinecap="round"/></svg>
+            เพิ่มกิจกรรม
           </button>
         </div>
 
@@ -90,10 +86,7 @@ export default function ActivitiesStep({ onNext, onBack }) {
                 const cfg = CATEGORY_CONFIG[cat] || CATEGORY_CONFIG.other;
                 return (
                   <div key={cat} className="activity-section">
-                    <div className="activity-section-header">
-                      <span className="activity-section-icon" dangerouslySetInnerHTML={{ __html: cfg.icon }} />
-                      <span className="activity-section-label">{cfg.label}</span>
-                    </div>
+                    <span className="activity-section-label">{cfg.label}</span>
                     <div className="activity-section-row">
                       {activities.map((act) => (
                         <ActivityCard

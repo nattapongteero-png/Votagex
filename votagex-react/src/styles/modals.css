@@ -296,6 +296,27 @@
   appearance: menulist;
 }
 
+.currency-select-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  background: #f5f5f5;
+  font-family: 'Google Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: #222;
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.currency-select-btn:active {
+  background: #e8e8e8;
+}
+
 .modal-swap-icon {
   width: 24px;
   height: 24px;
@@ -315,9 +336,7 @@
 
 .btn-gradient-save {
   width: 100%;
-  max-width: 345px;
   height: 48px;
-  margin: 0 auto;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -332,7 +351,7 @@
   transition: opacity 0.2s;
 }
 
-.btn-gradient-save:hover {
+.btn-gradient-save:active {
   opacity: 0.9;
 }
 
@@ -569,7 +588,7 @@
 
 .btn-outline-detail {
   height: 48px;
-  width: 150px;
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -589,58 +608,131 @@
 
 /* ===== Edit Modal ===== */
 .edit-modal-sheet {
-  height: 80vh;
+  height: 85vh;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
 }
 
 .edit-modal-body {
   flex: 1;
   overflow-y: auto;
+  padding: 4px 2px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  scrollbar-width: none;
+}
+
+.edit-modal-body::-webkit-scrollbar {
+  display: none;
+}
+
+.edit-modal-body .input-pill {
+  margin-bottom: 0;
 }
 
 .edit-modal-sheet .modal-actions {
   flex-shrink: 0;
-  padding-top: 12px;
+  padding-top: 16px;
 }
 
+/* Field with label */
+.edit-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.edit-field-label {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: #737373;
+  padding-left: 4px;
+}
+
+/* Cover image area */
+.edit-cover-area {
+  width: 100%;
+  height: 120px;
+  border-radius: 16px;
+  background: #f5f5f5;
+  overflow: hidden;
+  cursor: pointer;
+  position: relative;
+  transition: opacity 0.2s;
+}
+
+.edit-cover-area:active {
+  opacity: 0.85;
+}
+
+.edit-cover-area img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.edit-cover-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.edit-cover-placeholder span {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 12px;
+  color: #a3a3a3;
+  font-weight: 500;
+}
+
+.edit-cover-remove {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 5;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.5);
+  border: 2px solid #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  color: #fff;
+}
+
+/* Date row */
 .edit-date-row {
   display: flex;
   gap: 12px;
-  margin-bottom: 12px;
 }
 
 .edit-date-field {
   flex: 1;
-}
-
-.edit-date-field label {
-  display: block;
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-  margin-bottom: 6px;
-  font-weight: 600;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .edit-date-field .input-pill {
   padding: 12px 16px;
   font-size: 0.9rem;
+  margin-bottom: 0;
 }
 
+/* Member slider */
 .edit-member-row {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 12px;
-  padding: 0 4px;
-}
-
-.edit-member-row label {
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-  font-weight: 600;
-  white-space: nowrap;
 }
 
 .edit-member-row input[type="range"] {
@@ -721,7 +813,7 @@
 
 /* ===== Members Bottom Sheet ===== */
 .members-sheet {
-  padding: 16px;
+  padding: 16px 24px;
   height: 70vh;
   display: flex;
   flex-direction: column;
@@ -834,6 +926,210 @@
   height: 1px;
   background: #e5e7eb;
   margin: 12px;
+}
+
+/* ===== Time Picker Modal ===== */
+.time-picker-sheet {
+  padding: 16px 24px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.time-picker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+.time-picker-title {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 20px;
+  font-weight: 600;
+  color: #000;
+  margin: 0;
+}
+
+.time-picker-display {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 16px;
+}
+
+.time-picker-value {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 40px;
+  font-weight: 700;
+  color: #2463eb;
+  min-width: 56px;
+  text-align: center;
+}
+
+.time-picker-colon {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 40px;
+  font-weight: 700;
+  color: #2463eb;
+}
+
+.time-picker-wheels {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+  max-width: 280px;
+  margin-bottom: 20px;
+}
+
+.time-picker-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.time-picker-label {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  color: #a3a3a3;
+  margin-bottom: 8px;
+}
+
+.time-picker-separator {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  color: #d4d4d4;
+  padding-top: 108px;
+}
+
+.time-wheel {
+  height: 220px;
+  overflow-y: auto;
+  scroll-snap-type: y mandatory;
+  scrollbar-width: none;
+  width: 100%;
+  position: relative;
+  mask-image: linear-gradient(transparent, black 35%, black 65%, transparent);
+  -webkit-mask-image: linear-gradient(transparent, black 35%, black 65%, transparent);
+}
+
+.time-wheel::-webkit-scrollbar {
+  display: none;
+}
+
+.time-wheel-item {
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Google Sans', sans-serif;
+  font-size: 22px;
+  font-weight: 500;
+  color: #d4d4d4;
+  cursor: pointer;
+  scroll-snap-align: center;
+  transition: all 0.15s;
+  border-radius: 12px;
+}
+
+.time-wheel-item.active {
+  font-size: 26px;
+  font-weight: 700;
+  color: #000;
+  background: #f0f4ff;
+}
+
+.time-picker-confirm {
+  width: 100%;
+}
+
+/* ===== Currency Modal ===== */
+.currency-sheet {
+  padding: 16px 24px;
+  height: 70vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.currency-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f5f5f5;
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin-top: 8px;
+}
+
+.currency-search input {
+  flex: 1;
+  border: none;
+  background: none;
+  outline: none;
+  font-family: 'Google Sans', sans-serif;
+  font-size: 14px;
+  color: #222;
+}
+
+.currency-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 4px;
+  cursor: pointer;
+  border-radius: 12px;
+  transition: background 0.15s;
+}
+
+.currency-row:active {
+  background: #f0f0ff;
+}
+
+.currency-row.selected {
+  background: #f0f0ff;
+}
+
+.currency-flag {
+  font-size: 28px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.currency-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.currency-code {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: #000;
+}
+
+.currency-name {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 11px;
+  color: #737373;
+}
+
+.currency-rate {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 11px;
+  color: #a3a3a3;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.currency-check {
+  flex-shrink: 0;
 }
 
 /* ===== Confirm Modal (Bottom Sheet) ===== */

@@ -33,7 +33,7 @@
   transition: background 0.15s;
 }
 
-.cal-nav-btn:hover {
+.cal-nav-btn:active {
   background: #f0f0f0;
 }
 
@@ -155,7 +155,7 @@
   user-select: none;
 }
 
-.cal-day:hover {
+.cal-day:active {
   background: rgba(36, 99, 235, 0.1);
 }
 
@@ -173,7 +173,7 @@
   font-weight: 700;
 }
 
-.cal-day.selected:hover {
+.cal-day.selected:active {
   background: #1d4fd8;
 }
 

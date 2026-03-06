@@ -46,7 +46,7 @@
   align-items: center;
   position: relative;
   width: 100%;
-  margin-bottom: 16px;
+  margin-bottom: 24px;
 }
 
 .join-topbar .btn-back-pill {
@@ -177,7 +177,7 @@
   transition: opacity 0.2s;
 }
 
-.trip-card-edit-btn:hover {
+.trip-card-edit-btn:active {
   opacity: 1;
 }
 
@@ -295,7 +295,7 @@
   margin-top: auto;
 }
 
-.btn-join-card:hover {
+.btn-join-card:active {
   opacity: 0.9;
 }
 
@@ -369,7 +369,7 @@
   color: #1a1a2e;
 }
 
-.trip-action-item:hover {
+.trip-action-item:active {
   background: #f0f0f0;
 }
 

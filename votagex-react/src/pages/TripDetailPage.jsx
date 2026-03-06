@@ -48,30 +48,21 @@ export default function TripDetailPage() {
   const [selectedActivity, setSelectedActivity] = useState(null);
   const [selectedActivityIndex, setSelectedActivityIndex] = useState(-1);
   const [showActivityEditModal, setShowActivityEditModal] = useState(false);
-  const [descCollapsed, setDescCollapsed] = useState(false);
   const scrollRef = useRef(null);
-  const descCollapsedRef = useRef(false);
+  const tripNameRef = useRef(null);
+  const infoRowRef = useRef(null);
+  const [tripNameHeight, setTripNameHeight] = useState(0);
+  const [infoRowHeight, setInfoRowHeight] = useState(0);
 
   useEffect(() => { loadTrips(); }, [loadTrips]);
 
   const trip = useMemo(() => trips.find(t => t.id === tripId), [trips, tripId]);
 
   useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const onScroll = () => {
-      const top = el.scrollTop;
-      if (!descCollapsedRef.current && top > 30) {
-        descCollapsedRef.current = true;
-        setDescCollapsed(true);
-      } else if (descCollapsedRef.current && top < 10) {
-        descCollapsedRef.current = false;
-        setDescCollapsed(false);
-      }
-    };
-    el.addEventListener('scroll', onScroll, { passive: true });
-    return () => el.removeEventListener('scroll', onScroll);
+    if (tripNameRef.current) setTripNameHeight(tripNameRef.current.offsetHeight);
+    if (infoRowRef.current) setInfoRowHeight(infoRowRef.current.offsetHeight);
   }, [trip]);
+
 
   const displayName = authUser?.displayName || trip?.profileName || 'User';
 
@@ -250,31 +241,33 @@ export default function TripDetailPage() {
 
   return (
     <div className="trip-detail-page active">
-      <div className={`trip-detail-container${descCollapsed ? ' desc-collapsed header-collapsed' : ''}`}>
-        {/* Header */}
-        <div className="td-header">
-          <div className="td-header-bg"><img src="/assets/header-bg.png" alt="" /></div>
-          <div className="td-header-text">
-            <span className="td-header-title">iTrip</span>
-            <span className="td-header-subtitle">Welcome , {displayName}</span>
-          </div>
-          <button className="td-close-btn" onClick={() => navigate(-1)}>
-            <svg viewBox="0 0 32 32" fill="none" width="24" height="24">
-              <path d="M19.1921 12.793L12.8027 19.1823" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M19.1998 19.1908L12.7998 12.7908" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <path opacity="0.4" fillRule="evenodd" clipRule="evenodd" d="M3.6665 16.0001C3.6665 25.2494 6.7505 28.3334 15.9998 28.3334C25.2492 28.3334 28.3332 25.2494 28.3332 16.0001C28.3332 6.75075 25.2492 3.66675 15.9998 3.66675C6.7505 3.66675 3.6665 6.75075 3.6665 16.0001Z" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
-        </div>
-
-        {/* Trip Flag */}
-        <div className="td-trip-flag">
-          {trip.coverImage ? <img src={trip.coverImage} alt="" /> : <span className="flag-emoji">🌍</span>}
-        </div>
-
+      <div className="trip-detail-container">
         <div className="td-scroll" ref={scrollRef}>
-          {/* Trip Info */}
-          <div className="td-trip-info">
+          {/* Header (scrolls away) */}
+          <div className="td-header">
+            <div className="td-header-bg"><img src="/assets/header-bg.png" alt="" /></div>
+            <div className="td-header-text">
+              <span className="td-header-title">iTrip</span>
+              <span className="td-header-subtitle">Welcome , {displayName}</span>
+            </div>
+            <button className="td-close-btn" onClick={() => navigate(-1)}>
+              <svg viewBox="0 0 32 32" fill="none" width="24" height="24">
+                <path d="M19.1921 12.793L12.8027 19.1823" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M19.1998 19.1908L12.7998 12.7908" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path opacity="0.4" fillRule="evenodd" clipRule="evenodd" d="M3.6665 16.0001C3.6665 25.2494 6.7505 28.3334 15.9998 28.3334C25.2492 28.3334 28.3332 25.2494 28.3332 16.0001C28.3332 6.75075 25.2492 3.66675 15.9998 3.66675C6.7505 3.66675 3.6665 6.75075 3.6665 16.0001Z" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+          </div>
+
+          {/* Flag (scrolls away naturally) */}
+          <div className="td-scroll-away">
+            <div className="td-trip-flag">
+              {trip.coverImage ? <img src={trip.coverImage} alt="" /> : <span className="flag-emoji">🌍</span>}
+            </div>
+          </div>
+
+          {/* Trip Name (sticky layer 1) */}
+          <div className="td-trip-name-sticky" ref={tripNameRef}>
             <div className="td-trip-top">
               <div className="td-trip-details">
                 <span className="td-trip-name">{trip.name || 'Trip'}</span>
@@ -282,7 +275,17 @@ export default function TripDetailPage() {
               </div>
               <button className="td-trip-more" onClick={() => setShowActionSheet(true)}>⋯</button>
             </div>
-            {trip.description && <div className="td-trip-desc">{trip.description}</div>}
+          </div>
+
+          {/* Description (scrolls away behind trip name) */}
+          {trip.description && (
+            <div className="td-desc-scroll">
+              <div className="td-trip-desc">{trip.description}</div>
+            </div>
+          )}
+
+          {/* Info Row (sticky layer 2 — slides up under trip name) */}
+          <div className="td-info-row-sticky" ref={infoRowRef} style={{ top: tripNameHeight }}>
             <div className="td-info-row">
               <div className="td-info-item td-info-members" style={{ cursor: 'pointer' }} onClick={() => setShowMembersModal(true)}>
                 <div className="td-info-avatars">
@@ -318,8 +321,8 @@ export default function TripDetailPage() {
             </div>
           </div>
 
-          {/* Tabs */}
-          <div className="td-tabs-wrapper">
+          {/* Tabs (sticky layer 3) */}
+          <div className="td-tabs-sticky" style={{ top: tripNameHeight + infoRowHeight }}>
             <div className="td-tabs">
               <div className="td-tabs-indicator" style={{ transform: activeTab === 'plan' ? 'translateX(100%)' : 'translateX(0)' }} />
               <button className={`td-tab${activeTab === 'expenses' ? ' active' : ''}`} onClick={() => setActiveTab('expenses')}>ค่าใช้จ่าย</button>
@@ -352,7 +355,13 @@ export default function TripDetailPage() {
                 <div className="td-expense-bg"><img src="/assets/coins.png" alt="" onError={(e) => { e.target.parentElement.style.display = 'none'; }} /></div>
               </div>
               <div className="td-activities">
-                <div className="td-activities-header"><span className="td-activities-title">กิจกรรม</span></div>
+                <div className="td-activities-header">
+                  <span className="td-activities-title">กิจกรรม</span>
+                  <button className="td-btn-add" onClick={() => { setSelectedActivity(null); setSelectedActivityIndex(-1); setShowActivityEditModal(true); }}>
+                    <svg width="24" height="24" viewBox="0 0 16 16" fill="none"><path d="M2.23525 5.96695C2.66958 4.11534 4.11534 2.66958 5.96696 2.23525C7.30417 1.92158 8.69583 1.92158 10.033 2.23525C11.8847 2.66958 13.3304 4.11534 13.7647 5.96696C14.0784 7.30417 14.0784 8.69583 13.7647 10.033C13.3304 11.8847 11.8847 13.3304 10.033 13.7648C8.69583 14.0784 7.30417 14.0784 5.96696 13.7647C4.11534 13.3304 2.66958 11.8847 2.23525 10.033C1.92158 8.69583 1.92158 7.30417 2.23525 5.96695Z" fill="#363853" fillOpacity="0.15" stroke="white" strokeWidth="1.5"/><path d="M9.66665 8.00016H6.33331M7.99998 9.66683L7.99998 6.3335" stroke="white" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                    เพิ่มกิจกรรม
+                  </button>
+                </div>
                 <div className="td-chips">
                   <button className={`td-chip${selectedChip === 'all' ? ' active' : ''}`} onClick={() => setSelectedChip('all')}>ทั้งหมด</button>
                   {Object.entries(CATEGORY_CONFIG).map(([key, cfg]) => (<button key={key} className={`td-chip${selectedChip === key ? ' active' : ''}`} onClick={() => setSelectedChip(key)}><span dangerouslySetInnerHTML={{ __html: cfg.icon }} /> {cfg.label}</button>))}
@@ -361,7 +370,7 @@ export default function TripDetailPage() {
                   {detailActivities.length > 0 ? categoryOrder.map(cat => {
                     if (!grouped[cat]?.length) return null;
                     const cfg = CATEGORY_CONFIG[cat];
-                    return (<div key={cat} className="activity-section"><div className="activity-section-header"><span className="activity-section-icon" dangerouslySetInnerHTML={{ __html: cfg.icon }} /><span className="activity-section-label">{cfg.label}</span></div><div className="activity-section-row">{grouped[cat].map((act, i) => { const origIdx = (trip.activities || []).indexOf(act); return <ActivityCard key={i} activity={act} onClick={() => handleActivityClick(act, origIdx)} />; })}</div></div>);
+                    return (<div key={cat} className="activity-section"><span className="activity-section-label">{cfg.label}</span><div className="activity-section-row">{grouped[cat].map((act, i) => { const origIdx = (trip.activities || []).indexOf(act); return <ActivityCard key={i} activity={act} onClick={() => handleActivityClick(act, origIdx)} />; })}</div></div>);
                   }) : <div className="td-empty">ไม่มีกิจกรรม</div>}
                 </div>
               </div>
@@ -378,7 +387,13 @@ export default function TripDetailPage() {
                 ))}
               </div>
               <div className="td-plan-content" style={{ display: 'block' }}>
-                <div className="td-schedule-header"><span className="td-schedule-title">ตารางเที่ยว</span></div>
+                <div className="td-schedule-header">
+                  <span className="td-schedule-title">ตารางเที่ยว</span>
+                  <button className="td-btn-add" onClick={() => { setSelectedActivity(null); setSelectedActivityIndex(-1); setShowActivityEditModal(true); }}>
+                    <svg width="24" height="24" viewBox="0 0 16 16" fill="none"><path d="M2.23525 5.96695C2.66958 4.11534 4.11534 2.66958 5.96696 2.23525C7.30417 1.92158 8.69583 1.92158 10.033 2.23525C11.8847 2.66958 13.3304 4.11534 13.7647 5.96696C14.0784 7.30417 14.0784 8.69583 13.7647 10.033C13.3304 11.8847 11.8847 13.3304 10.033 13.7648C8.69583 14.0784 7.30417 14.0784 5.96696 13.7647C4.11534 13.3304 2.66958 11.8847 2.23525 10.033C1.92158 8.69583 1.92158 7.30417 2.23525 5.96695Z" fill="#363853" fillOpacity="0.15" stroke="white" strokeWidth="1.5"/><path d="M9.66665 8.00016H6.33331M7.99998 9.66683L7.99998 6.3335" stroke="white" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                    เพิ่มกิจกรรม
+                  </button>
+                </div>
                 <div className="hp-schedule">
                   {planActivities.length > 0 ? (() => {
                     const monthsShort = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];

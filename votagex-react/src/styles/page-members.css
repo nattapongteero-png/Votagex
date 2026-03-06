@@ -4,71 +4,80 @@
   flex-direction: column;
   align-items: center;
   height: 100%;
-  padding: 20px 24px 100px;
-  gap: 16px;
+  padding: 20px 0 100px;
+  gap: 0;
   position: relative;
   background: white;
 }
 
-/* ===== Member Ticket Title ===== */
-.member-ticket-title {
-  font-family: 'Google Sans', sans-serif;
-  font-size: 26px;
-  font-weight: 400;
+.page6-layout > .page2-title,
+.page6-layout > .page2-subtitle,
+.page6-layout > .slider-container,
+.page6-layout > .spacer,
+.page6-layout > .page2-bottom-fade {
+  padding-left: 24px;
+  padding-right: 24px;
+}
+
+.page6-layout > .page2-title {
+  margin-top: 16px;
+  margin-bottom: 4px;
+}
+
+.page6-layout > .page2-subtitle {
+  margin-top: 0;
+  margin-bottom: 24px;
+}
+
+.page6-layout > .slider-container {
+  margin-top: 0;
+  margin-bottom: 8px;
+}
+
+/* Reset header negative margins since page6-layout has no horizontal padding */
+.page6-layout .page-header-bg {
+  width: 100%;
+  margin: -20px 0 0;
+}
+
+/* ===== Character Display ===== */
+.members-characters {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 393 / 338;
+  overflow: hidden;
+}
+
+.member-char {
+  position: absolute;
+  object-fit: cover;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(30px) scale(0.85);
+  transition: opacity 0.35s ease, transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.member-char.visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+/* ===== Slider Value ===== */
+.page6-layout .slider-value {
+  display: block;
+  font-family: 'Inter', sans-serif;
+  font-size: 30px;
+  font-weight: 900;
   color: #000;
   text-align: center;
-  margin: 0;
-  padding: 12px 24px 0;
-  position: relative;
-  z-index: 2;
-}
-
-/* ===== Member Icons - Single Stacked Row ===== */
-.member-icons-grid {
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  padding: 10px 24px 18px;
-  position: relative;
-  z-index: 2;
-  min-height: 50px;
-}
-
-.member-icon {
-  flex-shrink: 0;
-  line-height: 0;
-}
-
-.member-icon-full {
-  width: 30px;
-  height: 39px;
-}
-
-.member-icon-partial {
-  width: 17px;
-  height: 39px;
-}
-
-.member-icon svg {
-  display: block;
-  width: 100%;
-  height: 100%;
+  margin-top: 12px;
 }
 
 /* ===== Slider ===== */
 .page6-layout .slider-container {
   width: 100%;
-  padding: 0;
+  box-sizing: border-box;
   text-align: center;
-}
-
-.page6-layout .slider-value {
-  font-family: 'Google Sans', sans-serif;
-  font-size: 30px;
-  font-weight: 900;
-  color: var(--text);
-  margin-bottom: 16px;
-  text-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .page6-layout input[type="range"] {

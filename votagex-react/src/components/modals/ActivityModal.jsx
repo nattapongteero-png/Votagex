@@ -1,20 +1,11 @@
 import { useState, useEffect } from 'react';
 import { CATEGORY_CONFIG } from '../../constants/categories';
-import { convertCurrency, convertToTHB } from '../../constants/currencies';
+import { convertCurrency, convertToTHB, CURRENCIES, fetchRates } from '../../constants/currencies';
 import { getTripDays, formatDateThaiShort, formatISODate } from '../../utils/dates';
 import { formatNumberComma, stripCommas } from '../../utils/numbers';
 import useModalClose from '../../hooks/useModalClose';
-
-const CURRENCY_OPTIONS = [
-  { code: 'JPY', symbol: '¥' },
-  { code: 'USD', symbol: '$' },
-  { code: 'EUR', symbol: '€' },
-  { code: 'GBP', symbol: '£' },
-  { code: 'KRW', symbol: '₩' },
-  { code: 'CNY', symbol: '¥' },
-  { code: 'AUD', symbol: '$' },
-  { code: 'SGD', symbol: '$' }
-];
+import CurrencyModal from './CurrencyModal';
+import TimePickerModal from './TimePickerModal';
 
 export default function ActivityModal({ tripForm, editingActivity, editingIndex, onSave, onClose }) {
   const { isClosing, handleClose } = useModalClose(onClose);
@@ -31,11 +22,16 @@ export default function ActivityModal({ tripForm, editingActivity, editingIndex,
   const [checkOut, setCheckOut] = useState('');
   const [nameError, setNameError] = useState(false);
   const [dayError, setDayError] = useState(false);
+  const [showCurrencyModal, setShowCurrencyModal] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
 
   const isEditing = editingIndex >= 0;
   const cfg = CATEGORY_CONFIG[category];
   const tripDays = getTripDays(tripForm.startDate, tripForm.endDate);
   const todayStr = formatISODate(new Date());
+
+  // Fetch live rates on mount
+  useEffect(() => { fetchRates(); }, []);
 
   // Populate form when editing
   useEffect(() => {
@@ -147,9 +143,10 @@ export default function ActivityModal({ tripForm, editingActivity, editingIndex,
           <div className="modal-add-header-row">
             <h3 className="modal-add-title">{isEditing ? 'แก้ไข Activity' : 'เพิ่ม Activity'}</h3>
             <button className="modal-close-btn" onClick={handleClose}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#222B45" strokeWidth="2" strokeLinecap="round">
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
+              <svg viewBox="0 0 32 32" fill="none" width="24" height="24">
+                <path d="M19.1921 12.793L12.8027 19.1823" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M19.1998 19.1908L12.7998 12.7908" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path opacity="0.4" fillRule="evenodd" clipRule="evenodd" d="M3.6665 16.0001C3.6665 25.2494 6.7505 28.3334 15.9998 28.3334C25.2492 28.3334 28.3332 25.2494 28.3332 16.0001C28.3332 6.75075 25.2492 3.66675 15.9998 3.66675C6.7505 3.66675 3.6665 6.75075 3.6665 16.0001Z" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </button>
           </div>
@@ -225,13 +222,13 @@ export default function ActivityModal({ tripForm, editingActivity, editingIndex,
           {cfg.hasTime && !cfg.hasDate && (
             <div className="modal-section-card">
               <span className="modal-section-label">เวลา</span>
-              <div className="modal-time-row">
-                <input
-                  type="time"
-                  value={time}
-                  onChange={(e) => setTime(e.target.value)}
-                  placeholder="เลือกเวลา"
-                />
+              <div className="modal-time-row" onClick={() => setShowTimePicker(true)} style={{ cursor: 'pointer' }}>
+                <span style={{ flex: 1, fontFamily: "'Google Sans', sans-serif", fontSize: 14, color: time ? 'var(--text)' : '#a3a3a3' }}>
+                  {time || 'เลือกเวลา'}
+                </span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a3a3a3" strokeWidth="1.5" strokeLinecap="round">
+                  <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                </svg>
               </div>
             </div>
           )}
@@ -242,13 +239,13 @@ export default function ActivityModal({ tripForm, editingActivity, editingIndex,
               {/* Check-in Time */}
               <div className="modal-section-card">
                 <span className="modal-section-label">เวลาเช็คอิน</span>
-                <div className="modal-time-row">
-                  <input
-                    type="time"
-                    value={time}
-                    onChange={(e) => setTime(e.target.value)}
-                    placeholder="เลือกเวลา"
-                  />
+                <div className="modal-time-row" onClick={() => setShowTimePicker(true)} style={{ cursor: 'pointer' }}>
+                  <span style={{ flex: 1, fontFamily: "'Google Sans', sans-serif", fontSize: 14, color: time ? 'var(--text)' : '#a3a3a3' }}>
+                    {time || 'เลือกเวลา'}
+                  </span>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a3a3a3" strokeWidth="1.5" strokeLinecap="round">
+                    <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                  </svg>
                 </div>
               </div>
 
@@ -328,11 +325,10 @@ export default function ActivityModal({ tripForm, editingActivity, editingIndex,
                     value={foreignAmount}
                     onChange={(e) => handleForeignAmountChange(e.target.value)}
                   />
-                  <select value={currency} onChange={(e) => handleCurrencyChange(e.target.value)}>
-                    {CURRENCY_OPTIONS.map(c => (
-                      <option key={c.code} value={c.code}>{c.code} ({c.symbol})</option>
-                    ))}
-                  </select>
+                  <button type="button" className="currency-select-btn" onClick={() => setShowCurrencyModal(true)}>
+                    {(CURRENCIES.find(c => c.code === currency)?.flag || '') + ' ' + currency}
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+                  </button>
                 </div>
               </div>
             </div>
@@ -356,6 +352,21 @@ export default function ActivityModal({ tripForm, editingActivity, editingIndex,
           <button className="btn-gradient-save" onClick={handleSave}>บันทึก</button>
         </div>
       </div>
+
+      {showCurrencyModal && (
+        <CurrencyModal
+          selected={currency}
+          onSelect={(code) => { handleCurrencyChange(code); setShowCurrencyModal(false); }}
+          onClose={() => setShowCurrencyModal(false)}
+        />
+      )}
+      {showTimePicker && (
+        <TimePickerModal
+          value={time}
+          onConfirm={(val) => { setTime(val); setShowTimePicker(false); }}
+          onClose={() => setShowTimePicker(false)}
+        />
+      )}
     </div>
   );
 }

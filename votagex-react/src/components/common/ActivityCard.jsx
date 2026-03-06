@@ -68,12 +68,9 @@ export default function ActivityCard({ activity, showRemove, onRemove, onClick }
         <span className="act-card-name">{activity.name}</span>
         <span className="act-card-icon" dangerouslySetInnerHTML={{ __html: cfg.icon }} />
       </div>
-      <div className="act-card-info">{infoContent}</div>
-      {cfg.illust && (
-        <div className="act-card-illust">
-          <img src={cfg.illust} alt="" />
-        </div>
-      )}
+      <div className="act-card-body">
+        <div className="act-card-info">{infoContent}</div>
+      </div>
     </div>
   );
 }

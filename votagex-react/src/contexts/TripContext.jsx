@@ -1,5 +1,5 @@
-import { createContext, useContext, useState, useCallback } from 'react';
-import { saveTrip as storageSaveTrip, getTrips as storageGetTrips, updateTrip as storageUpdateTrip, joinTrip as storageJoinTrip, deleteTrip as storageDeleteTrip } from '../services/storage';
+import { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { saveTrip as storageSaveTrip, getTrips as storageGetTrips, updateTrip as storageUpdateTrip, joinTrip as storageJoinTrip, deleteTrip as storageDeleteTrip, subscribeTrips } from '../services/storage';
 import { getCurrentUser } from '../services/firebase';
 
 const TripContext = createContext(null);
@@ -21,6 +21,16 @@ export function TripProvider({ children }) {
   const [tripForm, setTripForm] = useState({ ...INITIAL_TRIP_FORM });
   const [trips, setTrips] = useState([]);
   const [currentTrip, setCurrentTrip] = useState(null);
+
+  // Realtime subscription to Firestore
+  useEffect(() => {
+    try {
+      const unsub = subscribeTrips((tripsData) => setTrips(tripsData));
+      return () => unsub();
+    } catch {
+      storageGetTrips().then(t => setTrips(t));
+    }
+  }, []);
 
   const resetTripForm = useCallback(() => {
     const savedName = localStorage.getItem('votagex_username') || '';

@@ -2,7 +2,6 @@ import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTrips } from '../contexts/TripContext';
 import { useAuth } from '../contexts/AuthContext';
-import { backfillTripDescriptions } from '../services/storage';
 import { formatISODate, activityMatchesDate, formatDateThaiShort } from '../utils/dates';
 import { CATEGORY_CONFIG } from '../constants/categories';
 import Timeline from '@mui/lab/Timeline';
@@ -55,7 +54,6 @@ export default function HomePage() {
   const collapsedRef = useRef(false);
 
   useEffect(() => {
-    backfillTripDescriptions();
     loadTrips();
   }, [loadTrips]);
 
@@ -434,7 +432,8 @@ export default function HomePage() {
         {/* Add button */}
         <button className="hp-add-btn" onClick={handleAddButton}>
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path d="M8 1V15M1 8H15" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+            <path d="M2.23525 5.96695C2.66958 4.11534 4.11534 2.66958 5.96696 2.23525C7.30417 1.92158 8.69583 1.92158 10.033 2.23525C11.8847 2.66958 13.3304 4.11534 13.7647 5.96696C14.0784 7.30417 14.0784 8.69583 13.7647 10.033C13.3304 11.8847 11.8847 13.3304 10.033 13.7648C8.69583 14.0784 7.30417 14.0784 5.96696 13.7647C4.11534 13.3304 2.66958 11.8847 2.23525 10.033C1.92158 8.69583 1.92158 7.30417 2.23525 5.96695Z" fill="#363853" fillOpacity="0.15" stroke="white" strokeWidth="1.5"/>
+            <path d="M9.66665 8.00016H6.33331M7.99998 9.66683L7.99998 6.3335" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
           </svg>
           {addButtonMode === 'activity' ? 'เพิ่ม Activity' : 'เพิ่มทริป'}
         </button>
@@ -451,8 +450,9 @@ export default function HomePage() {
                 className="hp-section-arrow"
                 onClick={() => navigate(`/trip/${tripOnDate.id}`)}
               >
-                <svg width="8" height="13" viewBox="0 0 8 13" fill="none">
-                  <path d="M1 1L7 6.5L1 12" stroke="#222B45" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <path d="M3.35288 8.95043C4.00437 6.17301 6.17301 4.00437 8.95043 3.35288C10.9563 2.88237 13.0437 2.88237 15.0496 3.35288C17.827 4.00437 19.9956 6.17301 20.6471 8.95044C21.1176 10.9563 21.1176 13.0437 20.6471 15.0496C19.9956 17.827 17.827 19.9956 15.0496 20.6471C13.0437 21.1176 10.9563 21.1176 8.95044 20.6471C6.17301 19.9956 4.00437 17.827 3.35288 15.0496C2.88237 13.0437 2.88237 10.9563 3.35288 8.95043Z" fill="#363853" fillOpacity="0.15" stroke="#363853" strokeWidth="1.5"/>
+                  <path d="M8.5 12L15.5 12M15.5 12L13 9.5M15.5 12L13 14.5" stroke="#363853" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               </button>
             )}
@@ -477,9 +477,10 @@ export default function HomePage() {
                 className="hp-section-arrow"
                 onClick={() => navigate(`/trip/${tripOnDate.id}`)}
               >
-                <svg width="8" height="13" viewBox="0 0 8 13" fill="none">
-                  <path d="M1 1L7 6.5L1 12" stroke="#222B45" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <path d="M3.35288 8.95043C4.00437 6.17301 6.17301 4.00437 8.95043 3.35288C10.9563 2.88237 13.0437 2.88237 15.0496 3.35288C17.827 4.00437 19.9956 6.17301 20.6471 8.95044C21.1176 10.9563 21.1176 13.0437 20.6471 15.0496C19.9956 17.827 17.827 19.9956 15.0496 20.6471C13.0437 21.1176 10.9563 21.1176 8.95044 20.6471C6.17301 19.9956 4.00437 17.827 3.35288 15.0496C2.88237 13.0437 2.88237 10.9563 3.35288 8.95043Z" fill="#363853" fillOpacity="0.15" stroke="#363853" strokeWidth="1.5"/>
+                  <path d="M8.5 12L15.5 12M15.5 12L13 9.5M15.5 12L13 14.5" stroke="#363853" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
               </button>
             )}
           </div>
