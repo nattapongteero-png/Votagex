@@ -70,7 +70,7 @@ export default function ActivityModal({ tripForm, editingActivity, editingIndex,
   }, [editingActivity]);
 
   const handleAmountChange = (val) => {
-    const clean = stripCommas(val);
+    const clean = stripCommas(val).replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
     setAmount(clean);
     const num = parseFloat(clean);
     if (!isNaN(num) && num > 0) {

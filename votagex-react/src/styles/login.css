@@ -93,7 +93,7 @@
 }
 
 .logout-sheet-name {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 700;
   color: #000;
@@ -103,7 +103,7 @@
 }
 
 .logout-sheet-email {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 12px;
   color: #999;
   white-space: nowrap;
@@ -130,7 +130,7 @@
 }
 
 .logout-sheet-btn span {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 600;
   color: #EF4444;

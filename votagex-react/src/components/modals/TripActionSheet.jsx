@@ -28,7 +28,7 @@ export default function TripActionSheet({ trip, onClose, onEdit, onDelete, onLea
       <div className="modal-sheet trip-action-sheet">
         <h3>{isOwner ? 'จัดการทริป' : 'ตัวเลือก'}</h3>
         <div className="trip-action-list">
-          {(isOwner || isMember) && (
+          {isOwner && (
             <button className="trip-action-item" onClick={() => { handleClose(); onEdit?.(trip); }}>
               <span className="action-icon">
                 <svg width="20" height="20" viewBox="0 0 16 16" fill="none">

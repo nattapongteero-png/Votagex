@@ -16,6 +16,7 @@ import ActivityCard from '../components/common/ActivityCard';
 import TripCard from '../components/common/TripCard';
 import ActivityModal from '../components/modals/ActivityModal';
 import ActivityDetailModal from '../components/modals/ActivityDetailModal';
+import JoinConfirmModal from '../components/modals/JoinConfirmModal';
 
 function getStartOfWeek(baseDate, offset) {
   const dayOfWeek = baseDate.getDay();
@@ -39,12 +40,14 @@ function getActivityStatus(act) {
 
 export default function HomePage() {
   const navigate = useNavigate();
-  const { trips, loadTrips, currentTrip, resetTripForm, updateExistingTrip } = useTrips();
-  const { username, userImage, authUser } = useAuth();
+  const { trips, loadTrips, currentTrip, resetTripForm, updateExistingTrip, joinExistingTrip, setCurrentTrip } = useTrips();
+  const { username, userImage, authUser, updateUserImage } = useAuth();
 
   const [selectedDate, setSelectedDate] = useState(formatISODate(new Date()));
   const [weekOffset, setWeekOffset] = useState(0);
   const [slideAnim, setSlideAnim] = useState('');
+  const [confirmTrip, setConfirmTrip] = useState(null);
+  const [joining, setJoining] = useState(false);
   const [showActivityModal, setShowActivityModal] = useState(false);
   const [detailActivity, setDetailActivity] = useState(null);
   const [detailActivityIndex, setDetailActivityIndex] = useState(-1);
@@ -257,6 +260,21 @@ export default function HomePage() {
   // Determine add button mode
   const addButtonMode = tripOnDate ? 'activity' : 'trip';
 
+  const handleJoinConfirm = async () => {
+    if (!confirmTrip) return;
+    setJoining(true);
+    try {
+      await joinExistingTrip(confirmTrip.id, { name: username, image: userImage });
+      if (userImage) updateUserImage(userImage);
+      setCurrentTrip({ ...confirmTrip });
+      setConfirmTrip(null);
+      navigate(`/trip/${confirmTrip.id}`);
+    } catch (err) {
+      console.error('Error joining trip:', err);
+      setJoining(false);
+    }
+  };
+
   const handleAddButton = () => {
     if (addButtonMode === 'trip') {
       resetTripForm();
@@ -357,7 +375,7 @@ export default function HomePage() {
   }, [doSwipe]);
 
   const displayName = authUser?.displayName || username || 'Traveler';
-  const displayPhoto = authUser?.photoURL || userImage;
+  const displayPhoto = userImage || authUser?.photoURL;
 
   return (
     <div className={`homepage${headerCollapsed ? ' header-collapsed' : ''}`} style={{ display: 'flex' }}>
@@ -545,7 +563,7 @@ export default function HomePage() {
                   key={trip.id}
                   trip={trip}
                   showEditButton={false}
-                  onJoin={() => navigate('/join')}
+                  onJoin={(t) => setConfirmTrip(t)}
                   onView={(t) => navigate(`/trip/${t.id}`)}
                 />
               ))}
@@ -553,6 +571,17 @@ export default function HomePage() {
           </div>
         )}
       </div>
+
+      {confirmTrip && (
+        <JoinConfirmModal
+          trip={confirmTrip}
+          userName={username || ''}
+          trips={trips}
+          joining={joining}
+          onConfirm={handleJoinConfirm}
+          onClose={() => { setConfirmTrip(null); setJoining(false); }}
+        />
+      )}
 
       {showActivityModal && tripOnDate && (
         <ActivityModal

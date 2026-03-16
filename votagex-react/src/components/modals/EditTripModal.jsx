@@ -1,7 +1,9 @@
 import { useState, useRef } from 'react';
 import { formatNumberComma, stripCommas } from '../../utils/numbers';
+import { formatDateThai } from '../../utils/dates';
 import { uploadCoverImage, DEFAULT_TRIP_DESCRIPTION } from '../../services/storage';
 import useModalClose from '../../hooks/useModalClose';
+import CalendarModal from './CalendarModal';
 
 export default function EditTripModal({ trip, onClose, onSave }) {
   const { isClosing, handleClose } = useModalClose(onClose);
@@ -14,15 +16,15 @@ export default function EditTripModal({ trip, onClose, onSave }) {
   const [memberCount, setMemberCount] = useState(trip.memberCount || 1);
   const [coverImage, setCoverImage] = useState(trip.coverImage || null);
   const [saving, setSaving] = useState(false);
+  const [showCalendar, setShowCalendar] = useState(false);
   const coverFileRef = useRef(null);
 
   const budgetDisplay = budget ? formatNumberComma(budget) : '';
 
   const handleBudgetChange = (e) => {
-    const raw = stripCommas(e.target.value);
-    if (raw === '' || raw === '-') { setBudget(''); return; }
-    const num = parseFloat(raw);
-    if (!isNaN(num)) setBudget(raw);
+    const raw = stripCommas(e.target.value).replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
+    if (raw === '') { setBudget(''); return; }
+    setBudget(raw);
   };
 
   const handleCoverChange = (e) => {
@@ -30,6 +32,12 @@ export default function EditTripModal({ trip, onClose, onSave }) {
     if (file) {
       uploadCoverImage(file).then(url => setCoverImage(url));
     }
+  };
+
+  const handleDatesConfirm = (start, end) => {
+    setStartDate(start);
+    setEndDate(end);
+    setShowCalendar(false);
   };
 
   const handleSave = async () => {
@@ -107,15 +115,19 @@ export default function EditTripModal({ trip, onClose, onSave }) {
             <input type="text" className="input-pill" placeholder="0" inputMode="decimal" value={budgetDisplay} onChange={handleBudgetChange} />
           </div>
 
-          {/* Dates */}
+          {/* Dates - using CalendarModal */}
           <div className="edit-date-row">
-            <div className="edit-date-field">
+            <div className="edit-date-field" onClick={() => setShowCalendar(true)} style={{ cursor: 'pointer' }}>
               <label className="edit-field-label">ขาไป</label>
-              <input type="date" className="input-pill" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+              <div className="input-pill edit-date-display">
+                {startDate ? formatDateThai(startDate) : <span className="edit-date-placeholder">เลือกวัน</span>}
+              </div>
             </div>
-            <div className="edit-date-field">
+            <div className="edit-date-field" onClick={() => setShowCalendar(true)} style={{ cursor: 'pointer' }}>
               <label className="edit-field-label">ขากลับ</label>
-              <input type="date" className="input-pill" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+              <div className="input-pill edit-date-display">
+                {endDate ? formatDateThai(endDate) : <span className="edit-date-placeholder">เลือกวัน</span>}
+              </div>
             </div>
           </div>
 
@@ -140,6 +152,15 @@ export default function EditTripModal({ trip, onClose, onSave }) {
           <button className="btn btn-primary" disabled={saving} onClick={handleSave}>{saving ? 'กำลังบันทึก...' : 'บันทึก'}</button>
         </div>
       </div>
+
+      {showCalendar && (
+        <CalendarModal
+          startDate={startDate}
+          endDate={endDate}
+          onConfirm={handleDatesConfirm}
+          onClose={() => setShowCalendar(false)}
+        />
+      )}
     </div>
   );
 }

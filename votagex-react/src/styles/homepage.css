@@ -57,7 +57,7 @@
 }
 
 .hp-logo {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 30px;
   font-weight: 900;
   letter-spacing: 0.05em;
@@ -96,7 +96,7 @@
 }
 
 .hp-welcome {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 12px;
   font-weight: 400;
   color: #666;
@@ -192,7 +192,7 @@
 }
 
 .hp-countdown-num {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 24px;
   font-weight: 500;
   color: #1a1a2e;
@@ -200,14 +200,14 @@
 }
 
 .hp-countdown-label {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 24px;
   font-weight: 500;
   color: #1a1a2e;
 }
 
 .hp-trip-subtitle {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 12px;
   font-weight: 400;
   color: #a3a3a3;
@@ -266,7 +266,7 @@
   flex: 1;
   min-width: 0;
   text-align: center;
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 12px;
   font-weight: 400;
   color: #8f9bb3;
@@ -301,7 +301,7 @@
   align-items: center;
   justify-content: center;
   border-radius: 10px;
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 12px;
   font-weight: 400;
   color: #a3a3a3;
@@ -361,7 +361,7 @@
   border: none;
   background: linear-gradient(to top, #2463eb, #36bffa);
   color: #fff;
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
@@ -392,7 +392,7 @@
 }
 
 .hp-section-title {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 16px;
   font-weight: 600;
   color: #1a1a2e;
@@ -420,7 +420,7 @@
 }
 
 .hp-recent-empty {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 13px;
   color: #a3a3a3;
   text-align: center;
@@ -555,7 +555,7 @@
 
 /* Timeline text styles */
 .hp-timeline-name {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 600;
   color: #1a1a2e;
@@ -565,7 +565,7 @@
 }
 
 .hp-timeline-status {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 11px;
   font-weight: 400;
   color: #2463eb;
@@ -573,7 +573,7 @@
 }
 
 .hp-timeline-time {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 12px;
   font-weight: 500;
   color: #8f9bb3;
@@ -590,20 +590,20 @@
 }
 
 .hp-schedule-day-num {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 13px;
   font-weight: 700;
   color: #2463eb;
 }
 
 .hp-schedule-day-date {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 12px;
   color: #6b7280;
 }
 
 .hp-schedule-empty {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 13px;
   color: #a3a3a3;
   text-align: center;
@@ -688,7 +688,7 @@
 }
 
 .hp-tab span {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 10px;
   font-weight: 500;
   color: #a3a3a3;
@@ -939,7 +939,7 @@
   border: none;
   background: linear-gradient(to top, #2463eb, #36bffa);
   color: #fff;
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
@@ -974,18 +974,31 @@
   background: linear-gradient(135deg, #4a7dff 0%, #2463eb 100%);
 }
 
-/* Expired my-trip button — grey but still clickable */
-.hp-expired-view {
-  background: #e5e5e5;
-  color: #737373;
-  cursor: pointer;
+/* Expired card — greyed out, not clickable */
+.hp-other-card.expired {
+  opacity: 0.55;
+  filter: grayscale(0.6);
+  cursor: default;
 }
 
-/* ===== Join Confirmation Modal ===== */
-.join-confirm-overlay {
+/* Edit button (3 dots) still clickable on expired cards */
+.hp-other-card.expired .hp-other-edit-btn {
+  pointer-events: auto;
+  opacity: 1;
+  filter: none;
+}
+
+.hp-expired-view {
+  background: #d4d4d4 !important;
+  color: #888 !important;
+  cursor: default;
+}
+
+/* ===== Join Confirmation Modal (jcm) ===== */
+.jcm-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.45);
+  background: rgba(0, 0, 0, 0.5);
   z-index: 9999;
   display: flex;
   align-items: center;
@@ -994,117 +1007,160 @@
   animation: modalFadeIn 0.3s ease-out;
 }
 
-.join-confirm-card {
+.jcm-overlay.closing {
+  animation: modalFadeOut 0.25s ease-in forwards;
+}
+
+.jcm-overlay.closing .jcm-card {
+  animation: jcmCardOut 0.25s ease-in forwards;
+}
+
+@keyframes jcmCardIn {
+  from { opacity: 0; transform: scale(0.92) translateY(12px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes jcmCardOut {
+  from { opacity: 1; transform: scale(1) translateY(0); }
+  to   { opacity: 0; transform: scale(0.92) translateY(12px); }
+}
+
+.jcm-card {
   background: #fff;
   border-radius: 24px;
   padding: 32px 24px 24px;
   width: 100%;
   max-width: 320px;
   text-align: center;
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.18);
-  animation: joinModalIn 0.25s ease-out;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
+  animation: jcmCardIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
 }
 
-@keyframes joinModalIn {
-  from { opacity: 0; transform: scale(0.9) translateY(10px); }
-  to { opacity: 1; transform: scale(1) translateY(0); }
-}
-
-@keyframes joinModalOut {
-  from { opacity: 1; transform: scale(1) translateY(0); }
-  to { opacity: 0; transform: scale(0.9) translateY(10px); }
-}
-
-.join-confirm-overlay.closing {
-  animation: modalFadeOut 0.25s ease-in forwards;
-}
-
-.join-confirm-overlay.closing .join-confirm-card {
-  animation: joinModalOut 0.25s ease-in forwards;
-}
-
-.join-confirm-icon {
+/* Icon wrapper */
+.jcm-icon-wrap {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   margin-bottom: 16px;
 }
 
-.join-confirm-trip-name {
-  font-family: 'IBM Plex Sans Thai', sans-serif;
-  font-size: 18px;
+.jcm-icon-wrap.warn {
+  background: #FFFAEB;
+  border: 1.5px solid #FEDF89;
+}
+
+.jcm-icon-wrap.info {
+  background: #EFF4FF;
+  border: 1.5px solid #c7d7fd;
+}
+
+.jcm-icon-wrap.danger {
+  background: #FEF3F2;
+  border: 1.5px solid #FECDCA;
+}
+
+/* Title */
+.jcm-title {
+  font-family: 'IBM Plex Sans Thai', 'Google Sans', sans-serif;
+  font-size: 20px;
   font-weight: 700;
-  color: #1a1a2e;
-  margin-bottom: 8px;
+  color: #101828;
+  margin-bottom: 10px;
+  line-height: 1.3;
+}
+
+/* Body text */
+.jcm-body {
+  font-family: 'IBM Plex Sans Thai', 'Google Sans', sans-serif;
+  font-size: 14px;
+  color: #667085;
+  line-height: 1.65;
+  margin-bottom: 28px;
   word-break: break-word;
 }
 
-.join-confirm-text {
-  font-family: 'IBM Plex Sans Thai', sans-serif;
-  font-size: 14px;
-  color: #666;
-  margin-bottom: 24px;
+.jcm-highlight {
+  color: #344054;
+  font-weight: 600;
 }
 
-.join-confirm-actions {
+/* Actions */
+.jcm-actions {
+  width: 100%;
   display: flex;
-  gap: 12px;
+  gap: 10px;
 }
 
-.join-confirm-cancel {
+.jcm-actions.one {
+  flex-direction: column;
+}
+
+.jcm-actions.two {
+  flex-direction: row;
+}
+
+.jcm-btn {
   flex: 1;
-  padding: 12px 0;
-  border: 1.5px solid #ddd;
-  border-radius: 14px;
-  background: #fff;
-  font-family: 'IBM Plex Sans Thai', sans-serif;
+  padding: 13px 0;
+  border-radius: 100px;
+  font-family: 'IBM Plex Sans Thai', 'Google Sans', sans-serif;
   font-size: 15px;
   font-weight: 600;
-  color: #666;
   cursor: pointer;
-  transition: background 0.15s;
-}
-
-.join-confirm-cancel:active {
-  background: #f5f5f5;
-}
-
-.join-confirm-ok {
-  flex: 1;
-  padding: 12px 0;
   border: none;
-  border-radius: 14px;
-  background: linear-gradient(135deg, #4a7dff 0%, #2463eb 100%);
-  font-family: 'IBM Plex Sans Thai', sans-serif;
-  font-size: 15px;
-  font-weight: 600;
-  color: #fff;
-  cursor: pointer;
-  transition: opacity 0.15s;
+  transition: opacity 0.15s, background 0.15s;
 }
 
-.join-confirm-ok:active {
+.jcm-btn.cancel {
+  background: #F9FAFB;
+  border: 1.5px solid #E4E7EC;
+  color: #344054;
+}
+
+.jcm-btn.cancel:active {
+  background: #f0f1f3;
+}
+
+.jcm-btn.confirm {
+  background: linear-gradient(135deg, #4a7dff 0%, #2463eb 100%);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(36, 99, 235, 0.3);
+}
+
+.jcm-btn.confirm:active {
   opacity: 0.9;
 }
 
-.join-confirm-ok:disabled {
+.jcm-btn.confirm:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-.join-confirm-warning {
-  background: #fff3f3;
-  border: 1px solid #fcc;
-  border-radius: 12px;
-  padding: 12px 14px;
-  margin-bottom: 20px;
-  font-family: 'IBM Plex Sans Thai', sans-serif;
-  font-size: 13px;
-  color: #c0392b;
-  line-height: 1.5;
-  text-align: left;
+.jcm-btn.warn-ok {
+  background: linear-gradient(135deg, #f5c842 0%, #EAAA08 100%);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(234, 170, 8, 0.3);
 }
 
-.join-confirm-warning svg {
-  vertical-align: -3px;
-  margin-right: 4px;
+.jcm-btn.warn-ok:active {
+  opacity: 0.9;
+}
+
+.jcm-btn.danger {
+  background: linear-gradient(135deg, #F97066 0%, #D92D20 100%);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(217, 45, 32, 0.3);
+}
+
+.jcm-btn.danger:active {
+  opacity: 0.9;
 }
 
 /* ---- Header Collapse on Scroll ---- */

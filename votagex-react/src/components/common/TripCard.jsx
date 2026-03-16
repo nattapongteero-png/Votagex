@@ -7,7 +7,7 @@ export default function TripCard({ trip, showEditButton, onEdit, onJoin, onView,
   const maxMembers = trip.memberCount || 1;
   const isFull = currentMembers >= maxMembers;
   const isJoined = isTripOwner(trip) || isTripMember(trip);
-  const disabled = !isJoined && (isExpired || isFull);
+  const disabled = isExpired || (!isJoined && isFull);
 
   const dateText = (trip.startDate && trip.endDate)
     ? `${formatDateShort(trip.startDate)} - ${formatDateShort(trip.endDate)}`
@@ -21,7 +21,7 @@ export default function TripCard({ trip, showEditButton, onEdit, onJoin, onView,
   const defaultAvatarSvg = `<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>`;
 
   return (
-    <div className={`hp-other-card${disabled ? ' disabled' : ''}`} onClick={onCardClick}>
+    <div className={`hp-other-card${disabled ? ' disabled' : ''}${isExpired ? ' expired' : ''}`} onClick={isExpired ? undefined : onCardClick}>
       <div className="hp-other-card-top">
         <div className="hp-other-flag">
           {trip.coverImage ? (
@@ -73,16 +73,16 @@ export default function TripCard({ trip, showEditButton, onEdit, onJoin, onView,
         )}
       </div>
 
-      {isJoined ? (
+      {isExpired ? (
+        <button className="hp-other-join-btn hp-expired-view" disabled>สิ้นสุดทริป</button>
+      ) : isJoined ? (
         <button className="hp-other-join-btn hp-other-view-btn" onClick={(e) => { e.stopPropagation(); onView ? onView(trip) : onCardClick?.(); }}>
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none">
-            <path d="M12 3C10.9767 3 9.95334 3.11763 8.95043 3.35288C6.17301 4.00437 4.00437 6.17301 3.35288 8.95043C2.88237 10.9563 2.88237 13.0437 3.35288 15.0496C4.00437 17.827 6.17301 19.9956 8.95044 20.6471C10.9563 21.1176 13.0437 21.1176 15.0496 20.6471C17.827 19.9956 19.9956 17.827 20.6471 15.0496C20.8824 14.0466 21 13.0233 21 12" stroke="#ffffff" stroke-width="2" stroke-linecap="round" />
-            <path d="M17 3H21M21 3V7.66667M21 3L15 10" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M12 3C10.9767 3 9.95334 3.11763 8.95043 3.35288C6.17301 4.00437 4.00437 6.17301 3.35288 8.95043C2.88237 10.9563 2.88237 13.0437 3.35288 15.0496C4.00437 17.827 6.17301 19.9956 8.95044 20.6471C10.9563 21.1176 13.0437 21.1176 15.0496 20.6471C17.827 19.9956 19.9956 17.827 20.6471 15.0496C20.8824 14.0466 21 13.0233 21 12" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" />
+            <path d="M17 3H21M21 3V7.66667M21 3L15 10" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
           ดูข้อมูลทริป
         </button>
-      ) : isExpired ? (
-        <button className="hp-other-join-btn hp-expired-view" onClick={(e) => { e.stopPropagation(); onCardClick?.(); }}>สิ้นสุดแล้ว</button>
       ) : isFull ? (
         <button className="hp-other-join-btn" disabled>เต็มแล้ว ({currentMembers}/{maxMembers})</button>
       ) : (

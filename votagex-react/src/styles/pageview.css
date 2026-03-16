@@ -65,21 +65,18 @@
   align-self: flex-start;
   padding: 12px 24px;
   border-radius: 100px;
-  border: 1.5px solid #2463eb;
-  background: white;
-  color: #2463eb;
-  font-family: 'Google Sans', sans-serif;
+  border: 1.5px solid #E4E7EC;
+  background: #F9FAFB;
+  color: #344054;
+  font-family: 'Google Sans', 'Inter', sans-serif;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   transition: background 0.2s;
 }
 
 .btn-back-pill:active {
-  background: rgba(36, 99, 235, 0.05);
-}
-
-.btn-back-pill:active {
+  background: #f0f1f3;
   transform: scale(0.97);
 }
 
@@ -175,7 +172,7 @@
 }
 
 .page2-title {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 24px;
   font-weight: 900;
   color: var(--text);
@@ -185,7 +182,7 @@
 }
 
 .page2-subtitle {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 900;
   color: var(--text-secondary);
@@ -206,8 +203,8 @@
   border: none;
   border-radius: 100px;
   background: #fafafa;
-  font-family: 'Google Sans', sans-serif;
-  font-size: 14px;
+  font-family: 'Google Sans', 'Inter', sans-serif;
+  font-size: 16px;
   font-weight: 600;
   color: var(--text);
   outline: none;
@@ -230,7 +227,7 @@
   width: 100%;
   max-width: 100%;
   padding: 16px;
-  border-radius: 30px;
+  border-radius: 100px;
   font-size: 1.05rem;
   transition: background 0.2s, border-color 0.2s, color 0.2s;
 }
@@ -265,7 +262,7 @@
   border-radius: 100px;
   background: linear-gradient(to top, #2463eb, #36bffa);
   color: #fff;
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;

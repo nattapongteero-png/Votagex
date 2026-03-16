@@ -60,7 +60,7 @@
 }
 
 .td-header-title {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 30px;
   font-weight: 900;
   background: linear-gradient(to right, #0a296b, #092834);
@@ -71,7 +71,7 @@
 }
 
 .td-header-subtitle {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 12px;
   font-weight: 400;
   color: #666;
@@ -357,7 +357,7 @@
   height: 48px;
   border: none;
   border-radius: 100px;
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;
@@ -429,14 +429,14 @@
 }
 
 .td-day-label {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 700;
   color: #000;
 }
 
 .td-day-total {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 700;
   color: #026aa2;
@@ -447,14 +447,14 @@
 }
 
 .td-day-date {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 11px;
   font-weight: 400;
   color: #a3a3a3;
 }
 
 .td-day-total-label {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 10px;
   font-weight: 400;
   color: #a3a3a3;
@@ -473,7 +473,7 @@
 }
 
 .td-expense-title {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 600;
   color: #000;
@@ -507,7 +507,7 @@
 }
 
 .td-expense-value {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 600;
   color: #026aa2;
@@ -537,7 +537,7 @@
 }
 
 .td-expense-cat-label {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 10px;
   font-weight: 400;
   color: #666;
@@ -573,7 +573,7 @@
 }
 
 .td-activities-title {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 18px;
   font-weight: 700;
   color: #000;
@@ -591,7 +591,7 @@
   border: none;
   background: #2463eb;
   color: #fff;
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 12px;
   font-weight: 400;
   cursor: pointer;
@@ -633,7 +633,7 @@
   border-radius: 100px;
   border: 1px solid #2463eb;
   background: #e8eefd;
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 400;
   color: #2463eb;
@@ -701,7 +701,7 @@
 
 /* Empty state */
 .td-empty {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 13px;
   color: #a3a3a3;
   text-align: center;
@@ -722,7 +722,7 @@
 }
 
 .td-schedule-title {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 18px;
   font-weight: 700;
   color: #000;
@@ -733,7 +733,7 @@
 }
 
 .hp-schedule-meta {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 10px;
   font-weight: 400;
   color: #a3a3a3;

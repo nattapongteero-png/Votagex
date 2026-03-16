@@ -55,7 +55,7 @@
 }
 
 .me-title {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 30px;
   font-weight: 900;
   background: linear-gradient(to right, #0a296b, #092834);
@@ -66,7 +66,7 @@
 }
 
 .me-welcome {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 12px;
   font-weight: 400;
   color: #666;
@@ -127,7 +127,7 @@
 }
 
 .me-menu-label {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 500;
   color: #000;
@@ -150,14 +150,14 @@
 }
 
 .me-user-email {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 12px;
   color: #999;
   margin: 0;
 }
 
 .me-logout-text {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 12px;
   font-weight: 600;
   color: #EF4444;

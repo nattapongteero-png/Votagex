@@ -250,7 +250,7 @@ export default function TripDetailPage() {
               <span className="td-header-title">iTrip</span>
               <span className="td-header-subtitle">Welcome , {displayName}</span>
             </div>
-            <button className="td-close-btn" onClick={() => navigate(-1)}>
+            <button className="td-close-btn" onClick={() => navigate('/home')}>
               <svg viewBox="0 0 32 32" fill="none" width="24" height="24">
                 <path d="M19.1921 12.793L12.8027 19.1823" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 <path d="M19.1998 19.1908L12.7998 12.7908" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -337,7 +337,7 @@ export default function TripDetailPage() {
               <div className="td-days">
                 {dayCards.map(c => (
                   <div key={c.key} className={`td-day-card${selectedDay === c.key ? ' active' : ''}`} onClick={() => setSelectedDay(c.key)}>
-                    <div className="td-day-top"><span className="td-day-label">{c.label}</span><span className={`td-day-total${c.total > 0 ? ' has-expense' : ''}`}>{formatBudgetDisplay(c.total)}</span></div>
+                    <div className="td-day-top"><span className="td-day-label">{c.label}</span><span className={`td-day-total${c.total > 0 ? ' has-expense' : ''}`}>{c.total > 0 ? `-${formatBudgetDisplay(c.total)}` : '0'}</span></div>
                     <div className="td-day-top"><span className="td-day-date">{c.date}</span><span className="td-day-total-label">รวม</span></div>
                   </div>
                 ))}
@@ -346,10 +346,10 @@ export default function TripDetailPage() {
                 <span className="td-expense-title">{selectedDay === 'all' ? 'สรุปค่าใช้จ่ายทั้งหมด' : 'สรุปค่าใช้จ่ายรายวัน'}</span>
                 <div className="td-expense-rows">
                   <div className="td-expense-row">
-                    {row1Cats.map(cat => { const cfg = CATEGORY_CONFIG[cat]; const val = categoryTotals[cat] || 0; return (<div key={cat} className="td-expense-item"><span className={`td-expense-value${val > 0 ? ' has-expense' : ''}`}>{formatBudgetDisplay(val)}</span><div className="td-expense-cat"><span className="td-expense-cat-icon" dangerouslySetInnerHTML={{ __html: cfg.icon }} /><span className="td-expense-cat-label">{cfg.label}</span></div></div>); })}
+                    {row1Cats.map(cat => { const cfg = CATEGORY_CONFIG[cat]; const val = categoryTotals[cat] || 0; return (<div key={cat} className="td-expense-item"><span className={`td-expense-value${val > 0 ? ' has-expense' : ''}`}>{val > 0 ? `-${formatBudgetDisplay(val)}` : '0'}</span><div className="td-expense-cat"><span className="td-expense-cat-icon" dangerouslySetInnerHTML={{ __html: cfg.icon }} /><span className="td-expense-cat-label">{cfg.label}</span></div></div>); })}
                   </div>
                   <div className="td-expense-row">
-                    {row2Cats.map(cat => { const cfg = CATEGORY_CONFIG[cat]; const val = categoryTotals[cat] || 0; return (<div key={cat} className="td-expense-item"><span className={`td-expense-value${val > 0 ? ' has-expense' : ''}`}>{formatBudgetDisplay(val)}</span><div className="td-expense-cat"><span className="td-expense-cat-icon" dangerouslySetInnerHTML={{ __html: cfg.icon }} /><span className="td-expense-cat-label">{cfg.label}</span></div></div>); })}
+                    {row2Cats.map(cat => { const cfg = CATEGORY_CONFIG[cat]; const val = categoryTotals[cat] || 0; return (<div key={cat} className="td-expense-item"><span className={`td-expense-value${val > 0 ? ' has-expense' : ''}`}>{val > 0 ? `-${formatBudgetDisplay(val)}` : '0'}</span><div className="td-expense-cat"><span className="td-expense-cat-icon" dangerouslySetInnerHTML={{ __html: cfg.icon }} /><span className="td-expense-cat-label">{cfg.label}</span></div></div>); })}
                   </div>
                 </div>
                 <div className="td-expense-bg"><img src="/assets/coins.png" alt="" onError={(e) => { e.target.parentElement.style.display = 'none'; }} /></div>
@@ -381,7 +381,7 @@ export default function TripDetailPage() {
               <div className="td-days">
                 {dayCards.map(c => (
                   <div key={c.key} className={`td-day-card${selectedPlanDay === c.key ? ' active' : ''}`} onClick={() => setSelectedPlanDay(c.key)}>
-                    <div className="td-day-top"><span className="td-day-label">{c.label}</span><span className={`td-day-total${c.total > 0 ? ' has-expense' : ''}`}>{formatBudgetDisplay(c.total)}</span></div>
+                    <div className="td-day-top"><span className="td-day-label">{c.label}</span><span className={`td-day-total${c.total > 0 ? ' has-expense' : ''}`}>{c.total > 0 ? `-${formatBudgetDisplay(c.total)}` : '0'}</span></div>
                     <div className="td-day-top"><span className="td-day-date">{c.date}</span><span className="td-day-total-label">รวม</span></div>
                   </div>
                 ))}

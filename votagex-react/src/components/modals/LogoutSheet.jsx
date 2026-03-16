@@ -3,7 +3,7 @@ import useModalClose from '../../hooks/useModalClose';
 
 export default function LogoutSheet({ onClose }) {
   const { isClosing, handleClose } = useModalClose(onClose);
-  const { authUser, signOut } = useAuth();
+  const { authUser, userImage, signOut } = useAuth();
 
   const handleLogout = async () => {
     onClose();
@@ -21,7 +21,7 @@ export default function LogoutSheet({ onClose }) {
         <div className="logout-sheet-handle"></div>
         <div className="logout-sheet-profile">
           <div className="logout-sheet-avatar">
-            {authUser?.photoURL && <img src={authUser.photoURL} alt="" />}
+            {userImage && <img src={userImage} alt="" />}
           </div>
           <div className="logout-sheet-info">
             <span className="logout-sheet-name">{authUser?.displayName || ''}</span>

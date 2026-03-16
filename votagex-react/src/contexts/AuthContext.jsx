@@ -9,6 +9,7 @@ import {
   clearAuthUserData,
   getStoredAuthUser
 } from '../services/firebase';
+import { updateProfileImageInTrips } from '../services/storage';
 
 const AuthContext = createContext(null);
 
@@ -63,7 +64,12 @@ export function AuthProvider({ children }) {
   const updateUserImage = useCallback((url) => {
     localStorage.setItem('votagex_userimage', url);
     setCustomImage(url);
-  }, []);
+    // Update profile image in all trips this user belongs to
+    const name = authUser?.displayName || localStorage.getItem('votagex_username') || '';
+    if (name) {
+      updateProfileImageInTrips(name, url).catch(err => console.error('Error updating trip images:', err));
+    }
+  }, [authUser]);
 
   return (
     <AuthContext.Provider value={{

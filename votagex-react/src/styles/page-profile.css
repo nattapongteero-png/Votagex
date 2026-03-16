@@ -40,7 +40,7 @@
 }
 
 .profile-upload-label {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 10px;
   font-weight: 600;
   color: var(--text-secondary);

@@ -7,7 +7,7 @@ import TravelCard from '../../components/common/TravelCard';
 
 export default function ProfileStep({ onNext, onBack }) {
   const { tripForm, updateTripForm } = useTrips();
-  const { username, userImage } = useAuth();
+  const { username, userImage, updateUserImage } = useAuth();
   const fileInputRef = useRef(null);
 
   // Pre-fill from auth if form is empty
@@ -19,6 +19,7 @@ export default function ProfileStep({ onNext, onBack }) {
     if (file) {
       uploadProfileImage(file).then(url => {
         updateTripForm('profileImage', url);
+        updateUserImage(url);
       });
     }
   };

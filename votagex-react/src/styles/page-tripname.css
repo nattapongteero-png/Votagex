@@ -58,7 +58,7 @@
 }
 
 .travel-card-title {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 30px;
   font-weight: 400;
   color: black;
@@ -69,7 +69,7 @@
 }
 
 .travel-card-desc {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 10px;
   color: var(--text);
   text-align: center;
@@ -158,7 +158,7 @@
 }
 
 .travel-card-dates {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 10px;
   color: #737373;
   text-align: center;
@@ -167,7 +167,7 @@
 }
 
 .travel-card-owner {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 10px;
   color: var(--text);
   position: absolute;
@@ -177,7 +177,7 @@
 }
 
 .cover-upload-label {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 10px;
   font-weight: 600;
   color: var(--text-secondary);

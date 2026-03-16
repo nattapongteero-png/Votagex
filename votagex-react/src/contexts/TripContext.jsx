@@ -78,7 +78,6 @@ export function TripProvider({ children }) {
     }
 
     if (data.profileName) localStorage.setItem('votagex_username', data.profileName);
-    if (data.profileImage) localStorage.setItem('votagex_userimage', data.profileImage);
 
     const saved = await storageSaveTrip(data);
     await loadTrips();

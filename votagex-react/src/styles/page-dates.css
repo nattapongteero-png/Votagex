@@ -28,14 +28,14 @@
 }
 
 .date-card-label {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 12px;
   font-weight: 600;
   color: #a3a3a3;
 }
 
 .date-card-value {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 600;
   color: var(--text);
@@ -52,7 +52,7 @@
   border-radius: 100px;
   background: white;
   color: #2463eb;
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 12px;
   font-weight: 400;
   cursor: pointer;

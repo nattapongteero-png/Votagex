@@ -5,13 +5,16 @@ import { useAuth } from '../contexts/AuthContext';
 import TripCard from '../components/common/TripCard';
 import TripActionSheet from '../components/modals/TripActionSheet';
 import EditTripModal from '../components/modals/EditTripModal';
+import JoinConfirmModal from '../components/modals/JoinConfirmModal';
 
 export default function ITripPage() {
   const navigate = useNavigate();
-  const { trips, loadTrips, resetTripForm, setCurrentTrip, updateExistingTrip, deleteExistingTrip } = useTrips();
-  const { username, authUser } = useAuth();
+  const { trips, loadTrips, resetTripForm, setCurrentTrip, updateExistingTrip, deleteExistingTrip, joinExistingTrip } = useTrips();
+  const { username, authUser, userImage, updateUserImage } = useAuth();
   const [actionTrip, setActionTrip] = useState(null);
   const [editTrip, setEditTrip] = useState(null);
+  const [confirmTrip, setConfirmTrip] = useState(null);
+  const [joining, setJoining] = useState(false);
 
   useEffect(() => {
     loadTrips();
@@ -50,6 +53,21 @@ export default function ITripPage() {
 
     return { myTrips: my, otherTrips: other };
   }, [trips, username]);
+
+  const handleJoinConfirm = async () => {
+    if (!confirmTrip) return;
+    setJoining(true);
+    try {
+      await joinExistingTrip(confirmTrip.id, { name: username, image: userImage });
+      if (userImage) updateUserImage(userImage);
+      setCurrentTrip({ ...confirmTrip });
+      setConfirmTrip(null);
+      navigate(`/trip/${confirmTrip.id}`);
+    } catch (err) {
+      console.error('Error joining trip:', err);
+      setJoining(false);
+    }
+  };
 
   const handleAddTrip = () => {
     resetTripForm();
@@ -133,15 +151,26 @@ export default function ITripPage() {
                   key={trip.id}
                   trip={trip}
                   showEditButton={false}
-                  onJoin={() => navigate('/join')}
+                  onJoin={(t) => setConfirmTrip(t)}
                   onView={(t) => navigate(`/trip/${t.id}`)}
-                  onCardClick={() => handleTripClick(trip)}
+                  onCardClick={() => setConfirmTrip(trip)}
                 />
               ))}
             </div>
           </div>
         )}
       </div>
+
+      {confirmTrip && (
+        <JoinConfirmModal
+          trip={confirmTrip}
+          userName={username || ''}
+          trips={trips}
+          joining={joining}
+          onConfirm={handleJoinConfirm}
+          onClose={() => { setConfirmTrip(null); setJoining(false); }}
+        />
+      )}
 
       {actionTrip && (
         <TripActionSheet

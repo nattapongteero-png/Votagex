@@ -67,6 +67,8 @@ export default function CalendarModal({ startDate, endDate, onConfirm, onClose }
   }, [blockedRanges]);
 
   const handlePrev = () => {
+    const isCurrentMonth = year === now.getFullYear() && month === now.getMonth();
+    if (isCurrentMonth) return;
     if (month === 0) { setMonth(11); setYear(y => y - 1); }
     else setMonth(m => m - 1);
   };
@@ -78,6 +80,7 @@ export default function CalendarModal({ startDate, endDate, onConfirm, onClose }
 
   const handleDayClick = (date) => {
     const clickedDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    if (clickedDate.getTime() < todayNorm) return;
 
     if (!selStart || (selStart && selEnd)) {
       // First click or reset
@@ -193,6 +196,9 @@ export default function CalendarModal({ startDate, endDate, onConfirm, onClose }
               const isInRange = startT !== null && endT !== null && dateNorm > startT && dateNorm < endT;
               const hasRange = startT !== null && endT !== null && startT !== endT;
 
+              const isPast = dateNorm < todayNorm;
+              const isDisabled = blocked || isPast;
+
               const cellClasses = ['cal-cell'];
               if (blocked) cellClasses.push('blocked-range');
               if (isStart && hasRange) cellClasses.push('range-start');
@@ -203,6 +209,7 @@ export default function CalendarModal({ startDate, endDate, onConfirm, onClose }
 
               const dayClasses = ['cal-day'];
               if (cell.isOtherMonth) dayClasses.push('other-month');
+              if (isPast) dayClasses.push('past');
               if (isToday) dayClasses.push('today');
               if (blocked) dayClasses.push('blocked');
               if (isStart || isEnd) dayClasses.push('selected');
@@ -211,8 +218,8 @@ export default function CalendarModal({ startDate, endDate, onConfirm, onClose }
                 <div key={idx} className={cellClasses.join(' ')}>
                   <div
                     className={dayClasses.join(' ')}
-                    onClick={blocked ? undefined : () => handleDayClick(cell.date)}
-                    style={blocked ? undefined : { cursor: 'pointer' }}
+                    onClick={isDisabled ? undefined : () => handleDayClick(cell.date)}
+                    style={isDisabled ? undefined : { cursor: 'pointer' }}
                   >
                     {cell.dayNum}
                   </div>

@@ -10,9 +10,9 @@
   --gray-light: #F3F4F6;
   --dot-inactive: #FFFFFF;
   --dot-active: #3B5BDB;
-  --radius: 30px;
+  --radius: 100px;
   --radius-sm: 16px;
-  --font:'Google Sans';
+  --font: 'Google Sans', 'Inter', sans-serif;
 }
 
 /* ===== Reset ===== */
@@ -29,6 +29,23 @@ html, body {
   color: var(--text);
   -webkit-font-smoothing: antialiased;
   overflow: hidden;
+}
+
+/* Prevent zoom on input focus (iOS requires >= 16px) */
+@media screen and (max-width: 768px) {
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="tel"],
+  input[type="url"],
+  input[type="search"],
+  input[type="date"],
+  input[type="time"],
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
 }
 
 /* ===== Mobile Container ===== */
@@ -151,7 +168,7 @@ html, body {
 }
 
 .app-title-gradient {
-  font-family: 'Google Sans';
+  font-family: 'Google Sans', 'Inter', sans-serif;
   font-size: 30px;
   font-weight: 900;
   letter-spacing: 0.05em;
@@ -166,7 +183,7 @@ html, body {
 }
 
 .app-tagline {
-  font-family: 'Google Sans';
+  font-family: 'Google Sans', 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 500;
   color: #666;
@@ -207,16 +224,13 @@ html, body {
 }
 
 .btn-outline {
-  background: transparent;
-  color: var(--primary);
-  border-color: var(--primary);
+  background: #F9FAFB;
+  color: #344054;
+  border-color: #E4E7EC;
 }
 
 .btn-outline:active {
-  background: rgba(74, 108, 247, 0.05);
-}
-
-.btn-outline:active {
+  background: #f0f1f3;
   transform: scale(0.97);
 }
 
@@ -413,12 +427,22 @@ input[type="range"] {
 input[type="range"]::-webkit-slider-thumb {
   appearance: none;
   -webkit-appearance: none;
-  width: 28px;
-  height: 28px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
   background: var(--primary);
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(74, 108, 247, 0.4);
+  box-shadow: 0 1px 4px rgba(74, 108, 247, 0.4);
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--primary);
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 1px 4px rgba(74, 108, 247, 0.4);
 }
 
 /* ===== Date Picker ===== */

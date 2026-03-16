@@ -108,7 +108,7 @@
 }
 
 .modal-add-title {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 24px;
   font-weight: 600;
   color: #000;
@@ -130,7 +130,7 @@
 }
 
 .modal-add-desc {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 12px;
   font-weight: 400;
   color: #737373;
@@ -172,7 +172,7 @@
 }
 
 .modal-section-label {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 12px;
   font-weight: 600;
   padding: 4px;
@@ -186,7 +186,7 @@
   border: none;
   border-radius: 100px;
   background: #fafafa;
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 400;
   color: var(--text);
@@ -216,7 +216,7 @@
   flex: 1;
   border: none;
   background: none;
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 400;
   color: var(--text);
@@ -259,7 +259,7 @@
 }
 
 .modal-expense-row span {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 400;
   color: #a3a3a3;
@@ -268,7 +268,7 @@
 .modal-expense-row input {
   border: none;
   background: none;
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 400;
   color: var(--text);
@@ -285,7 +285,7 @@
 .modal-expense-row select {
   border: none;
   background: none;
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 400;
   color: #a3a3a3;
@@ -302,7 +302,7 @@
   gap: 6px;
   border: none;
   background: #f5f5f5;
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 13px;
   font-weight: 600;
   color: #222;
@@ -344,7 +344,7 @@
   border-radius: 100px;
   background: linear-gradient(to top, #2463eb, #36bffa);
   color: #fff;
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
@@ -384,14 +384,14 @@
 }
 
 .modal-hotel-date-info .date-sub {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 12px;
   font-weight: 600;
   color: #a3a3a3;
 }
 
 .modal-hotel-date-info .date-value {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 600;
   color: #000;
@@ -437,14 +437,14 @@
 }
 
 .detail-title {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 24px;
   font-weight: 600;
   color: #000;
 }
 
 .detail-desc {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 12px;
   font-weight: 400;
   color: #737373;
@@ -484,7 +484,7 @@
 }
 
 .detail-cat-label {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 10px;
   font-weight: 400;
   color: #a3a3a3;
@@ -510,7 +510,7 @@
 }
 
 .detail-action-label {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 10px;
   font-weight: 400;
   color: #a3a3a3;
@@ -552,7 +552,7 @@
 }
 
 .detail-info-label {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 12px;
   font-weight: 600;
   color: #000;
@@ -566,7 +566,7 @@
   padding: 12px 24px;
   border-radius: 100px;
   background: #fafafa;
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 600;
   color: var(--text);
@@ -596,7 +596,7 @@
   border-radius: 100px;
   background: #fff;
   color: #2463eb;
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
@@ -644,7 +644,7 @@
 }
 
 .edit-field-label {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 12px;
   font-weight: 600;
   color: #737373;
@@ -685,7 +685,7 @@
 }
 
 .edit-cover-placeholder span {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 12px;
   color: #a3a3a3;
   font-weight: 500;
@@ -726,6 +726,17 @@
   padding: 12px 16px;
   font-size: 0.9rem;
   margin-bottom: 0;
+}
+
+.edit-date-display {
+  text-align: left;
+  font-size: 0.85rem;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.edit-date-placeholder {
+  color: #a3a3a3;
 }
 
 /* Member slider */
@@ -781,7 +792,7 @@
 }
 
 .day-chip-num {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 13px;
   font-weight: 700;
   color: #1a1a2e;
@@ -793,7 +804,7 @@
 }
 
 .day-chip-date {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 10px;
   font-weight: 400;
   color: #a3a3a3;
@@ -827,7 +838,7 @@
 }
 
 .members-sheet-title {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 24px;
   font-weight: 600;
   color: #000;
@@ -836,7 +847,7 @@
 }
 
 .members-sheet-desc {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 12px;
   font-weight: 400;
   color: #737373;
@@ -897,7 +908,7 @@
 
 .member-row-name {
   flex: 1;
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 500;
   color: #000;
@@ -945,7 +956,7 @@
 }
 
 .time-picker-title {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 20px;
   font-weight: 600;
   color: #000;
@@ -960,7 +971,7 @@
 }
 
 .time-picker-value {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 40px;
   font-weight: 700;
   color: #2463eb;
@@ -969,7 +980,7 @@
 }
 
 .time-picker-colon {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 40px;
   font-weight: 700;
   color: #2463eb;
@@ -992,7 +1003,7 @@
 }
 
 .time-picker-label {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 12px;
   font-weight: 500;
   color: #a3a3a3;
@@ -1000,7 +1011,7 @@
 }
 
 .time-picker-separator {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 28px;
   font-weight: 700;
   color: #d4d4d4;
@@ -1027,7 +1038,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 22px;
   font-weight: 500;
   color: #d4d4d4;
@@ -1071,7 +1082,7 @@
   border: none;
   background: none;
   outline: none;
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 14px;
   color: #222;
 }
@@ -1108,20 +1119,20 @@
 }
 
 .currency-code {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 600;
   color: #000;
 }
 
 .currency-name {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 11px;
   color: #737373;
 }
 
 .currency-rate {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 11px;
   color: #a3a3a3;
   white-space: nowrap;
@@ -1169,7 +1180,7 @@
 }
 
 .confirm-message {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 18px;
   font-weight: 700;
   color: #1a1a2e;
@@ -1190,7 +1201,7 @@
   flex: 1;
   height: 48px;
   border-radius: 100px;
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;

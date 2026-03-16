@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import useModalClose from '../../hooks/useModalClose';
 import ConfirmModal from './ConfirmModal';
+import { isTripOwner } from '../../utils/helpers';
 
 export default function MembersModal({ trip, onClose, onRemoveMember }) {
   const { isClosing, handleClose } = useModalClose(onClose);
   const [confirmTarget, setConfirmTarget] = useState(null);
   const members = trip.members || [];
+  const isOwner = isTripOwner(trip);
 
   // Build member list: creator first, then joined members
   const allMembers = [];
@@ -57,10 +59,11 @@ export default function MembersModal({ trip, onClose, onRemoveMember }) {
                   <span className="member-row-name">
                     {member.name}{member.isCreator ? ' (เจ้าของทริป)' : ''}
                   </span>
-                  {!member.isCreator && (
+                  {isOwner && !member.isCreator && (
                     <button className="member-row-delete" title="ลบ" onClick={() => handleRemove(member.name)}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                      <svg width="20" height="20" viewBox="0 0 16 16" fill="none">
+                        <path d="M3.33333 4.6884H12.6667V8.11722C12.6667 9.16726 12.5189 10.212 12.2279 11.2202C11.8265 12.6105 10.671 13.6464 9.25448 13.8858L9.1493 13.9036C8.3884 14.0321 7.61158 14.0321 6.85067 13.9036L6.74551 13.8858C5.32896 13.6464 4.17345 12.6105 3.7721 11.2202C3.48106 10.212 3.33333 9.16726 3.33333 8.11724V4.6884Z" fill="#E62E05" fillOpacity="0.15"/>
+                        <path d="M2 4.1884C1.72386 4.1884 1.5 4.41225 1.5 4.6884C1.5 4.96454 1.72386 5.1884 2 5.1884V4.6884V4.1884ZM14 5.1884C14.2761 5.1884 14.5 4.96454 14.5 4.6884C14.5 4.41225 14.2761 4.1884 14 4.1884V4.6884V5.1884ZM3.33333 4.6884V4.1884H2.83333V4.6884H3.33333ZM12.6667 4.6884H13.1667V4.1884H12.6667V4.6884ZM3.33333 4.6884H3.83333V8.11724H3.33333H2.83333V4.6884H3.33333ZM12.6667 4.6884H12.1667V8.11722H12.6667H13.1667V4.6884H12.6667ZM2 4.6884V5.1884H14V4.6884V4.1884H2V4.6884ZM5 4.6884H5.5C5.5 4.40911 5.5613 4.13099 5.68222 3.86938L5.22836 3.65959L4.7745 3.44981C4.5939 3.84053 4.5 4.26159 4.5 4.6884H5ZM8 2V2.5C8.33546 2.5 8.66659 2.55926 8.97406 2.67339L9.14805 2.20464L9.32205 1.73589C8.90156 1.57981 8.45247 1.5 8 1.5V2ZM10.5 4.6884H11C11 4.26159 10.9061 3.84053 10.7255 3.44981L10.2716 3.65959L9.81775 3.86938C9.9387 4.131 10 4.40911 10 4.6884H10.5ZM6.66675 8V10.6667M9.33341 8V10.6667" stroke="#E62E05" strokeLinecap="round"/>
                       </svg>
                     </button>
                   )}

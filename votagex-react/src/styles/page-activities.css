@@ -20,7 +20,7 @@
 }
 
 .activity-heading {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 20px;
   font-weight: 700;
   color: #1a1a2e;
@@ -32,14 +32,14 @@
   align-items: center;
   gap: 6px;
   padding: 8px 20px;
-  border-radius: 30px;
+  border-radius: 100px;
   border: none;
   background: linear-gradient(135deg, #4a90d9 0%, #357ABD 100%);
   color: #fff;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   transition: all 0.2s;
   box-shadow: 0 2px 8px rgba(53, 122, 189, 0.3);
 }
@@ -65,7 +65,7 @@
   text-align: center;
   padding: 32px 0;
   color: #666;
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
 }
 
 /* ===== Activity Sections (grouped by category) ===== */
@@ -114,7 +114,7 @@
 }
 
 .activity-section-label {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 18px;
   font-weight: 700;
   color: #1a1a2e;
@@ -306,7 +306,7 @@
   border-radius: 100px;
   border: 1px solid #2463eb;
   background: #e8eefd;
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 400;
   color: #2463eb;

@@ -74,8 +74,46 @@ export function uploadCoverImage(file) {
   return compressImage(file, 600, 0.6);
 }
 
+export async function updateProfileImageInTrips(username, newImage) {
+  const db = getDb();
+  if (!db || !username) return;
+  const snapshot = await getDocs(collection(db, 'trips'));
+  const batch = [];
+  snapshot.docs.forEach(d => {
+    const data = d.data();
+    const updates = {};
+
+    // Update profileImage if this user is the creator
+    if (data.profileName === username && data.profileImage !== newImage) {
+      updates.profileImage = newImage;
+    }
+
+    // Update image in members array
+    if (Array.isArray(data.members)) {
+      let memberChanged = false;
+      const newMembers = data.members.map(m => {
+        if (m.name === username && m.image !== newImage) {
+          memberChanged = true;
+          return { ...m, image: newImage };
+        }
+        return m;
+      });
+      if (memberChanged) updates.members = newMembers;
+    }
+
+    if (Object.keys(updates).length > 0) {
+      batch.push(updateDoc(doc(db, 'trips', d.id), updates));
+    }
+  });
+  await Promise.all(batch);
+}
+
 export function subscribeTrips(callback) {
   const db = getDb();
+  if (!db) {
+    const timer = setTimeout(() => subscribeTrips(callback), 500);
+    return () => clearTimeout(timer);
+  }
   return onSnapshot(collection(db, 'trips'), (snapshot) => {
     const trips = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
     callback(trips);

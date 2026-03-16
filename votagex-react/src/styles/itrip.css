@@ -56,7 +56,7 @@
 }
 
 .itrip-title {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 30px;
   font-weight: 900;
   background: linear-gradient(to right, #0a296b, #092834);
@@ -67,7 +67,7 @@
 }
 
 .itrip-welcome {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 12px;
   font-weight: 400;
   color: #666;
@@ -108,7 +108,7 @@
   border: none;
   background: linear-gradient(to top, #2463eb, #36bffa);
   color: #fff;
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
@@ -155,7 +155,7 @@
 }
 
 .itrip-section-title {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 18px;
   font-weight: 600;
   color: #000;
@@ -242,7 +242,7 @@
 }
 
 .itrip-card-name {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 600;
   color: #000;
@@ -252,7 +252,7 @@
 }
 
 .itrip-card-date {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 12px;
   font-weight: 400;
   color: #666;
@@ -260,7 +260,7 @@
 }
 
 .itrip-card-desc {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 12px;
   font-weight: 400;
   color: #737373;
@@ -336,7 +336,7 @@
   border: none;
   background: linear-gradient(to top, #2463eb, #36bffa);
   color: #fff;
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
@@ -365,7 +365,7 @@
 
 /* Empty state */
 .itrip-empty {
-  font-family: 'Google Sans', sans-serif;
+  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
   font-size: 13px;
   color: #a3a3a3;
   text-align: center;

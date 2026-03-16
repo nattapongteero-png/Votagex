@@ -19,15 +19,12 @@ export default function TripNameStep({ onNext, onBack }) {
   };
 
   const handleBudgetChange = (e) => {
-    const raw = stripCommas(e.target.value);
-    if (raw === '' || raw === '-') {
+    const raw = stripCommas(e.target.value).replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
+    if (raw === '') {
       updateTripForm('budget', '');
       return;
     }
-    const num = parseFloat(raw);
-    if (!isNaN(num)) {
-      updateTripForm('budget', raw);
-    }
+    updateTripForm('budget', raw);
   };
 
   const budgetDisplay = tripForm.budget ? formatNumberComma(tripForm.budget) : '';
