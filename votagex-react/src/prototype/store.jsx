@@ -2,14 +2,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ProtoCtx } from './useProto';
 import {
   TODAY, ME, PEOPLE, addPeople, addDays, diffDays, seedData, seedPiggy, seedEvents, withSeedGroups, shiftData, planStatus,
-  splitByShare, jarCats, settleUp, fmtMoney, JAR_TEMPLATES, KINDS,
+  splitByShare, jarCats, settleUp, fmtMoney, JAR_TEMPLATES, KINDS, DEMO_PROMPTPAY,
 } from './data';
 
 import * as cloud from './cloud';
 
 // The app's data. Demo: sample data in memory + localStorage. Signed in: groups, trips with their stops,
-// expenses and transfers live in Firestore; the rest moves there piece by piece (docs/ROADMAP.md, phase 3)
-// and until then starts empty and is kept on this device, per account.
+// expenses and transfers, settings and saved places live in Firestore; the rest (events, memories, savings
+// piggies) moves there piece by piece (docs/ROADMAP.md, phase 3) and until then is kept on this device, per account.
 const KEY = 'votagex.proto.v1';
 const emptyData = () => ({ v: 1, seededOn: TODAY, simMode: 'normal', plans: [], places: [], expenses: [], payments: [], memories: [], jars: [], piggyLog: [], events: [], groups: [], settings: {} });
 
@@ -76,8 +76,45 @@ export function ProtoProvider({ children, user = null, exit }) {
     return cloud.watchGroups(user.uid, setCloudGroups);
   }, [user]);
   const myGroups = useMemo(() => cloudGroups || [], [cloudGroups]);
-  // signed in: my trips and every trip of my groups, with their stops, live
+
+  // signed in: settings and saved places, live. What this device kept before they moved goes up once.
+  const [cloudSettings, setCloudSettings] = useState(null);
+  const [cloudPlaces, setCloudPlaces] = useState([]);
+  const local = useRef(data);
+  useEffect(() => {
+    if (!user) return undefined;
+    const moved = `votagex.moved.${user.uid}`;
+    let first = true;
+    const offSettings = cloud.watchSettings(user.uid, setCloudSettings);
+    const offPlaces = cloud.watchPlaces(user.uid, (list) => {
+      setCloudPlaces(list);
+      if (!first) return;
+      first = false;
+      try {
+        if (localStorage.getItem(moved)) return;
+        localStorage.setItem(moved, '1');
+      } catch { return; }
+      const { settings = {}, places = [] } = local.current;
+      if (Object.keys(settings).length) cloud.saveSettings(user.uid, settings);
+      if (!list.length) places.forEach((p) => cloud.addPlace(user.uid, p));
+    });
+    return () => { offSettings(); offPlaces(); };
+  }, [user]);
+  const settings = useMemo(() => (user ? cloudSettings || {} : data.settings || {}), [user, cloudSettings, data.settings]);
+  const settingsRef = useRef(settings);
+  useEffect(() => { settingsRef.current = settings; }, [settings]);
+
+  // signed in: my PromptPay, copied into each group I'm in whenever either changes
   const groupKey = myGroups.map((g) => g.id).sort().join(',');
+  useEffect(() => {
+    if (!user || !cloudSettings || !groupKey) return;
+    const mark = `votagex.pp.${user.uid}`;
+    const now = `${groupKey}|${cloudSettings.promptpay || ''}`;
+    try { if (localStorage.getItem(mark) === now) return; } catch { /* write anyway */ }
+    cloud.savePromptPay(user.uid, groupKey.split(','), cloudSettings.promptpay)
+      .then(() => { try { localStorage.setItem(mark, now); } catch { /* next time */ } }).catch(() => {});
+  }, [user, cloudSettings, groupKey]);
+  // signed in: my trips and every trip of my groups, with their stops, live
   useEffect(() => {
     if (!user) return undefined;
     return cloud.watchPlans(user.uid, groupKey ? groupKey.split(',') : [], (list, ready) => {
@@ -147,7 +184,16 @@ export function ProtoProvider({ children, user = null, exit }) {
   const actions = useMemo(() => ({
     setSimMode: (simMode) => setData((d) => ({ ...d, simMode })),
     // autoCheckIn (on unless false), simStop (demo: pretend to stand at that stop), scope (home: 'me' or a group id)
-    setSetting: (key, value) => setData((d) => ({ ...d, settings: { ...d.settings, [key]: value } })),
+    setSetting: (key, value) => {
+      if (user) { cloud.saveSettings(user.uid, { [key]: value }); return; }
+      setData((d) => ({ ...d, settings: { ...d.settings, [key]: value } }));
+    },
+    // the PromptPay of someone I owe on this plan (demo: the sample number, never a real account)
+    promptPayOf: (planId, who) => {
+      if (!user) return Promise.resolve(DEMO_PROMPTPAY);
+      const plan = findPlan(planId);
+      return plan?.groupId ? cloud.readPromptPay(plan.groupId, who) : Promise.resolve(null);
+    },
 
     addGroup: (group) => {
       if (user) return cloud.createGroup(user.uid, group); // friends join by invite link
@@ -159,7 +205,7 @@ export function ProtoProvider({ children, user = null, exit }) {
     invite: (group) => (user ? cloud.createInvite(user.uid, group) : Promise.resolve('https://votagex.app/g/AB12CD')),
     leaveGroup: (id) => (user ? cloud.leaveGroup(user.uid, id) : setData((d) => ({ ...d, groups: d.groups.filter((g) => g.id !== id) }))),
     // the group goes; its trips stay, as mine (signed in: archived, members can still open its trips)
-    removeGroup: (id) => (user ? cloud.archiveGroup(id).then(() => setData((d) => ({ ...d, settings: d.settings?.scope === id ? { ...d.settings, scope: 'me' } : d.settings }))) : setData((d) => ({
+    removeGroup: (id) => (user ? cloud.archiveGroup(id).then(() => settingsRef.current.scope === id && cloud.saveSettings(user.uid, { scope: 'me' })) : setData((d) => ({
       ...d,
       groups: d.groups.filter((g) => g.id !== id),
       plans: d.plans.map((p) => (p.groupId === id ? { ...p, groupId: null } : p)),
@@ -169,6 +215,7 @@ export function ProtoProvider({ children, user = null, exit }) {
     reset: () => setData(user ? emptyData() : seedData()),
 
     addPlace: (place) => {
+      if (user) return cloud.addPlace(user.uid, { ...place, savedAt: TODAY });
       const id = uid('p');
       setData((d) => ({ ...d, places: [{ ...place, id, savedAt: TODAY }, ...d.places] }));
       return id;
@@ -180,7 +227,7 @@ export function ProtoProvider({ children, user = null, exit }) {
     },
     shareEvent: (id, groupId) => setData((d) => ({ ...d, events: d.events.map((e) => (e.id === id ? { ...e, groupId } : e)) })),
     removeEvent: (id) => setData((d) => ({ ...d, events: d.events.filter((e) => e.id !== id) })),
-    removePlace: (id) => setData((d) => ({ ...d, places: d.places.filter((p) => p.id !== id) })),
+    removePlace: (id) => (user ? cloud.deletePlace(user.uid, id) : setData((d) => ({ ...d, places: d.places.filter((p) => p.id !== id) }))),
 
     addPlan: (plan) => {
       if (user) {
@@ -359,7 +406,8 @@ export function ProtoProvider({ children, user = null, exit }) {
     loading,
     cloud: Boolean(user),
     exit, // sign out, or leave the demo
-    settings: data.settings || {},
+    settings,
+    places: user ? cloudPlaces : data.places,
     sheet, openSheet, closeSheet, toast, showToast, hideToast,
     kindLabel: (k) => KINDS[k]?.label || k,
   };

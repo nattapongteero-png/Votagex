@@ -139,6 +139,13 @@ describe('group trips', () => {
     await assertFails(updateDoc(x1('ton'), { status: 'received', amount: 1 }));
     await assertSucceeds(updateDoc(x1('ton'), { status: 'received' }));
   });
+  it('my PromptPay: people in the group read it, only I write it', async () => {
+    await seed((db) => setDoc(doc(db, 'groups/g1/members/ton'), { promptpay: '0812345678' }));
+    await assertSucceeds(getDoc(doc(as('fai'), 'groups/g1/members/ton')));
+    await assertFails(getDoc(doc(as('bew'), 'groups/g1/members/ton')));
+    await assertFails(setDoc(doc(as('fai'), 'groups/g1/members/ton'), { promptpay: '0899999999' }));
+    await assertSucceeds(setDoc(doc(as('fai'), 'groups/g1/members/fai'), { promptpay: '0899999999' }));
+  });
   it('a slip is seen only by the two people', async () => {
     await seed((db) => updateDoc(doc(db, 'groups/g1'), { memberIds: ['ton', 'fai', 'prae'] }));
     await assertSucceeds(getDoc(doc(as('ton'), 'groups/g1/plans/p1/slips/x1')));

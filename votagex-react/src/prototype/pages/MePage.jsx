@@ -130,9 +130,10 @@ export default function MePage() {
             <span className="pt-muted">{settings.monthBudget ? fmtMoney(settings.monthBudget) : 'ยังไม่ตั้ง'}</span>
           </button>
           <div className="me-row"><span className="me-row-icon"><Icon name="wallet" size={16} /></span><span className="pt-grow">สกุลเงินหลัก</span><span className="pt-muted">THB ฿</span></div>
-          <div className="me-row">
-            <span className="me-row-icon"><Icon name="qr" size={16} /></span><span className="pt-grow">พร้อมเพย์รับเงินคืน</span><span className="pt-muted">ยังไม่ตั้ง</span>
-          </div>
+          <button className="me-row" onClick={() => openSheet('promptpay')}>
+            <span className="me-row-icon"><Icon name="qr" size={16} /></span><span className="pt-grow">พร้อมเพย์รับเงินคืน</span>
+            <span className="pt-muted">{settings.promptpay ? `···${settings.promptpay.slice(-4)}` : 'ยังไม่ตั้ง'}</span>
+          </button>
           <div className="me-row">
             <span className="me-row-icon"><Icon name="clock" size={16} /></span><span className="pt-grow">แจ้งเตือนก่อนถึงจุดแวะ</span><span className="pt-muted">30 นาที</span>
           </div>

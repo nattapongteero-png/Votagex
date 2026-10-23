@@ -236,3 +236,32 @@ export async function readSlip(uid, plan, id) {
   const snap = await getDoc(doc(planRef(uid, plan), 'slips', id)).catch(() => null);
   return snap?.data()?.image || null;
 }
+
+/* ---------- my own: settings, saved places, PromptPay ---------- */
+const settingsRef = (uid) => doc(db, 'users', uid, 'private', 'settings');
+export const watchSettings = (uid, onChange) => onSnapshot(settingsRef(uid), (s) => onChange(s.data() || {}), () => onChange({}));
+// a value of null or undefined clears the setting
+export const saveSettings = (uid, fields) => setDoc(settingsRef(uid), Object.fromEntries(Object.entries(fields).map(([k, v]) => [k, v ?? deleteField()])), { merge: true });
+
+export const watchPlaces = (uid, onChange) => onSnapshot(collection(db, 'users', uid, 'places'), (s) => {
+  onChange(s.docs.map((d) => ({ id: d.id, ...d.data() })).sort((a, b) => (b.savedAt || '').localeCompare(a.savedAt || '')));
+}, () => onChange([]));
+export function addPlace(uid, place) {
+  const ref = doc(collection(db, 'users', uid, 'places'));
+  const fields = { ...place };
+  delete fields.id;
+  setDoc(ref, fields);
+  return ref.id;
+}
+export const deletePlace = (uid, id) => deleteDoc(doc(db, 'users', uid, 'places', id));
+
+// My PromptPay goes into each of my groups (only people there can read it, to make the QR that pays me back)
+export function savePromptPay(uid, groupIds, promptpay) {
+  const batch = writeBatch(db);
+  groupIds.forEach((gid) => batch.set(doc(db, 'groups', gid, 'members', uid), { promptpay: promptpay || deleteField() }, { merge: true }));
+  return batch.commit();
+}
+export async function readPromptPay(groupId, uid) {
+  const snap = await getDoc(doc(db, 'groups', groupId, 'members', uid)).catch(() => null);
+  return snap?.data()?.promptpay || null;
+}

@@ -227,7 +227,7 @@ function CreatePlanSheet({ onClose, place, groupId, type: startType, date, time:
     // an outing's place is its first stop; a trip's is where it goes (unless it started from a place)
     const firstStop = dest && dates[0] && (outing || place) ? [{
       date: dates[0], time: outing ? time : '', name: dest.name, area: dest.area, prov: dest.prov, lat: dest.lat, lng: dest.lng, cat,
-      note: '', checkIns: {}, placeId: dest.id?.startsWith?.('p') ? dest.id : undefined, eventId: dest.eventId,
+      note: '', checkIns: {}, placeId: dest.savedAt ? dest.id : undefined, eventId: dest.eventId,
     }] : [];
     const id = actions.addPlan({
       name: title, kind, country, currency: c.currency,
@@ -348,7 +348,7 @@ function AddStopSheet({ onClose, planId, date }) {
   const saved = places.filter((p) => p.status === 'want' && (p.country || 'TH') === (plan?.country || 'TH') && (!q || p.name.toLowerCase().includes(q)));
 
   const add = (pl, close) => {
-    const stopId = actions.addStop(planId, { date: date || null, time: '', name: pl.name, area: pl.area, prov: pl.prov, lat: pl.lat, lng: pl.lng, cat: pl.cat, placeId: pl.id && pl.id.startsWith('p') ? pl.id : undefined });
+    const stopId = actions.addStop(planId, { date: date || null, time: '', name: pl.name, area: pl.area, prov: pl.prov, lat: pl.lat, lng: pl.lng, cat: pl.cat, placeId: pl.savedAt ? pl.id : undefined });
     close();
     showToast(`เพิ่ม “${pl.name}” แล้ว`, { label: 'ใส่เวลา', onClick: () => openSheet('stop', { planId, stopId }) });
   };
@@ -427,12 +427,17 @@ function AddToPlanSheet({ onClose, placeId }) {
 /* ---------- Paying a friend back: PromptPay QR, a slip, "โอนแล้ว" ---------- */
 // The friend confirms it came (with the slip in front of them); until then it shows as waiting.
 function SettleSheet({ onClose, planId, to, amount }) {
-  const { actions, showToast } = useProto();
-  const [qr, setQr] = useState('');
+  const { actions, showToast, cloud } = useProto();
+  const [qr, setQr] = useState(''); // '': still making it, null: they haven't set their PromptPay
   const [slip, setSlip] = useState(null);
   useEffect(() => {
-    QRCode.toDataURL(generatePayload(DEMO_PROMPTPAY, { amount }), { margin: 1, width: 520, color: { dark: '#111827' } }).then(setQr).catch(() => setQr(''));
-  }, [amount]);
+    let alive = true;
+    actions.promptPayOf(planId, to)
+      .then((pp) => (pp ? QRCode.toDataURL(generatePayload(pp, { amount }), { margin: 1, width: 520, color: { dark: '#111827' } }) : null))
+      .then((url) => alive && setQr(url))
+      .catch(() => alive && setQr(null));
+    return () => { alive = false; };
+  }, [actions, planId, to, amount]);
   const onFile = async (e) => {
     const file = e.target.files?.[0];
     if (file) setSlip(await compressImage(file).catch(() => null));
@@ -450,13 +455,36 @@ function SettleSheet({ onClose, planId, to, amount }) {
           <Avatar id={ME} size={48} /><Icon name="next" size={20} /><Avatar id={to} size={48} />
         </div>
         <div className="pt-settle-amount">{fmtMoney(amount)}</div>
-        <div className="pt-qr">{qr ? <img src={qr} alt="PromptPay QR" /> : <span className="pt-muted">กำลังสร้าง QR…</span>}</div>
-        <div className="pt-warn">QR ตัวอย่าง ห้ามสแกนจ่ายจริง</div>
+        {qr === null
+          ? <div className="pt-muted center">{PEOPLE[to].name}ยังไม่ได้ตั้งพร้อมเพย์</div>
+          : <div className="pt-qr">{qr ? <img src={qr} alt="PromptPay QR" /> : <span className="pt-muted">กำลังสร้าง QR…</span>}</div>}
+        {!cloud && <div className="pt-warn">QR ตัวอย่าง ห้ามสแกนจ่ายจริง</div>}
       </div>
       <label className="pt-slip-add">
         {slip ? <img src={slip} alt="สลิป" /> : <><Icon name="camera" size={20} /> แนบสลิป</>}
         <input type="file" accept="image/*" hidden onChange={onFile} />
       </label>
+    </Sheet>
+  );
+}
+
+/* ---------- My PromptPay: friends in my groups get a QR to pay me back ---------- */
+// a phone number (10 digits, starts with 0) or a national ID (13 digits)
+const validPromptPay = (v) => /^0\d{9}$/.test(v) || /^\d{13}$/.test(v);
+function PromptPaySheet({ onClose }) {
+  const { settings, actions, showToast } = useProto();
+  const [value, setValue] = useState(settings.promptpay || '');
+  const ok = validPromptPay(value);
+  return (
+    <Sheet title="พร้อมเพย์รับเงินคืน" subtitle="เพื่อนในกลุ่มเห็น เพื่อสแกนโอนคืน" onClose={onClose}
+      footer={(close) => (
+        <div className="pt-foot-row">
+          {settings.promptpay && <button className="pt-btn light" onClick={() => { actions.setSetting('promptpay', null); showToast('ลบพร้อมเพย์แล้ว'); close(); }}>ลบ</button>}
+          <button className="pt-btn" disabled={!ok} onClick={() => { actions.setSetting('promptpay', value); showToast('บันทึกพร้อมเพย์แล้ว'); close(); }}>บันทึก</button>
+        </div>
+      )}>
+      <input className="pt-input" inputMode="numeric" autoFocus placeholder="เบอร์มือถือ หรือเลขบัตรประชาชน" value={value}
+        onChange={(e) => setValue(e.target.value.replace(/\D/g, '').slice(0, 13))} />
     </Sheet>
   );
 }
@@ -531,6 +559,7 @@ const SHEETS = {
   settle: SettleSheet,
   payment: PaymentSheet,
   month: MonthSheet,
+  promptpay: PromptPaySheet,
   provinces: ProvinceSheet,
   piggy: PiggySheet,
   newJar: NewJarSheet,
