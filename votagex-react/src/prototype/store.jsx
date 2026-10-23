@@ -42,6 +42,8 @@ export function ProtoProvider({ children, user = null, exit }) {
   const key = user ? `${KEY}.${user.uid}` : KEY;
   const [data, setData] = useState(() => load(key, Boolean(user)));
   const [cloudGroups, setCloudGroups] = useState([]);
+  const [cloudPlans, setCloudPlans] = useState([]);
+  const [pendingPlans, setPendingPlans] = useState([]); // just created, until Firestore sends them back
   const [, setPeopleVersion] = useState(0);
   const [sheet, setSheet] = useState(null);
   const [toast, setToast] = useState(null);
@@ -57,6 +59,19 @@ export function ProtoProvider({ children, user = null, exit }) {
     cloud.saveProfile(user).catch(() => {});
     return cloud.watchGroups(user.uid, setCloudGroups);
   }, [user]);
+  // signed in: my trips and every trip of my groups, with their stops, live
+  const groupKey = cloudGroups.map((g) => g.id).sort().join(',');
+  useEffect(() => {
+    if (!user) return undefined;
+    return cloud.watchPlans(user.uid, groupKey ? groupKey.split(',') : [], setCloudPlans);
+  }, [user, groupKey]);
+  const plans = useMemo(() => (user
+    ? [...cloudPlans, ...pendingPlans.filter((p) => !cloudPlans.some((c) => c.id === p.id))]
+    : data.plans), [user, cloudPlans, pendingPlans, data.plans]);
+  const plansRef = useRef(plans);
+  useEffect(() => { plansRef.current = plans; }, [plans]);
+  const findPlan = (id) => plansRef.current.find((p) => p.id === id);
+
   // names and photos of the people in my groups
   const memberKey = [...new Set(cloudGroups.flatMap((g) => g.memberIds))].sort().join(',');
   useEffect(() => {
@@ -124,14 +139,28 @@ export function ProtoProvider({ children, user = null, exit }) {
     removePlace: (id) => setData((d) => ({ ...d, places: d.places.filter((p) => p.id !== id) })),
 
     addPlan: (plan) => {
+      if (user) {
+        const id = cloud.createPlan(user.uid, plan);
+        setPendingPlans((ps) => [...ps, { stops: [], ...plan, id, groupId: plan.groupId || null }]);
+        return id;
+      }
       const id = uid('plan');
       setData((d) => ({ ...d, plans: [{ stops: [], members: [ME], ...plan, id }, ...d.plans] }));
       return id;
     },
     addStop: (planId, stop) => {
+      if (user) { cloud.addStop(user.uid, findPlan(planId), stop); return; }
       updatePlan(planId, (p) => ({ ...p, stops: [...p.stops, { checkIns: {}, note: '', ...stop, id: uid('s') }] }));
     },
     toggleCheckIn: (planId, stopId, late = false, auto = false) => {
+      if (user) {
+        const plan = findPlan(planId);
+        const now = new Date();
+        const at = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+        const mine = plan?.stops.find((s) => s.id === stopId)?.checkIns?.[user.uid];
+        cloud.setCheckIn(user.uid, plan, stopId, mine ? null : { at, late, ...(auto && { auto }) });
+        return;
+      }
       updatePlan(planId, (p) => ({
         ...p,
         stops: p.stops.map((s) => {
@@ -147,9 +176,15 @@ export function ProtoProvider({ children, user = null, exit }) {
       }));
     },
     toggleChecklist: (planId, itemId) => {
+      if (user) {
+        const plan = findPlan(planId);
+        cloud.updatePlanFields(user.uid, plan, { checklist: plan.checklist.map((c) => (c.id === itemId ? { ...c, done: !c.done } : c)) });
+        return;
+      }
       updatePlan(planId, (p) => ({ ...p, checklist: p.checklist.map((c) => (c.id === itemId ? { ...c, done: !c.done } : c)) }));
     },
     markSettled: (planId, key) => {
+      if (user) { const plan = findPlan(planId); cloud.updatePlanFields(user.uid, plan, { settled: [...(plan.settled || []), key] }); return; }
       updatePlan(planId, (p) => ({ ...p, settled: [...(p.settled || []), key] }));
     },
     addExpense: (e) => setData((d) => ({ ...d, expenses: [{ ...e, id: uid('e') }, ...d.expenses] })),
@@ -173,9 +208,9 @@ export function ProtoProvider({ children, user = null, exit }) {
 
   // The plan that quick-add attaches to: the ongoing plan today, else a same-day outing created on demand
   const activePlan = useMemo(() => {
-    const live = data.plans.filter((p) => planStatus(p, today) === 'ongoing');
+    const live = plans.filter((p) => planStatus(p, today) === 'ongoing');
     return live.find((p) => p.kind !== 'outing') || live[0] || null;
-  }, [data.plans, today]);
+  }, [plans, today]);
 
   const ensureActivePlan = useCallback(() => {
     if (activePlan) return activePlan.id;
@@ -187,7 +222,7 @@ export function ProtoProvider({ children, user = null, exit }) {
   }, [activePlan, actions, today]);
 
   const value = {
-    ...data, today, activePlan, ensureActivePlan, actions,
+    ...data, plans, today, activePlan, ensureActivePlan, actions,
     groups: user ? cloudGroups : data.groups,
     cloud: Boolean(user),
     exit, // sign out, or leave the demo

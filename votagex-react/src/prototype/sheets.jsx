@@ -190,7 +190,7 @@ function nextSaturday(from) {
 }
 
 function CreatePlanSheet({ onClose, place, groupId }) {
-  const { actions, closeSheet, today, groups, settings } = useProto();
+  const { actions, closeSheet, today, groups, settings, cloud } = useProto();
   const navigate = useNavigate();
   const [query, setQuery] = useState('');
   const [dest, setDest] = useState(place ? { ...place, key: 'prefill' } : null);
@@ -290,7 +290,8 @@ function CreatePlanSheet({ onClose, place, groupId }) {
         </div>
       )}
       <div className="pt-people">
-        {Object.values(PEOPLE).map((p) => (
+        {/* signed in, only people in the trip's group can come (they're the ones who can see it) */}
+        {(cloud ? (group ? group.members : [ME]).map((id) => PEOPLE[id]).filter(Boolean) : Object.values(PEOPLE)).map((p) => (
           <button key={p.id} className={`pt-person check${members.includes(p.id) ? ' active' : ''}`} disabled={p.id === ME}
             onClick={() => setMembers((m) => (m.includes(p.id) ? m.filter((x) => x !== p.id) : [...m, p.id]))}>
             <Avatar id={p.id} size={40} /><span>{p.id === ME ? 'ฉัน' : p.name}</span>

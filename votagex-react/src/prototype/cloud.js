@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react';
 import { initializeApp } from 'firebase/app';
 import { connectAuthEmulator, getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signInWithRedirect, signOut } from 'firebase/auth';
 import {
-  arrayRemove, arrayUnion, collection, connectFirestoreEmulator, doc, getDoc, getFirestore, onSnapshot, query,
-  serverTimestamp, setDoc, Timestamp, updateDoc, where,
+  addDoc, arrayRemove, arrayUnion, collection, connectFirestoreEmulator, deleteField, doc, getDoc,
+  initializeFirestore, onSnapshot, query, serverTimestamp, setDoc, Timestamp, updateDoc, where, writeBatch,
 } from 'firebase/firestore';
 import { DEFAULT_AVATAR } from './data';
 
@@ -24,7 +24,7 @@ let db = null;
 if (cloudReady) {
   const app = initializeApp(config, 'votagex');
   auth = getAuth(app);
-  db = getFirestore(app);
+  db = initializeFirestore(app, { ignoreUndefinedProperties: true }); // optional fields left undefined are just skipped
   if (EMULATOR) {
     connectAuthEmulator(auth, `http://${location.hostname}:9099`, { disableWarnings: true });
     connectFirestoreEmulator(db, location.hostname, 8080);
@@ -104,3 +104,54 @@ export async function readInvite(code) {
   return inv.expiresAt.toMillis() > Date.now() ? { code, ...inv } : null;
 }
 export const joinGroup = (uid, invite) => updateDoc(doc(db, 'groups', invite.groupId), { memberIds: arrayUnion(uid), joinCode: invite.code });
+
+/* ---------- trips and their stops ---------- */
+// A group's trip lives under the group (everyone in it plans together); a trip of my own under me.
+// In the app a plan looks like the demo's: { id, ...fields, members, stops: [...] }.
+const plansPath = (uid, groupId) => (groupId ? `groups/${groupId}/plans` : `users/${uid}/plans`);
+const planRef = (uid, plan) => doc(db, plansPath(uid, plan.groupId), plan.id);
+
+// Every trip I can see: mine, and every trip of each of my groups (whether I go or not), each with its stops,
+// live. onChange gets the whole list whenever anything changes. Returns a function that stops listening.
+export function watchPlans(uid, groupIds, onChange) {
+  const plans = new Map(); // key "root/id" → plan without stops
+  const stops = new Map(); // same key → stops
+  const stopSubs = new Map();
+  const emit = () => onChange([...plans.entries()].map(([k, p]) => ({ ...p, stops: stops.get(k) || [] })));
+  const watchRoot = (groupId) => onSnapshot(collection(db, plansPath(uid, groupId)), (snap) => {
+    const root = groupId || 'me';
+    const seen = new Set();
+    snap.docs.forEach((d) => {
+      const k = `${root}/${d.id}`;
+      seen.add(k);
+      plans.set(k, { id: d.id, ...d.data(), groupId: groupId || null, members: d.data().memberIds });
+      if (!stopSubs.has(k)) {
+        stopSubs.set(k, onSnapshot(collection(d.ref, 'stops'), (ss) => {
+          stops.set(k, ss.docs.map((x) => ({ id: x.id, ...x.data() })));
+          emit();
+        }, (e) => { console.warn('stops listener:', e.code); stopSubs.delete(k); })); // dropped: the next snapshot listens again
+      }
+    });
+    [...plans.keys()].filter((k) => k.startsWith(`${root}/`) && !seen.has(k)).forEach((k) => {
+      plans.delete(k); stops.delete(k); stopSubs.get(k)?.(); stopSubs.delete(k);
+    });
+    emit();
+  }, (e) => console.warn('plans listener:', e.code));
+  const roots = [watchRoot(null), ...groupIds.map(watchRoot)];
+  return () => { roots.forEach((u) => u()); stopSubs.forEach((u) => u()); };
+}
+
+// a new trip (and its first stops); the id is known at once, the write finishes in the background
+export function createPlan(uid, { members, stops = [], ...plan }) {
+  const ref = doc(collection(db, plansPath(uid, plan.groupId)));
+  const batch = writeBatch(db);
+  batch.set(ref, { ...plan, groupId: plan.groupId || null, memberIds: members, createdBy: uid, createdAt: serverTimestamp() });
+  // stops get their own ids in Firestore
+  stops.forEach((st) => { const fields = { ...st }; delete fields.id; batch.set(doc(collection(ref, 'stops')), { checkIns: {}, ...fields }); });
+  batch.commit();
+  return ref.id;
+}
+export const updatePlanFields = (uid, plan, fields) => updateDoc(planRef(uid, plan), fields);
+export const addStop = (uid, plan, stop) => addDoc(collection(planRef(uid, plan), 'stops'), { note: '', ...stop, checkIns: {} });
+// my own check-in only (the rules refuse anyone else's): set it, or take it back with null
+export const setCheckIn = (uid, plan, stopId, value) => updateDoc(doc(planRef(uid, plan), 'stops', stopId), { [`checkIns.${uid}`]: value ?? deleteField() });
