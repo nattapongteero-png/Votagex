@@ -2,21 +2,15 @@ import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTrips } from '../contexts/TripContext';
 import { useAuth } from '../contexts/AuthContext';
+import { DEFAULT_AVATAR } from '../constants/avatars';
 import { formatISODate, activityMatchesDate, formatDateThaiShort } from '../utils/dates';
-import { CATEGORY_CONFIG } from '../constants/categories';
-import Timeline from '@mui/lab/Timeline';
-import TimelineItem from '@mui/lab/TimelineItem';
-import TimelineSeparator from '@mui/lab/TimelineSeparator';
-import TimelineConnector from '@mui/lab/TimelineConnector';
-import TimelineContent from '@mui/lab/TimelineContent';
-import TimelineOppositeContent from '@mui/lab/TimelineOppositeContent';
-import TimelineDot from '@mui/lab/TimelineDot';
-import Typography from '@mui/material/Typography';
 import ActivityCard from '../components/common/ActivityCard';
 import TripCard from '../components/common/TripCard';
 import ActivityModal from '../components/modals/ActivityModal';
 import ActivityDetailModal from '../components/modals/ActivityDetailModal';
 import JoinConfirmModal from '../components/modals/JoinConfirmModal';
+import MonthPickerSheet from '../components/modals/MonthPickerSheet';
+import useSheetSnap from '../hooks/useSheetSnap';
 
 function getStartOfWeek(baseDate, offset) {
   const dayOfWeek = baseDate.getDay();
@@ -53,8 +47,11 @@ export default function HomePage() {
   const [detailActivityIndex, setDetailActivityIndex] = useState(-1);
   const [showActivityEditModal, setShowActivityEditModal] = useState(false);
   const [headerCollapsed, setHeaderCollapsed] = useState(false);
+  const [showMonthPicker, setShowMonthPicker] = useState(false);
   const contentRef = useRef(null);
   const collapsedRef = useRef(false);
+  const pageRef = useRef(null);
+  useSheetSnap(pageRef);
 
   useEffect(() => {
     loadTrips();
@@ -150,27 +147,30 @@ export default function HomePage() {
     return { num: '', label: 'ไม่มีทริปของคุณ', isOngoing: false, noTrip: true };
   }, [selectedDate, trips, username]);
 
-  // Week calendar
-  const weekDays = useMemo(() => {
-    const today = new Date();
-    const startOfWeek = getStartOfWeek(today, weekOffset);
+  // Activities per day (week strip + month picker)
+  const activityCounts = useMemo(() => {
     const activities = homeTrip?.activities || [];
-    const activityCounts = {};
-
+    const counts = {};
     activities.forEach(act => {
       if (act.category === 'hotel' && act.checkIn && act.checkOut) {
         const d = new Date(act.checkIn);
         const end = new Date(act.checkOut);
         while (d < end) {
           const key = formatISODate(d);
-          activityCounts[key] = (activityCounts[key] || 0) + 1;
+          counts[key] = (counts[key] || 0) + 1;
           d.setDate(d.getDate() + 1);
         }
       } else if (act.tripDay) {
-        activityCounts[act.tripDay] = (activityCounts[act.tripDay] || 0) + 1;
+        counts[act.tripDay] = (counts[act.tripDay] || 0) + 1;
       }
     });
+    return counts;
+  }, [homeTrip]);
 
+  // Week calendar
+  const weekDays = useMemo(() => {
+    const today = new Date();
+    const startOfWeek = getStartOfWeek(today, weekOffset);
     const days = [];
     for (let i = 0; i < 7; i++) {
       const d = new Date(startOfWeek);
@@ -185,7 +185,17 @@ export default function HomePage() {
       });
     }
     return days;
-  }, [weekOffset, homeTrip, selectedDate]);
+  }, [weekOffset, activityCounts, selectedDate]);
+
+  // Pick a day from the month calendar: select it and move the week strip to its week
+  const pickDate = useCallback((dateStr) => {
+    const today = getStartOfWeek(new Date(), 0);
+    const target = getStartOfWeek(new Date(dateStr), 0);
+    today.setHours(0, 0, 0, 0);
+    target.setHours(0, 0, 0, 0);
+    setWeekOffset(Math.round((target - today) / (7 * 86400000)));
+    setSelectedDate(dateStr);
+  }, []);
 
   // Calendar month label (syncs with displayed week)
   const calendarMonthLabel = useMemo(() => {
@@ -377,50 +387,103 @@ export default function HomePage() {
   const displayName = authUser?.displayName || username || 'Traveler';
   const displayPhoto = userImage || authUser?.photoURL;
 
+  const stageTrip = tripOnDate || homeTrip;
+  const isTodaySelected = selectedDate === formatISODate(new Date());
+  const countdownChip = countdownData.noTrip
+    ? countdownData.label
+    : countdownData.isOngoing ? countdownData.num : `อีก ${countdownData.num} วัน`;
+
   return (
-    <div className={`homepage${headerCollapsed ? ' header-collapsed' : ''}`} style={{ display: 'flex' }}>
-      {/* Header */}
+    <div ref={pageRef} className={`homepage${headerCollapsed ? ' header-collapsed' : ''}`} style={{ display: 'flex' }}>
+      {/* Header: avatar + greeting, then pill row (ThaiWell home header) */}
       <div className="hp-header">
-        <div className="hp-header-bg">
-          <img src="/assets/header-bg.png" alt="" />
-        </div>
         <div className="hp-header-top">
-          <div>
-            <span className="hp-logo">VOTAGEX</span>
-            <span className="hp-welcome">Welcome , {displayName}</span>
-          </div>
-          <div className="hp-profile-avatar" onClick={() => navigate('/me')}>
-            {displayPhoto ? (
-              <img src={displayPhoto} alt="" />
-            ) : (
-              <svg viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-              </svg>
-            )}
-          </div>
+          <button className="hp-greet" onClick={() => navigate('/me')}>
+            <span className="hp-profile-avatar">
+              <img src={displayPhoto || DEFAULT_AVATAR} alt="" />
+            </span>
+            <span className="hp-greet-text">
+              <span className="hp-welcome">สวัสดี,</span>
+              <span className="hp-logo">{displayName}</span>
+            </span>
+          </button>
         </div>
 
-        {/* Countdown Calendar Card */}
-        <div className="hp-calendar-card" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} onMouseDown={handleMouseDown} onMouseUp={handleMouseUp}>
-          <div className="hp-stamp-stack">
-            <img className="hp-stamp hp-stamp-1" src="/assets/stamp_bg1.png" alt="" />
-            <img className="hp-stamp hp-stamp-2" src="/assets/stamp_bg2.png" alt="" />
-            <img className="hp-stamp hp-stamp-3" src="/assets/stamp_bg3.png" alt="" />
-          </div>
-          <div className="hp-countdown-row">
-            <span className="hp-countdown-icon">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <path d="M12 9C8.5285 9 5.71429 12.07 5.71429 15.8571H18.2857C18.2857 12.07 15.4715 9 12 9Z" fill="#363853" fillOpacity="0.15"/>
-                <path d="M1 15.8571H23M5.71429 21H18.2857M5.71429 15.8571C5.71429 12.07 8.5285 9 12 9C15.4715 9 18.2857 12.07 18.2857 15.8571H5.71429Z" stroke="#363853" strokeWidth="2" strokeLinecap="round"/>
-                <path d="M12 4V3M18 5.0622L16.7496 6M7.25041 6L6 5.06218" stroke="#363853" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
+        <div className="hp-pill-row">
+          <button className="hp-brand-pill" onClick={() => setShowMonthPicker(true)}>
+            <span className="hp-brand-orb">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4.5" width="18" height="16" rx="3" /><path d="M8 3v3M16 3v3M3 10h18" /></svg>
             </span>
-            <span className="hp-countdown-num">{countdownData.num}</span>
-            <span className="hp-countdown-label">{countdownData.label}</span>
-          </div>
-          <span className="hp-trip-subtitle">{calendarMonthLabel}</span>
+            {isTodaySelected ? 'วันนี้' : formatDateThaiShort(selectedDate)}
+          </button>
+          {stageTrip && (
+            <button className="hp-trip-pill" onClick={() => navigate(`/trip/${stageTrip.id}`)}>
+              {stageTrip.name || 'Trip'}
+            </button>
+          )}
+        </div>
+      </div>
 
-          <div className={`hp-calendar-dates${slideAnim ? ` ${slideAnim}` : ''}`}>
+      {/* Stage: info chips + empty slot (where ThaiWell shows its 3D model) */}
+      <div className="hp-stage">
+        <div className="hp-stage-chips">
+          <span className="hp-chip">
+            <span className="hp-chip-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4.5" width="18" height="16" rx="3" /><path d="M8 3v3M16 3v3M3 10h18" /></svg>
+            </span>
+            {countdownChip}
+          </span>
+          {stageTrip && (
+            <span className="hp-chip">
+              <span className="hp-chip-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="8" r="3.5" /><path d="M3 20c.5-3.4 3-5.5 6-5.5s5.5 2.1 6 5.5" /><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18.5 14.8c1.4.9 2.3 2.6 2.5 5.2" /></svg>
+              </span>
+              {(stageTrip.members || []).length}/{stageTrip.memberCount || 1} คน
+            </span>
+          )}
+          {scheduleActivities.length > 0 && (
+            <span className="hp-chip good">
+              <span className="hp-chip-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 11.5l2.5 2.5L16 9.5" /><rect x="3.5" y="3.5" width="17" height="17" rx="4" /></svg>
+              </span>
+              {scheduleActivities.length} กิจกรรม
+            </span>
+          )}
+          <span className="hp-stage-caption">{formatDateThaiShort(selectedDate)} · {calendarMonthLabel}</span>
+        </div>
+        {/* Reserved slot: content for this area is still to be decided */}
+        <div className="hp-stage-slot" />
+      </div>
+
+      {/* Sheet frame: rises with the cards to step 2, then stays under the pill row */}
+      <div className="hp-sheet-frame" aria-hidden="true"><div className="hp-sheet-bg" /><span className="hp-sheet-handle" /></div>
+
+      {/* Scrollable sheet of cards over the stage */}
+      <div className="hp-content" ref={contentRef}>
+        <div className="hp-stage-spacer" />
+
+        {/* Day plan card (ThaiWell appointment card) */}
+        <div className="hp-tile hp-plan-card">
+          <div className="hp-plan-head">
+            <div className="hp-plan-head-text">
+              <span className="hp-plan-label">{countdownData.noTrip ? calendarMonthLabel : `${countdownData.num} ${countdownData.label}`}</span>
+              <span className="hp-plan-title">{isTodaySelected ? 'วันนี้' : formatDateThaiShort(selectedDate)} · {scheduleActivities.length} กิจกรรม</span>
+            </div>
+          </div>
+          {stageTrip && (
+            <div className="hp-plan-place">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 21s-6.8-5.6-6.8-11.2a6.8 6.8 0 0 1 13.6 0C18.8 15.4 12 21 12 21Z" /><circle cx="12" cy="9.8" r="2.5" /></svg>
+              <span>{stageTrip.name || 'Trip'}</span>
+            </div>
+          )}
+
+          <div
+            className={`hp-calendar-dates${slideAnim ? ` ${slideAnim}` : ''}`}
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+            onMouseDown={handleMouseDown}
+            onMouseUp={handleMouseUp}
+          >
             <div className="hp-week-labels">
               <span>จ.</span><span>อ.</span><span>พ.</span><span>พฤ.</span><span>ศ.</span><span>ส.</span><span>อา.</span>
             </div>
@@ -445,34 +508,58 @@ export default function HomePage() {
               ))}
             </div>
           </div>
+
+          {/* Day schedule as a checklist */}
+          <div className="hp-steps">
+            {scheduleActivities.length > 0 ? scheduleActivities.map((act, idx) => {
+              const status = getActivityStatus(act);
+              const state = act.checkedIn ? (act.checkedInLate ? 'late' : 'done') : status === 'missed' ? 'missed' : 'pending';
+              return (
+                <div key={idx} className={`hp-step ${state}`}>
+                  <span className="hp-step-icon">
+                    {state === 'done' || state === 'late' ? (
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="m8.5 12 2.5 2.5 4.5-5" /></svg>
+                    ) : (
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="9" /></svg>
+                    )}
+                  </span>
+                  <span className="hp-step-time">{act.time || '--:--'}</span>
+                  <span className="hp-step-name">{act.name}</span>
+                  {state === 'done' ? (
+                    <span className="hp-step-status done">Checked</span>
+                  ) : state === 'late' ? (
+                    <span className="hp-step-status late">Late</span>
+                  ) : state === 'missed' ? (
+                    <span className="hp-step-status">Miss</span>
+                  ) : (
+                    <button className="hp-step-checkin" onClick={() => handleCheckIn(act._index)}>Check in</button>
+                  )}
+                </div>
+              );
+            }) : (
+              <div className="hp-schedule-empty">ไม่มีกิจกรรมในวัน{isTodaySelected ? 'นี้' : `ที่ ${formatDateThaiShort(selectedDate)}`}</div>
+            )}
+          </div>
+
+          <div className="hp-plan-actions">
+            <button className="hp-add-btn" onClick={handleAddButton}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
+              {addButtonMode === 'activity' ? 'เพิ่ม Activity' : 'เพิ่มทริป'}
+            </button>
+            {tripOnDate && (
+              <button className="hp-section-arrow" aria-label="ดูทริป" onClick={() => navigate(`/trip/${tripOnDate.id}`)}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 6 6 6-6 6" /></svg>
+              </button>
+            )}
+          </div>
         </div>
 
-        {/* Add button */}
-        <button className="hp-add-btn" onClick={handleAddButton}>
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path d="M2.23525 5.96695C2.66958 4.11534 4.11534 2.66958 5.96696 2.23525C7.30417 1.92158 8.69583 1.92158 10.033 2.23525C11.8847 2.66958 13.3304 4.11534 13.7647 5.96696C14.0784 7.30417 14.0784 8.69583 13.7647 10.033C13.3304 11.8847 11.8847 13.3304 10.033 13.7648C8.69583 14.0784 7.30417 14.0784 5.96696 13.7647C4.11534 13.3304 2.66958 11.8847 2.23525 10.033C1.92158 8.69583 1.92158 7.30417 2.23525 5.96695Z" fill="#363853" fillOpacity="0.15" stroke="white" strokeWidth="1.5"/>
-            <path d="M9.66665 8.00016H6.33331M7.99998 9.66683L7.99998 6.3335" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
-          </svg>
-          {addButtonMode === 'activity' ? 'เพิ่ม Activity' : 'เพิ่มทริป'}
-        </button>
-      </div>
-
-      {/* Scrollable Content */}
-      <div className="hp-content" ref={contentRef}>
         {/* Recent Activities */}
         <div className="hp-section">
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div className="hp-tile-title">
             <span className="hp-section-title">กิจกรรมล่าสุด</span>
             {recentActivities.length > 0 && tripOnDate && (
-              <button
-                className="hp-section-arrow"
-                onClick={() => navigate(`/trip/${tripOnDate.id}`)}
-              >
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                  <path d="M3.35288 8.95043C4.00437 6.17301 6.17301 4.00437 8.95043 3.35288C10.9563 2.88237 13.0437 2.88237 15.0496 3.35288C17.827 4.00437 19.9956 6.17301 20.6471 8.95044C21.1176 10.9563 21.1176 13.0437 20.6471 15.0496C19.9956 17.827 17.827 19.9956 15.0496 20.6471C13.0437 21.1176 10.9563 21.1176 8.95044 20.6471C6.17301 19.9956 4.00437 17.827 3.35288 15.0496C2.88237 13.0437 2.88237 10.9563 3.35288 8.95043Z" fill="#363853" fillOpacity="0.15" stroke="#363853" strokeWidth="1.5"/>
-                  <path d="M8.5 12L15.5 12M15.5 12L13 9.5M15.5 12L13 14.5" stroke="#363853" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </button>
+              <button className="hp-tile-link" onClick={() => navigate(`/trip/${tripOnDate.id}`)}>ดูทั้งหมด</button>
             )}
           </div>
           <div className="hp-recent-scroll">
@@ -486,77 +573,12 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Travel Schedule (Today only) */}
-        <div className="hp-section">
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span className="hp-section-title">{selectedDate === formatISODate(new Date()) ? 'ตารางเที่ยววันนี้' : `ตารางเที่ยว ${formatDateThaiShort(selectedDate)}`}</span>
-            {scheduleActivities.length > 0 && tripOnDate && (
-              <button
-                className="hp-section-arrow"
-                onClick={() => navigate(`/trip/${tripOnDate.id}`)}
-              >
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                  <path d="M3.35288 8.95043C4.00437 6.17301 6.17301 4.00437 8.95043 3.35288C10.9563 2.88237 13.0437 2.88237 15.0496 3.35288C17.827 4.00437 19.9956 6.17301 20.6471 8.95044C21.1176 10.9563 21.1176 13.0437 20.6471 15.0496C19.9956 17.827 17.827 19.9956 15.0496 20.6471C13.0437 21.1176 10.9563 21.1176 8.95044 20.6471C6.17301 19.9956 4.00437 17.827 3.35288 15.0496C2.88237 13.0437 2.88237 10.9563 3.35288 8.95043Z" fill="#363853" fillOpacity="0.15" stroke="#363853" strokeWidth="1.5"/>
-                  <path d="M8.5 12L15.5 12M15.5 12L13 9.5M15.5 12L13 14.5" stroke="#363853" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </button>
-            )}
-          </div>
-          <div className="hp-schedule">
-            {scheduleActivities.length > 0 ? (
-              <Timeline position="alternate">
-                {scheduleActivities.map((act, idx) => {
-                  const cfg = CATEGORY_CONFIG[act.category] || CATEGORY_CONFIG.other;
-                  const status = getActivityStatus(act);
-                  let circleClass = 'pending';
-                  if (status === 'checked-in') circleClass = act.checkedInLate ? 'late' : 'checked-in';
-                  else if (status === 'missed') circleClass = 'missed';
-                  else if (act.category === 'hotel') circleClass = 'default';
-
-                  return (
-                    <TimelineItem key={idx}>
-                      <TimelineOppositeContent sx={{ m: 'auto 0' }} variant="body2" color="text.secondary">
-                        <span className="hp-timeline-time">{act.time || '--:--'}</span>
-                      </TimelineOppositeContent>
-                      <TimelineSeparator>
-                        <TimelineConnector sx={{ bgcolor: '#e5e7eb' }} />
-                        <TimelineDot sx={{ bgcolor: 'transparent', boxShadow: 'none', p: 0, m: 0 }}>
-                          <div className={`hp-status-circle ${circleClass}`} dangerouslySetInnerHTML={{ __html: cfg.icon }} />
-                        </TimelineDot>
-                        <TimelineConnector sx={{ bgcolor: '#e5e7eb' }} />
-                      </TimelineSeparator>
-                      <TimelineContent sx={{ py: '12px', px: 2, m: 'auto 0' }}>
-                        <Typography variant="subtitle2" component="span" sx={{ fontFamily: "'Google Sans', sans-serif", fontWeight: 600, color: '#1a1a2e' }}>
-                          {act.name}
-                        </Typography>
-                        {act.checkedIn ? (
-                          <Typography variant="caption" sx={{ display: 'block', color: act.checkedInLate ? '#EF4444' : '#22C55E', fontWeight: 600, fontFamily: "'Google Sans', sans-serif" }}>
-                            {act.checkedInLate ? 'Late' : 'Checked'}
-                          </Typography>
-                        ) : status === 'missed' ? (
-                          <Typography variant="caption" sx={{ display: 'block', color: '#9ca3af', fontWeight: 400, fontFamily: "'Google Sans', sans-serif" }}>
-                            Miss
-                          </Typography>
-                        ) : (
-                          <Typography variant="caption" sx={{ display: 'block', color: '#2463eb', cursor: 'pointer', fontWeight: 400, fontFamily: "'Google Sans', sans-serif" }} onClick={() => handleCheckIn(act._index)}>
-                            Check in
-                          </Typography>
-                        )}
-                      </TimelineContent>
-                    </TimelineItem>
-                  );
-                })}
-              </Timeline>
-            ) : (
-              <div className="hp-schedule-empty">ไม่มีกิจกรรมในวัน{selectedDate === formatISODate(new Date()) ? 'นี้' : `ที่ ${formatDateThaiShort(selectedDate)}`}</div>
-            )}
-          </div>
-        </div>
-
         {/* Other Trips */}
         {otherTrips.length > 0 && (
           <div className="hp-section">
-            <span className="hp-section-title">Other Trip</span>
+            <div className="hp-tile-title">
+              <span className="hp-section-title">Other Trip</span>
+            </div>
             <div className="hp-other-trip-grid">
               {otherTrips.map(trip => (
                 <TripCard
@@ -580,6 +602,17 @@ export default function HomePage() {
           joining={joining}
           onConfirm={handleJoinConfirm}
           onClose={() => { setConfirmTrip(null); setJoining(false); }}
+        />
+      )}
+
+      {showMonthPicker && (
+        <MonthPickerSheet
+          selectedDate={selectedDate}
+          tripStart={stageTrip?.startDate}
+          tripEnd={stageTrip?.endDate}
+          activityCounts={activityCounts}
+          onPick={pickDate}
+          onClose={() => setShowMonthPicker(false)}
         />
       )}
 

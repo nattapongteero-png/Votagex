@@ -1,0 +1,37 @@
+import { useLayoutEffect, useRef, useState } from 'react';
+import Icon, { Flag } from './icons';
+
+// Notes from the profile character, Instagram-notes style: a small bubble floating above the avatar
+// with two little dots trailing down to it. Each note starts with typing dots, then the words; after a
+// few seconds it fades for the next one (the cycle follows the animation itself). Tap to open it.
+export default function SpeechNotes({ notes }) {
+  const [tick, setTick] = useState(0);
+  const btn = useRef(null);
+  const note = notes.length ? notes[tick % notes.length] : null;
+  const id = note ? `${note.key}-${tick}` : '';
+
+  // wrapped text keeps the box at its max width; shrink it to the longest line
+  useLayoutEffect(() => {
+    const el = btn.current;
+    if (!el) return;
+    el.style.width = '';
+    const range = document.createRange();
+    range.selectNodeContents(el.querySelector('.pt-speech-text'));
+    const scale = el.getBoundingClientRect().width / el.offsetWidth || 1; // the pop animation scales the bubble
+    const pad = parseFloat(getComputedStyle(el).paddingLeft) * 2;
+    el.style.width = `${Math.ceil(range.getBoundingClientRect().width / scale + pad)}px`;
+  }, [id, note?.text]);
+
+  if (!note) return null;
+  const many = notes.length > 1;
+  const next = (e) => { if (many && e.animationName === 'pt-speech-life') setTick((x) => x + 1); };
+  return (
+    <div className="pt-speech-wrap">
+      <button key={id} ref={btn} className={`pt-speech${many ? ' cycling' : ''}`}
+        onClick={note.onClick} onAnimationEnd={next}>
+        <span className="pt-speech-dots" aria-hidden="true"><i /><i /><i /></span>
+        <span className="pt-speech-text">{note.text}{note.icon && <Icon name={note.icon} size={14} className="pt-inline-icon" />}{note.flag && <Flag code={note.flag} className="pt-inline-icon" />}</span>
+      </button>
+    </div>
+  );
+}

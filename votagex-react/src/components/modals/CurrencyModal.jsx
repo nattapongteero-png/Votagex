@@ -39,7 +39,7 @@ export default function CurrencyModal({ selected, onSelect, onClose }) {
         </div>
 
         <div className="currency-search">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a3a3a3" strokeWidth="2" strokeLinecap="round">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round">
             <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
           </svg>
           <input
@@ -70,7 +70,7 @@ export default function CurrencyModal({ selected, onSelect, onClose }) {
                   </div>
                   <span className="currency-rate">1 ฿ = {rate < 1 ? rate.toFixed(4) : rate < 100 ? rate.toFixed(2) : Math.round(rate)} {c.symbol}</span>
                   {isSelected && (
-                    <svg className="currency-check" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <svg className="currency-check" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0D9488" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                       <polyline points="20 6 9 17 4 12"/>
                     </svg>
                   )}

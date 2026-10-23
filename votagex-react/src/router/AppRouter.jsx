@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import ProtectedRoute from './ProtectedRoute';
 import LandingPage from '../pages/LandingPage';
@@ -8,6 +9,9 @@ import MePage from '../pages/MePage';
 import JoinScreen from '../pages/JoinScreen';
 import TripDetailPage from '../pages/TripDetailPage';
 import TabLayout from '../components/common/TabLayout';
+
+// Clickable UI prototype of the redesigned flow (sample data only, no Firebase)
+const ProtoApp = lazy(() => import('../prototype/ProtoApp'));
 
 export default function AppRouter() {
   return (
@@ -22,6 +26,7 @@ export default function AppRouter() {
           <Route path="/me" element={<MePage />} />
         </Route>
         <Route path="/trip/:tripId" element={<ProtectedRoute><TripDetailPage /></ProtectedRoute>} />
+        <Route path="/proto/*" element={<Suspense fallback={<div className="loading-screen">กำลังโหลด...</div>}><ProtoApp /></Suspense>} />
       </Routes>
     </BrowserRouter>
   );

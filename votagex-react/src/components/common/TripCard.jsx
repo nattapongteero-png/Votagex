@@ -1,4 +1,4 @@
-import { formatDateShort } from '../../utils/dates';
+import { formatDateThaiShort } from '../../utils/dates';
 import { isTripOwner, isTripMember } from '../../utils/helpers';
 
 export default function TripCard({ trip, showEditButton, onEdit, onJoin, onView, onCardClick }) {
@@ -10,7 +10,7 @@ export default function TripCard({ trip, showEditButton, onEdit, onJoin, onView,
   const disabled = isExpired || (!isJoined && isFull);
 
   const dateText = (trip.startDate && trip.endDate)
-    ? `${formatDateShort(trip.startDate)} - ${formatDateShort(trip.endDate)}`
+    ? `${formatDateThaiShort(trip.startDate)} - ${formatDateThaiShort(trip.endDate)}`
     : '';
 
   const members = trip.members || [];
@@ -22,6 +22,7 @@ export default function TripCard({ trip, showEditButton, onEdit, onJoin, onView,
 
   return (
     <div className={`hp-other-card${disabled ? ' disabled' : ''}${isExpired ? ' expired' : ''}`} onClick={isExpired ? undefined : onCardClick}>
+      {/* Cover on top with a small tag, like ThaiWell stretch cards */}
       <div className="hp-other-card-top">
         <div className="hp-other-flag">
           {trip.coverImage ? (
@@ -34,6 +35,7 @@ export default function TripCard({ trip, showEditButton, onEdit, onJoin, onView,
             </svg>
           )}
         </div>
+        {dateText && <span className="hp-other-tag">{dateText}</span>}
         {showEdit && (
           <button className="hp-other-edit-btn" title="แก้ไข/ลบ" onClick={(e) => { e.stopPropagation(); onEdit?.(trip); }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -45,7 +47,6 @@ export default function TripCard({ trip, showEditButton, onEdit, onJoin, onView,
 
       <div className="hp-other-details">
         <div className="hp-other-name">{trip.name || 'Trip'}</div>
-        {dateText && <div className="hp-other-date">{dateText}</div>}
         {trip.description && <div className="hp-other-desc">{trip.description}</div>}
       </div>
 
@@ -78,8 +79,8 @@ export default function TripCard({ trip, showEditButton, onEdit, onJoin, onView,
       ) : isJoined ? (
         <button className="hp-other-join-btn hp-other-view-btn" onClick={(e) => { e.stopPropagation(); onView ? onView(trip) : onCardClick?.(); }}>
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none">
-            <path d="M12 3C10.9767 3 9.95334 3.11763 8.95043 3.35288C6.17301 4.00437 4.00437 6.17301 3.35288 8.95043C2.88237 10.9563 2.88237 13.0437 3.35288 15.0496C4.00437 17.827 6.17301 19.9956 8.95044 20.6471C10.9563 21.1176 13.0437 21.1176 15.0496 20.6471C17.827 19.9956 19.9956 17.827 20.6471 15.0496C20.8824 14.0466 21 13.0233 21 12" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" />
-            <path d="M17 3H21M21 3V7.66667M21 3L15 10" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M12 3C10.9767 3 9.95334 3.11763 8.95043 3.35288C6.17301 4.00437 4.00437 6.17301 3.35288 8.95043C2.88237 10.9563 2.88237 13.0437 3.35288 15.0496C4.00437 17.827 6.17301 19.9956 8.95044 20.6471C10.9563 21.1176 13.0437 21.1176 15.0496 20.6471C17.827 19.9956 19.9956 17.827 20.6471 15.0496C20.8824 14.0466 21 13.0233 21 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            <path d="M17 3H21M21 3V7.66667M21 3L15 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
           ดูข้อมูลทริป
         </button>

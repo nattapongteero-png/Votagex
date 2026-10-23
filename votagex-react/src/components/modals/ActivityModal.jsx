@@ -178,7 +178,7 @@ export default function ActivityModal({ tripForm, editingActivity, editingIndex,
               placeholder="รายละเอียด"
               value={name}
               onChange={(e) => { setName(e.target.value); setNameError(false); }}
-              style={nameError ? { boxShadow: '0 0 0 2px #EF4444' } : undefined}
+              style={nameError ? { boxShadow: '0 0 0 2px #D63B3B' } : undefined}
             />
           </div>
 
@@ -196,8 +196,8 @@ export default function ActivityModal({ tripForm, editingActivity, editingIndex,
 
           {/* Day Selector (not for hotel) */}
           {tripDays.length > 0 && !cfg.hasDate && (
-            <div className="modal-section-card" style={dayError && !tripDay ? { boxShadow: '0 0 0 2px #EF4444' } : undefined}>
-              <span className="modal-section-label">เลือกวัน <span style={{ color: '#EF4444' }}>*</span></span>
+            <div className="modal-section-card" style={dayError && !tripDay ? { boxShadow: '0 0 0 2px #D63B3B' } : undefined}>
+              <span className="modal-section-label">เลือกวัน <span style={{ color: '#D63B3B' }}>*</span></span>
               <div className="modal-day-selector">
                 {tripDays.map((date, i) => {
                   const isPast = date < todayStr;
@@ -223,10 +223,10 @@ export default function ActivityModal({ tripForm, editingActivity, editingIndex,
             <div className="modal-section-card">
               <span className="modal-section-label">เวลา</span>
               <div className="modal-time-row" onClick={() => setShowTimePicker(true)} style={{ cursor: 'pointer' }}>
-                <span style={{ flex: 1, fontFamily: "'Google Sans', sans-serif", fontSize: 14, color: time ? 'var(--text)' : '#a3a3a3' }}>
+                <span style={{ flex: 1, fontFamily: "var(--font)", fontSize: 14, color: time ? 'var(--text)' : '#9ca3af' }}>
                   {time || 'เลือกเวลา'}
                 </span>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a3a3a3" strokeWidth="1.5" strokeLinecap="round">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.5" strokeLinecap="round">
                   <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
                 </svg>
               </div>
@@ -240,18 +240,18 @@ export default function ActivityModal({ tripForm, editingActivity, editingIndex,
               <div className="modal-section-card">
                 <span className="modal-section-label">เวลาเช็คอิน</span>
                 <div className="modal-time-row" onClick={() => setShowTimePicker(true)} style={{ cursor: 'pointer' }}>
-                  <span style={{ flex: 1, fontFamily: "'Google Sans', sans-serif", fontSize: 14, color: time ? 'var(--text)' : '#a3a3a3' }}>
+                  <span style={{ flex: 1, fontFamily: "var(--font)", fontSize: 14, color: time ? 'var(--text)' : '#9ca3af' }}>
                     {time || 'เลือกเวลา'}
                   </span>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a3a3a3" strokeWidth="1.5" strokeLinecap="round">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.5" strokeLinecap="round">
                     <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
                   </svg>
                 </div>
               </div>
 
               {/* Check-in Date */}
-              <div className="modal-section-card" style={dayError && !checkIn ? { boxShadow: '0 0 0 2px #EF4444' } : undefined}>
-                <span className="modal-section-label">เช็คอิน <span style={{ color: '#EF4444' }}>*</span></span>
+              <div className="modal-section-card" style={dayError && !checkIn ? { boxShadow: '0 0 0 2px #D63B3B' } : undefined}>
+                <span className="modal-section-label">เช็คอิน <span style={{ color: '#D63B3B' }}>*</span></span>
                 <div className="modal-day-selector">
                   {tripDays.map((date, i) => {
                     const isPast = date < todayStr;
@@ -272,8 +272,8 @@ export default function ActivityModal({ tripForm, editingActivity, editingIndex,
               </div>
 
               {/* Check-out Date */}
-              <div className="modal-section-card" style={dayError && !checkOut ? { boxShadow: '0 0 0 2px #EF4444' } : undefined}>
-                <span className="modal-section-label">เช็คเอาท์ <span style={{ color: '#EF4444' }}>*</span></span>
+              <div className="modal-section-card" style={dayError && !checkOut ? { boxShadow: '0 0 0 2px #D63B3B' } : undefined}>
+                <span className="modal-section-label">เช็คเอาท์ <span style={{ color: '#D63B3B' }}>*</span></span>
                 <div className="modal-day-selector">
                   {tripDays.map((date, i) => {
                     const isPast = date < todayStr;
@@ -311,7 +311,7 @@ export default function ActivityModal({ tripForm, editingActivity, editingIndex,
                   <span>THB (฿)</span>
                 </div>
                 <div className="modal-swap-icon">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#222B45" strokeWidth="1.5" strokeLinecap="round">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#111827" strokeWidth="1.5" strokeLinecap="round">
                     <polyline points="7 16 3 12 7 8" />
                     <polyline points="17 8 21 12 17 16" />
                     <line x1="3" y1="12" x2="21" y2="12" />

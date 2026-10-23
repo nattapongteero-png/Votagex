@@ -36,7 +36,7 @@ export default function TripDetailPage() {
   const { tripId } = useParams();
   const navigate = useNavigate();
   const { trips, loadTrips, updateExistingTrip, deleteExistingTrip } = useTrips();
-  const { username, authUser } = useAuth();
+  const { username } = useAuth();
 
   const [activeTab, setActiveTab] = useState('expenses');
   const [selectedDay, setSelectedDay] = useState('all');
@@ -64,7 +64,6 @@ export default function TripDetailPage() {
   }, [trip]);
 
 
-  const displayName = authUser?.displayName || trip?.profileName || 'User';
 
   // Day cards data
   const dayCards = useMemo(() => {
@@ -220,7 +219,7 @@ export default function TripDetailPage() {
   if (!trip) {
     return (
       <div className="trip-detail-page active">
-        <div style={{ padding: 24, textAlign: 'center', color: '#999' }}>
+        <div style={{ padding: 24, textAlign: 'center', color: '#9ca3af' }}>
           <p>ไม่พบทริป</p>
           <button className="btn-gradient" onClick={() => navigate('/itrip')} style={{ marginTop: 16 }}>กลับ</button>
         </div>
@@ -245,18 +244,12 @@ export default function TripDetailPage() {
         <div className="td-scroll" ref={scrollRef}>
           {/* Header (scrolls away) */}
           <div className="td-header">
-            <div className="td-header-bg"><img src="/assets/header-bg.png" alt="" /></div>
-            <div className="td-header-text">
-              <span className="td-header-title">iTrip</span>
-              <span className="td-header-subtitle">Welcome , {displayName}</span>
-            </div>
-            <button className="td-close-btn" onClick={() => navigate('/home')}>
-              <svg viewBox="0 0 32 32" fill="none" width="24" height="24">
-                <path d="M19.1921 12.793L12.8027 19.1823" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M19.1998 19.1908L12.7998 12.7908" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path opacity="0.4" fillRule="evenodd" clipRule="evenodd" d="M3.6665 16.0001C3.6665 25.2494 6.7505 28.3334 15.9998 28.3334C25.2492 28.3334 28.3332 25.2494 28.3332 16.0001C28.3332 6.75075 25.2492 3.66675 15.9998 3.66675C6.7505 3.66675 3.6665 6.75075 3.6665 16.0001Z" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <button className="td-close-btn" aria-label="ย้อนกลับ" onClick={() => navigate('/home')}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="m15 18-6-6 6-6" />
               </svg>
             </button>
+            <span className="td-header-title">iTrip</span>
           </div>
 
           {/* Flag (scrolls away naturally) */}
@@ -296,7 +289,7 @@ export default function TripDetailPage() {
                           {m.image ? <img src={m.image} alt="" /> : <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>}
                         </div>
                       ))}
-                      {members.length > 3 && <div className="td-info-avatar" style={{ fontSize: 9, fontWeight: 700, color: '#2463eb' }}>+{members.length - 3}</div>}
+                      {members.length > 3 && <div className="td-info-avatar" style={{ fontSize: 9, fontWeight: 700, color: '#0d9488' }}>+{members.length - 3}</div>}
                     </>
                   ) : (
                     Array.from({ length: Math.min(memberCount, 3) }).map((_, i) => (
@@ -352,13 +345,12 @@ export default function TripDetailPage() {
                     {row2Cats.map(cat => { const cfg = CATEGORY_CONFIG[cat]; const val = categoryTotals[cat] || 0; return (<div key={cat} className="td-expense-item"><span className={`td-expense-value${val > 0 ? ' has-expense' : ''}`}>{val > 0 ? `-${formatBudgetDisplay(val)}` : '0'}</span><div className="td-expense-cat"><span className="td-expense-cat-icon" dangerouslySetInnerHTML={{ __html: cfg.icon }} /><span className="td-expense-cat-label">{cfg.label}</span></div></div>); })}
                   </div>
                 </div>
-                <div className="td-expense-bg"><img src="/assets/coins.png" alt="" onError={(e) => { e.target.parentElement.style.display = 'none'; }} /></div>
               </div>
               <div className="td-activities">
                 <div className="td-activities-header">
                   <span className="td-activities-title">กิจกรรม</span>
                   <button className="td-btn-add" onClick={() => { setSelectedActivity(null); setSelectedActivityIndex(-1); setShowActivityEditModal(true); }}>
-                    <svg width="24" height="24" viewBox="0 0 16 16" fill="none"><path d="M2.23525 5.96695C2.66958 4.11534 4.11534 2.66958 5.96696 2.23525C7.30417 1.92158 8.69583 1.92158 10.033 2.23525C11.8847 2.66958 13.3304 4.11534 13.7647 5.96696C14.0784 7.30417 14.0784 8.69583 13.7647 10.033C13.3304 11.8847 11.8847 13.3304 10.033 13.7648C8.69583 14.0784 7.30417 14.0784 5.96696 13.7647C4.11534 13.3304 2.66958 11.8847 2.23525 10.033C1.92158 8.69583 1.92158 7.30417 2.23525 5.96695Z" fill="#363853" fillOpacity="0.15" stroke="white" strokeWidth="1.5"/><path d="M9.66665 8.00016H6.33331M7.99998 9.66683L7.99998 6.3335" stroke="white" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                    <svg width="24" height="24" viewBox="0 0 16 16" fill="none"><path d="M2.23525 5.96695C2.66958 4.11534 4.11534 2.66958 5.96696 2.23525C7.30417 1.92158 8.69583 1.92158 10.033 2.23525C11.8847 2.66958 13.3304 4.11534 13.7647 5.96696C14.0784 7.30417 14.0784 8.69583 13.7647 10.033C13.3304 11.8847 11.8847 13.3304 10.033 13.7648C8.69583 14.0784 7.30417 14.0784 5.96696 13.7647C4.11534 13.3304 2.66958 11.8847 2.23525 10.033C1.92158 8.69583 1.92158 7.30417 2.23525 5.96695Z" fill="#374151" fillOpacity="0.15" stroke="white" strokeWidth="1.5"/><path d="M9.66665 8.00016H6.33331M7.99998 9.66683L7.99998 6.3335" stroke="white" strokeWidth="1.5" strokeLinecap="round"/></svg>
                     เพิ่มกิจกรรม
                   </button>
                 </div>
@@ -390,7 +382,7 @@ export default function TripDetailPage() {
                 <div className="td-schedule-header">
                   <span className="td-schedule-title">ตารางเที่ยว</span>
                   <button className="td-btn-add" onClick={() => { setSelectedActivity(null); setSelectedActivityIndex(-1); setShowActivityEditModal(true); }}>
-                    <svg width="24" height="24" viewBox="0 0 16 16" fill="none"><path d="M2.23525 5.96695C2.66958 4.11534 4.11534 2.66958 5.96696 2.23525C7.30417 1.92158 8.69583 1.92158 10.033 2.23525C11.8847 2.66958 13.3304 4.11534 13.7647 5.96696C14.0784 7.30417 14.0784 8.69583 13.7647 10.033C13.3304 11.8847 11.8847 13.3304 10.033 13.7648C8.69583 14.0784 7.30417 14.0784 5.96696 13.7647C4.11534 13.3304 2.66958 11.8847 2.23525 10.033C1.92158 8.69583 1.92158 7.30417 2.23525 5.96695Z" fill="#363853" fillOpacity="0.15" stroke="white" strokeWidth="1.5"/><path d="M9.66665 8.00016H6.33331M7.99998 9.66683L7.99998 6.3335" stroke="white" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                    <svg width="24" height="24" viewBox="0 0 16 16" fill="none"><path d="M2.23525 5.96695C2.66958 4.11534 4.11534 2.66958 5.96696 2.23525C7.30417 1.92158 8.69583 1.92158 10.033 2.23525C11.8847 2.66958 13.3304 4.11534 13.7647 5.96696C14.0784 7.30417 14.0784 8.69583 13.7647 10.033C13.3304 11.8847 11.8847 13.3304 10.033 13.7648C8.69583 14.0784 7.30417 14.0784 5.96696 13.7647C4.11534 13.3304 2.66958 11.8847 2.23525 10.033C1.92158 8.69583 1.92158 7.30417 2.23525 5.96695Z" fill="#374151" fillOpacity="0.15" stroke="white" strokeWidth="1.5"/><path d="M9.66665 8.00016H6.33331M7.99998 9.66683L7.99998 6.3335" stroke="white" strokeWidth="1.5" strokeLinecap="round"/></svg>
                     เพิ่มกิจกรรม
                   </button>
                 </div>
@@ -448,19 +440,19 @@ export default function TripDetailPage() {
                                   <TimelineConnector sx={{ bgcolor: '#e5e7eb' }} />
                                 </TimelineSeparator>
                                 <TimelineContent sx={{ py: '12px', px: 2, m: 'auto 0' }}>
-                                  <Typography variant="subtitle2" component="span" sx={{ fontFamily: "'Google Sans', sans-serif", fontWeight: 600, color: '#1a1a2e' }}>
+                                  <Typography variant="subtitle2" component="span" sx={{ fontFamily: "var(--font)", fontWeight: 600, color: '#111827' }}>
                                     {act.name}
                                   </Typography>
                                   {act.checkedIn ? (
-                                    <Typography variant="caption" sx={{ display: 'block', color: act.checkedInLate ? '#EF4444' : '#22C55E', fontWeight: 600, fontFamily: "'Google Sans', sans-serif" }}>
+                                    <Typography variant="caption" sx={{ display: 'block', color: act.checkedInLate ? '#D63B3B' : '#2E9E57', fontWeight: 600, fontFamily: "var(--font)" }}>
                                       {act.checkedInLate ? 'Late' : 'Checked'}
                                     </Typography>
                                   ) : status === 'missed' ? (
-                                    <Typography variant="caption" sx={{ display: 'block', color: '#9ca3af', fontWeight: 400, fontFamily: "'Google Sans', sans-serif" }}>
+                                    <Typography variant="caption" sx={{ display: 'block', color: '#9ca3af', fontWeight: 400, fontFamily: "var(--font)" }}>
                                       Miss
                                     </Typography>
                                   ) : (
-                                    <Typography variant="caption" sx={{ display: 'block', color: '#2463eb', cursor: 'pointer', fontWeight: 400, fontFamily: "'Google Sans', sans-serif" }} onClick={() => handleCheckIn(origIndex)}>
+                                    <Typography variant="caption" sx={{ display: 'block', color: '#0d9488', cursor: 'pointer', fontWeight: 400, fontFamily: "var(--font)" }} onClick={() => handleCheckIn(origIndex)}>
                                       Check in
                                     </Typography>
                                   )}

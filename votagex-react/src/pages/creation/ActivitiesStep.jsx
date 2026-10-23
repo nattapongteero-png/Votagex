@@ -73,7 +73,7 @@ export default function ActivitiesStep({ onNext, onBack }) {
         <div className="activity-header-row">
           <h2 className="activity-heading">กิจกรรม</h2>
           <button className="td-btn-add" onClick={handleAddClick}>
-            <svg width="24" height="24" viewBox="0 0 16 16" fill="none"><path d="M2.23525 5.96695C2.66958 4.11534 4.11534 2.66958 5.96696 2.23525C7.30417 1.92158 8.69583 1.92158 10.033 2.23525C11.8847 2.66958 13.3304 4.11534 13.7647 5.96696C14.0784 7.30417 14.0784 8.69583 13.7647 10.033C13.3304 11.8847 11.8847 13.3304 10.033 13.7648C8.69583 14.0784 7.30417 14.0784 5.96696 13.7647C4.11534 13.3304 2.66958 11.8847 2.23525 10.033C1.92158 8.69583 1.92158 7.30417 2.23525 5.96695Z" fill="#363853" fillOpacity="0.15" stroke="white" strokeWidth="1.5"/><path d="M9.66665 8.00016H6.33331M7.99998 9.66683L7.99998 6.3335" stroke="white" strokeWidth="1.5" strokeLinecap="round"/></svg>
+            <svg width="24" height="24" viewBox="0 0 16 16" fill="none"><path d="M2.23525 5.96695C2.66958 4.11534 4.11534 2.66958 5.96696 2.23525C7.30417 1.92158 8.69583 1.92158 10.033 2.23525C11.8847 2.66958 13.3304 4.11534 13.7647 5.96696C14.0784 7.30417 14.0784 8.69583 13.7647 10.033C13.3304 11.8847 11.8847 13.3304 10.033 13.7648C8.69583 14.0784 7.30417 14.0784 5.96696 13.7647C4.11534 13.3304 2.66958 11.8847 2.23525 10.033C1.92158 8.69583 1.92158 7.30417 2.23525 5.96695Z" fill="#374151" fillOpacity="0.15" stroke="white" strokeWidth="1.5"/><path d="M9.66665 8.00016H6.33331M7.99998 9.66683L7.99998 6.3335" stroke="white" strokeWidth="1.5" strokeLinecap="round"/></svg>
             เพิ่มกิจกรรม
           </button>
         </div>
@@ -105,7 +105,7 @@ export default function ActivitiesStep({ onNext, onBack }) {
           ) : (
             <div className="page5-empty">
               <p>ยังไม่มีกิจกรรม</p>
-              <p style={{ fontSize: 12, color: '#999' }}>กดปุ่ม "เพิ่ม" เพื่อเพิ่มกิจกรรม</p>
+              <p style={{ fontSize: 12, color: '#9ca3af' }}>กดปุ่ม "เพิ่ม" เพื่อเพิ่มกิจกรรม</p>
             </div>
           )}
         </div>

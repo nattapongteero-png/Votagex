@@ -7,14 +7,15 @@
   padding: 20px 24px 100px;
   gap: 16px;
   position: relative;
-  background: white;
+  background: var(--tw-canvas);
 }
 
 .profile-upload-circle {
   width: 64px;
   height: 64px;
-  border-radius: 100px;
-  background: #fafafa;
+  border-radius: 50%;
+  background: var(--tw-surface);
+  border: 1px dashed var(--tw-border-strong);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -40,8 +41,8 @@
 }
 
 .profile-upload-label {
-  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--text-secondary);
+  font-family: var(--font);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--tw-text-2);
 }

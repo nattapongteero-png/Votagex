@@ -7,7 +7,7 @@
   padding: 20px 24px 100px;
   gap: 16px;
   position: relative;
-  background: white;
+  background: var(--tw-canvas);
 }
 
 .trip-image-placeholder {
@@ -20,89 +20,64 @@
   margin: 32px 0 40px;
 }
 
-/* ===== Travel Card (Banner) ===== */
+/* ===== Travel Card (preview, ThaiWell card) ===== */
 .travel-card {
   position: relative;
-  width: 295px;
-  transform: rotate(-1deg);
+  width: 100%;
+  max-width: 320px;
 }
 
 .travel-card-inner {
-  background: white;
-  border-radius: 2px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
-  overflow: visible;
   position: relative;
-  padding-top: 40px;
+  padding: 36px 20px 16px;
+  background: var(--tw-surface);
+  border: 1px solid var(--tw-border);
+  border-radius: var(--tw-r-xl);
+  box-shadow: var(--tw-shadow-2);
+  overflow: hidden;
 }
 
-.travel-card-texture {
+/* teal accent band */
+.travel-card-inner::before {
+  content: '';
   position: absolute;
-  inset: 0;
-  background: url('../assets/noise-texture.png') center/cover;
-  opacity: 0.08;
-  pointer-events: none;
-  z-index: 1;
-}
-
-.travel-card-header {
-  width: 100px;
-  height: 40px;
-  background: #3f3f3f;
-  border-radius: 1px;
-  position: absolute;
-  top: -20px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 3;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background: linear-gradient(90deg, #14B8A6, #0D9488);
 }
 
 .travel-card-title {
-  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
-  font-size: 30px;
-  font-weight: 400;
-  color: black;
+  font-family: var(--font);
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 36px;
+  color: var(--tw-text);
   text-align: center;
-  margin: 12px 0 0;
-  position: relative;
-  z-index: 2;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .travel-card-desc {
-  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
-  font-size: 10px;
-  color: var(--text);
+  font-family: var(--font);
+  font-size: 13px;
+  color: var(--tw-text-2);
   text-align: center;
-  line-height: 1.6;
-  padding: 8px 24px 4px;
+  line-height: 20px;
+  padding: 4px 0;
   white-space: pre-line;
-}
-
-.travel-card-left,
-.travel-card-right {
-  position: absolute;
-  height: 172px;
-  width: 22px;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 2;
-  overflow: visible;
-}
-
-.travel-card-left {
-  left: -22px;
-}
-
-.travel-card-right {
-  right: -21px;
 }
 
 /* ===== Cover Image Upload (Page 2) ===== */
 .cover-upload-area {
   width: 64px;
   height: 64px;
-  border-radius: 100px;
-  background: #fafafa;
+  border-radius: 50%;
+  background: var(--tw-surface);
+  border: 1px dashed var(--tw-border-strong);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -158,28 +133,27 @@
 }
 
 .travel-card-dates {
-  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
-  font-size: 10px;
-  color: #737373;
+  font-family: var(--font);
+  font-size: 12px;
+  color: var(--tw-text-3);
   text-align: center;
-  padding: 0 24px 12px;
-  min-height: 12px;
+  min-height: 18px;
 }
 
 .travel-card-owner {
-  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
-  font-size: 10px;
-  color: var(--text);
+  font-family: var(--font);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--tw-brand-on-subtle);
   position: absolute;
   left: 16px;
-  top: 28px;
-  z-index: 2;
+  top: 14px;
 }
 
 .cover-upload-label {
-  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--text-secondary);
+  font-family: var(--font);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--tw-text-2);
   padding-bottom: 8px;
 }

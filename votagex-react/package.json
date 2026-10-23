@@ -7,17 +7,25 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "holidays": "node scripts/th-holidays.mjs"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@mui/lab": "^7.0.1-beta.22",
     "@mui/material": "^7.3.8",
+    "@remotion/player": "^4.0.534",
     "firebase": "^12.10.0",
+    "flag-icons": "^7.6.0",
+    "maplibre-gl": "^6.15.0",
+    "promptpay-qr": "^0.5.0",
+    "qrcode": "^1.5.4",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "react-router-dom": "^7.13.1"
+    "react-router-dom": "^7.13.1",
+    "remotion": "^4.0.534",
+    "three": "^0.186.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

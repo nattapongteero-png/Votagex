@@ -7,7 +7,7 @@
   padding: 20px 24px 100px;
   gap: 16px;
   position: relative;
-  background: white;
+  background: var(--tw-canvas);
 }
 
 /* ---- Activity Header Row ---- */
@@ -20,10 +20,10 @@
 }
 
 .activity-heading {
-  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
+  font-family: var(--font);
   font-size: 20px;
   font-weight: 700;
-  color: #1a1a2e;
+  color: #111827;
   margin: 0;
 }
 
@@ -32,20 +32,20 @@
   align-items: center;
   gap: 6px;
   padding: 8px 20px;
-  border-radius: 100px;
-  border: none;
-  background: linear-gradient(135deg, #4a90d9 0%, #357ABD 100%);
+  height: 36px;
+  border-radius: 999px;
+  border: 1px solid var(--tw-btn-primary);
+  background: var(--tw-btn-primary);
   color: #fff;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
-  transition: all 0.2s;
-  box-shadow: 0 2px 8px rgba(53, 122, 189, 0.3);
+  font-family: var(--font);
+  transition: transform 0.15s;
 }
 
 .btn-add-pill:active {
-  background: linear-gradient(135deg, #357ABD 0%, #2a6aa0 100%);
+  background: var(--tw-btn-primary-pressed);
 }
 
 .btn-add-pill:active {
@@ -64,8 +64,8 @@
 .page5-empty {
   text-align: center;
   padding: 32px 0;
-  color: #666;
-  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
+  color: #4b5563;
+  font-family: var(--font);
 }
 
 /* ===== Activity Sections (grouped by category) ===== */
@@ -105,7 +105,7 @@
   align-items: center;
   justify-content: center;
   border-radius: 8px;
-  background: linear-gradient(180deg, #D0DEFB 100%, #A2BCF6 100%);
+  background: var(--tw-brand-subtle);
 }
 
 .activity-section-icon svg {
@@ -114,10 +114,10 @@
 }
 
 .activity-section-label {
-  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
-  font-size: 18px;
-  font-weight: 700;
-  color: #1a1a2e;
+  font-family: var(--font);
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
 }
 
 .activity-section-row {
@@ -146,11 +146,12 @@
   position: relative;
   width: 188px;
   min-width: 188px;
-  height: 100px;
-  border-radius: 16px;
+  height: 108px;
+  border-radius: var(--tw-r-lg);
   overflow: hidden;
-  background: linear-gradient(180deg, #0E3B9A 0%, #0A296B 100%);
-  box-shadow: 0 1px 4px rgba(12, 12, 13, 0.1), 0 1px 4px rgba(12, 12, 13, 0.05);
+  background: var(--tw-surface);
+  border: 1px solid var(--tw-border);
+  box-shadow: var(--tw-shadow-1);
   cursor: pointer;
   transition: transform 0.15s;
 }
@@ -173,10 +174,10 @@
 }
 
 .act-card-name {
-  font-family: 'IBM Plex Sans Thai', 'Google Sans', sans-serif;
+  font-family: var(--font);
   font-size: 14px;
   font-weight: 600;
-  color: #fff;
+  color: var(--tw-text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -184,10 +185,12 @@
 }
 
 .act-card-icon {
-  width: 16px;
-  height: 16px;
+  width: 24px;
+  height: 24px;
+  padding: 4px;
   flex-shrink: 0;
-  color: rgba(255, 255, 255, 0.7);
+  border-radius: 8px;
+  background: var(--tw-brand-subtle);
 }
 
 .act-card-icon svg {
@@ -200,36 +203,51 @@
 .act-card-icon svg rect[stroke],
 .act-card-icon svg line[stroke],
 .act-card-icon svg polyline[stroke] {
-  stroke: #fff;
+  stroke: var(--tw-brand-on-subtle);
 }
 
 .act-card-icon svg path[fill]:not([fill="none"]),
 .act-card-icon svg circle[fill]:not([fill="none"]),
 .act-card-icon svg rect[fill]:not([fill="none"]) {
-  fill: #fff;
+  fill: var(--tw-brand-on-subtle);
 }
 
 .act-card-icon svg path[fill-opacity],
 .act-card-icon svg circle[fill-opacity] {
-  fill: #fff;
+  fill: var(--tw-brand);
+}
+
+.act-card.has-expense .act-card-icon {
+  background: #FDECEC;
+}
+
+.act-card.has-expense .act-card-icon svg path[stroke],
+.act-card.has-expense .act-card-icon svg circle[stroke],
+.act-card.has-expense .act-card-icon svg rect[stroke] {
+  stroke: #B42828;
+}
+
+.act-card.has-expense .act-card-icon svg path[fill]:not([fill="none"]),
+.act-card.has-expense .act-card-icon svg circle[fill]:not([fill="none"]),
+.act-card.has-expense .act-card-icon svg rect[fill]:not([fill="none"]) {
+  fill: #B42828;
 }
 
 /* ---- Card Body (white area) ---- */
 .act-card-body {
   position: absolute;
-  top: 43px;
-  left: -1px;
-  right: -1px;
-  bottom: -1px;
-  background: #fff;
-  border-radius: 16px 16px 0 0;
+  top: 44px;
+  left: 12px;
+  right: 12px;
+  bottom: 0;
+  border-top: 1px solid var(--tw-sunken);
 }
 
 /* ---- Card Info ---- */
 .act-card-info {
   position: absolute;
-  top: 13px;
-  left: 12px;
+  top: 10px;
+  left: 0;
   display: flex;
   gap: 16px;
   align-items: flex-start;
@@ -243,30 +261,25 @@
 }
 
 .act-card-info-value {
-  font-family: 'Inter', 'Google Sans', sans-serif;
-  font-size: 12px;
+  font-family: var(--font);
+  font-size: 13px;
   font-weight: 600;
-  color: #000;
-  text-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  color: var(--tw-text);
 }
 
 .act-card-info-value.spend {
-  color: #000;
-}
-
-.act-card.has-expense {
-  background: linear-gradient(180deg, #bc1b06 0%, #97180c 100%);
+  color: var(--tw-text);
 }
 
 .act-card.has-expense .act-card-info-value.spend {
-  color: #bc1b06;
+  color: var(--tw-danger);
 }
 
 .act-card-info-label {
-  font-family: 'Inter', 'Noto Sans Thai', 'Google Sans', sans-serif;
-  font-size: 10px;
+  font-family: var(--font);
+  font-size: 11px;
   font-weight: 400;
-  color: #666;
+  color: var(--tw-text-3);
 }
 
 /* ---- Remove button ---- */
@@ -278,8 +291,8 @@
   height: 20px;
   border-radius: 50%;
   border: none;
-  background: rgba(255, 255, 255, 0.25);
-  color: #fff;
+  background: var(--tw-sunken);
+  color: var(--tw-text-2);
   font-size: 12px;
   line-height: 1;
   cursor: pointer;
@@ -301,22 +314,23 @@
 .chip {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  border-radius: 100px;
-  border: 1px solid #2463eb;
-  background: #e8eefd;
-  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
-  font-size: 14px;
-  font-weight: 400;
-  color: #2463eb;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid var(--tw-border);
+  background: var(--tw-surface);
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--tw-text);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
 }
 
 .chip.active {
-  border-color: #0A296B;
-  background: #0A296B;
+  border-color: var(--tw-brand);
+  background: var(--tw-brand);
   color: #fff;
 }
 
@@ -327,17 +341,17 @@
 
 .chip svg path[stroke],
 .chip svg circle[stroke] {
-  stroke: #2463eb;
+  stroke: var(--tw-text-2);
 }
 
 .chip svg path[fill-opacity],
 .chip svg circle[fill-opacity] {
-  fill: #2463eb;
+  fill: var(--tw-text-2);
 }
 
 .chip svg path[fill]:not([fill="none"]):not([fill-opacity]),
 .chip svg circle[fill]:not([fill="none"]):not([fill-opacity]) {
-  fill: #2463eb;
+  fill: var(--tw-text-2);
 }
 
 .chip.active svg path[stroke],

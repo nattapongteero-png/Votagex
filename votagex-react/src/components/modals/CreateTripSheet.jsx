@@ -18,8 +18,8 @@ export default function CreateTripSheet({ onClose }) {
       <div className={`create-trip-backdrop active${isClosing ? ' closing' : ''}`} onClick={handleClose}></div>
       <div className={`modal-sheet${isClosing ? ' closing-sheet' : ''}`} style={{ padding: '24px 24px 32px', textAlign: 'center' }}>
         <div className="logout-sheet-handle" style={{ marginBottom: 16 }}></div>
-        <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 8, color: '#222B45' }}>สร้างทริปใหม่</h3>
-        <p style={{ fontSize: 13, color: '#999', marginBottom: 20 }}>วันที่เลือกยังไม่มีทริป มาสร้างทริปใหม่กัน!</p>
+        <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 8, color: '#111827' }}>สร้างทริปใหม่</h3>
+        <p style={{ fontSize: 13, color: '#9ca3af', marginBottom: 20 }}>วันที่เลือกยังไม่มีทริป มาสร้างทริปใหม่กัน!</p>
         <button className="btn-gradient" onClick={handleCreate}>Create Journey</button>
       </div>
     </>

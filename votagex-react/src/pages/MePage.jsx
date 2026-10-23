@@ -1,6 +1,8 @@
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { DEFAULT_AVATAR } from '../constants/avatars';
+import { useTrips } from '../contexts/TripContext';
 import { isFirebaseConfigured } from '../services/firebase';
 import { uploadProfileImage } from '../services/storage';
 import ConfirmModal from '../components/modals/ConfirmModal';
@@ -8,8 +10,18 @@ import ConfirmModal from '../components/modals/ConfirmModal';
 export default function MePage() {
   const navigate = useNavigate();
   const { username, userImage, authUser, signOut, user, updateUserImage } = useAuth();
+  const { trips } = useTrips();
   const fileInputRef = useRef(null);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+
+  // Trip counts for the stat tiles
+  const tripStats = useMemo(() => {
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const mine = trips.filter(t => (t.profileName && t.profileName === username) || (t.members || []).some(m => m.name === username));
+    const past = mine.filter(t => t.endDate && new Date(t.endDate) < today).length;
+    const upcoming = mine.filter(t => t.startDate && new Date(t.startDate) > today).length;
+    return { total: mine.length, upcoming, past };
+  }, [trips, username]);
 
   const displayName = authUser?.displayName || username || 'User';
   const displayPhoto = userImage || authUser?.photoURL;
@@ -42,14 +54,8 @@ export default function MePage() {
     <div className="me-page" style={{ display: 'flex' }}>
       {/* Header */}
       <div className="me-header">
-        <div className="me-header-bg">
-          <img src="/assets/header-bg.png" alt="" />
-        </div>
         <div className="me-header-top">
-          <div>
-            <span className="me-title">ME</span>
-            <span className="me-welcome">Welcome</span>
-          </div>
+          <span className="me-title">ME</span>
         </div>
       </div>
 
@@ -58,32 +64,55 @@ export default function MePage() {
 
       {/* Content */}
       <div className="me-content">
-        <button className="me-menu-item" onClick={() => fileInputRef.current?.click()}>
-          <span className="me-menu-icon" style={{ width: 36, height: 36, borderRadius: '50%', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f0f0f0', flexShrink: 0 }}>
-            {displayPhoto ? (
-              <img src={displayPhoto} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            ) : (
-              <svg viewBox="0 0 24 24" fill="#999" width="20" height="20">
-                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-              </svg>
-            )}
+        <button className="me-panel me-profile" onClick={() => fileInputRef.current?.click()}>
+          <span className="me-profile-avatar">
+            <img src={displayPhoto || DEFAULT_AVATAR} alt="" />
           </span>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+          <span className="me-profile-text">
             <span className="me-menu-label">{displayName}</span>
-            <span style={{ fontSize: 11, color: '#999' }}>แตะเพื่อเปลี่ยนรูปโปรไฟล์</span>
-          </div>
+          </span>
+          <svg className="me-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 6 6 6-6 6" /></svg>
         </button>
 
-        <div className="me-divider"></div>
-
-        <div className="me-email-row">
-          {authUser?.email && (
-            <span className="me-user-email">{authUser.email}</span>
-          )}
-          {showLogout && (
-            <span className="me-logout-text" onClick={handleLogout}>ออกจากระบบ</span>
-          )}
+        <div className="me-stats">
+          <div className="me-stat">
+            <span className="me-stat-label">ทริปทั้งหมด</span>
+            <span className="me-stat-value">{tripStats.total}</span>
+            <span className="me-stat-unit">ทริป</span>
+          </div>
+          <div className="me-stat">
+            <span className="me-stat-label">กำลังจะถึง</span>
+            <span className="me-stat-value">{tripStats.upcoming}</span>
+            <span className="me-stat-unit">ทริป</span>
+          </div>
+          <div className="me-stat">
+            <span className="me-stat-label">ผ่านมาแล้ว</span>
+            <span className="me-stat-value">{tripStats.past}</span>
+            <span className="me-stat-unit">ทริป</span>
+          </div>
         </div>
+
+        {(authUser?.email || showLogout) && (
+          <div className="me-panel">
+            <div className="me-panel-title">บัญชี</div>
+            {authUser?.email && (
+              <div className="me-row">
+                <span className="me-row-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="5" width="18" height="14" rx="3" /><path d="m4 7 8 6 8-6" /></svg>
+                </span>
+                <span className="me-user-email">{authUser.email}</span>
+              </div>
+            )}
+            {showLogout && (
+              <button className="me-row danger" onClick={handleLogout}>
+                <span className="me-row-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><path d="m16 17 5-5-5-5" /><path d="M21 12H9" /></svg>
+                </span>
+                <span className="me-logout-text">ออกจากระบบ</span>
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {showLogoutConfirm && (

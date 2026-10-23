@@ -29,9 +29,10 @@ export default function LogoutSheet({ onClose }) {
           </div>
         </div>
         <button className="logout-sheet-btn" onClick={handleLogout}>
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
-            <path d="M15 3H7C5.89543 3 5 3.89543 5 5V19C5 20.1046 5.89543 21 7 21H15" stroke="#EF4444" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M19 12H9M19 12L16 9M19 12L16 15" stroke="#EF4444" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path d="M21.791 12.1207H9.75" stroke="#D63B3B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M18.8643 9.20471L21.7923 12.1207L18.8643 15.0367" stroke="#D63B3B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            <path opacity="0.4" d="M16.3597 7.62991C16.0297 4.04991 14.6897 2.74991 9.35974 2.74991C2.25874 2.74991 2.25874 5.05991 2.25874 11.9999C2.25874 18.9399 2.25874 21.2499 9.35974 21.2499C14.6897 21.2499 16.0297 19.9499 16.3597 16.3699" stroke="#D63B3B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
           <span>ออกจากระบบ</span>
         </button>

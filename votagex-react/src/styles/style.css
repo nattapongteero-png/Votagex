@@ -1,18 +1,59 @@
 /* ===== CSS Variables ===== */
+/* ThaiWell design tokens (brand theme: teal + Tailwind gray, IBM Plex Sans Thai) */
 :root {
-  --primary: #4A6CF7;
-  --primary-light: #6B8AFF;
-  --primary-dark: #3A56D4;
-  --bg: #FFFFFF;
-  --text: #1A1A2E;
-  --text-secondary: #6B7280;
+  --primary: #0D9488;
+  --primary-light: #14B8A6;
+  --primary-dark: #0F766E;
+  --bg: #F9FAFB;
+  --text: #111827;
+  --text-secondary: #4B5563;
   --border: #E5E7EB;
   --gray-light: #F3F4F6;
-  --dot-inactive: #FFFFFF;
-  --dot-active: #3B5BDB;
-  --radius: 100px;
-  --radius-sm: 16px;
-  --font: 'Google Sans', 'Inter', sans-serif;
+  --dot-inactive: #D1D5DB;
+  --dot-active: #111827;
+  --radius: 999px;
+  --radius-sm: 12px;
+  --font: 'IBM Plex Sans Thai', sans-serif;
+
+  /* surfaces */
+  --tw-canvas: #F9FAFB;
+  --tw-surface: #FFFFFF;
+  --tw-sunken: #F3F4F6;
+  --tw-overlay: rgba(15, 23, 42, 0.45);
+  /* text */
+  --tw-text: #111827;
+  --tw-text-2: #4B5563;
+  --tw-text-3: #9CA3AF;
+  --tw-link: #0F766E;
+  /* brand */
+  --tw-brand: #0D9488;
+  --tw-brand-subtle: #F0FDFA;
+  --tw-brand-on-subtle: #0F766E;
+  --tw-accent: #E4A42A;
+  --tw-active: #15803D;
+  /* borders */
+  --tw-border: #E5E7EB;
+  --tw-border-strong: #D1D5DB;
+  /* buttons: primary = dark capsule, secondary = white capsule */
+  --tw-btn-primary: #111827;
+  --tw-btn-primary-pressed: #1F2937;
+  /* status */
+  --tw-danger: #D63B3B;
+  --tw-success: #237D44;
+  /* radius */
+  --tw-r-md: 12px;
+  --tw-r-lg: 16px;
+  --tw-r-xl: 24px;
+  --tw-r-sheet: 32px;
+  /* elevation */
+  --tw-shadow-1: 0 1px 4px rgba(15, 23, 42, 0.06);
+  --tw-shadow-2: 0 6px 16px rgba(15, 23, 42, 0.06);
+  --tw-shadow-3: 0 8px 24px rgba(15, 23, 42, 0.12);
+  --tw-shadow-round: 0 3px 10px rgba(15, 23, 42, 0.08);
+  /* glass (dock / floating cards) */
+  --tw-glass: rgba(255, 255, 255, 0.55);
+  --tw-glass-border: rgba(255, 255, 255, 0.7);
+  --tw-glass-card: rgba(255, 255, 255, 0.94);
 }
 
 /* ===== Reset ===== */
@@ -25,7 +66,7 @@
 html, body {
   height: 100%;
   font-family: var(--font);
-  background: #F0F2F5;
+  background: #F9FAFB;
   color: var(--text);
   -webkit-font-smoothing: antialiased;
   overflow: hidden;
@@ -65,7 +106,7 @@ html, body {
 .create-trip-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.4);
+  background: var(--tw-overlay);
   z-index: 249;
   opacity: 0;
   visibility: hidden;
@@ -94,7 +135,7 @@ html, body {
   z-index: 250;
   display: block !important;
   height: 92dvh;
-  border-radius: 24px 24px 0 0;
+  border-radius: var(--tw-r-sheet) var(--tw-r-sheet) 0 0;
   transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
@@ -105,9 +146,9 @@ html, body {
 /* Drag handle at top of bottom sheet */
 .sheet-drag-handle {
   display: none;
-  width: 36px;
-  height: 4px;
-  background: #d1d5db;
+  width: 44px;
+  height: 5px;
+  background: #4B5563;
   border-radius: 100px;
   margin: 8px auto 0;
   position: absolute;
@@ -141,7 +182,7 @@ html, body {
 .app-container.as-modal .page4-layout,
 .app-container.as-modal .page5-layout,
 .app-container.as-modal .page6-layout {
-  background: #fff;
+  background: var(--tw-canvas);
 }
 
 /* Hide header illustration in bottom sheet mode, keep close button */
@@ -149,8 +190,9 @@ html, body {
   display: none;
 }
 
-.app-container.as-modal .page-header-bg::after {
-  display: none;
+.app-container.as-modal .page-header-bg {
+  background: transparent;
+  height: auto;
 }
 
 .app-container.as-modal .page-header-overlay {
@@ -168,25 +210,20 @@ html, body {
 }
 
 .app-title-gradient {
-  font-family: 'Google Sans', 'Inter', sans-serif;
-  font-size: 30px;
-  font-weight: 900;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  background: linear-gradient(to right, #0a296b, #092834);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  text-shadow: none;
-  filter: drop-shadow(0px 4px 8px rgba(0,0,0,0.1));
-  margin-bottom: 8px;
+  font-family: var(--font);
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -0.25px;
+  line-height: 1.5;
+  color: var(--tw-text);
+  margin-bottom: 4px;
 }
 
 .app-tagline {
-  font-family: 'Google Sans', 'Inter', sans-serif;
+  font-family: var(--font);
   font-size: 14px;
   font-weight: 500;
-  color: #666;
+  color: #4b5563;
   line-height: 1.5;
   text-align: center;
   margin-bottom: 24px;
@@ -198,40 +235,39 @@ html, body {
   width: 100%;
   max-width: 320px;
   margin: 0 auto;
-  padding: 16px 32px;
+  height: 56px;
+  padding: 0 24px;
   border-radius: var(--radius);
-  font-size: 1rem;
+  font-family: var(--font);
+  font-size: 15px;
   font-weight: 600;
+  letter-spacing: 0.1px;
   cursor: pointer;
-  transition: all 0.2s ease;
-  border: 2px solid var(--primary);
+  transition: transform 0.15s ease, opacity 0.15s ease;
+  border: 1px solid var(--tw-btn-primary);
   text-align: center;
 }
 
 .btn-primary {
-  background: var(--primary);
+  background: var(--tw-btn-primary);
   color: #fff;
-  border-color: var(--primary);
+  border-color: var(--tw-btn-primary);
 }
 
 .btn-primary:active {
-  background: var(--primary-dark);
-  border-color: var(--primary-dark);
-}
-
-.btn-primary:active {
-  transform: scale(0.97);
+  background: var(--tw-btn-primary-pressed);
+  transform: scale(0.98);
 }
 
 .btn-outline {
-  background: #F9FAFB;
-  color: #344054;
-  border-color: #E4E7EC;
+  background: var(--tw-surface);
+  color: var(--tw-text);
+  border-color: var(--tw-border);
 }
 
 .btn-outline:active {
-  background: #f0f1f3;
-  transform: scale(0.97);
+  background: var(--tw-sunken);
+  transform: scale(0.98);
 }
 
 .btn-small {
@@ -267,9 +303,10 @@ html, body {
 
 .form-input {
   width: 100%;
-  padding: 14px 18px;
-  border: 2px solid var(--border);
-  border-radius: var(--radius-sm);
+  min-height: 48px;
+  padding: 12px 16px;
+  border: 1px solid var(--tw-border-strong);
+  border-radius: var(--tw-r-md);
   font-size: 1rem;
   font-family: var(--font);
   color: var(--text);
@@ -283,7 +320,7 @@ html, body {
 }
 
 .form-input::placeholder {
-  color: var(--dot-inactive);
+  color: var(--tw-text-3);
 }
 
 textarea.form-input {
@@ -388,7 +425,7 @@ textarea.form-input {
 .activity-item .remove-btn {
   background: none;
   border: none;
-  color: #EF4444;
+  color: #D63B3B;
   font-size: 1.2rem;
   cursor: pointer;
   padding: 4px;
@@ -432,7 +469,7 @@ input[type="range"]::-webkit-slider-thumb {
   border-radius: 50%;
   background: var(--primary);
   cursor: pointer;
-  box-shadow: 0 1px 4px rgba(74, 108, 247, 0.4);
+  box-shadow: 0 1px 4px rgba(13, 148, 136, 0.4);
 }
 
 input[type="range"]::-moz-range-thumb {
@@ -442,7 +479,7 @@ input[type="range"]::-moz-range-thumb {
   background: var(--primary);
   cursor: pointer;
   border: none;
-  box-shadow: 0 1px 4px rgba(74, 108, 247, 0.4);
+  box-shadow: 0 1px 4px rgba(13, 148, 136, 0.4);
 }
 
 /* ===== Date Picker ===== */

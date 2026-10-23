@@ -2,20 +2,20 @@ import { useState, useMemo, useRef } from 'react';
 import { useTrips } from '../../contexts/TripContext';
 import PageHeader from '../../components/common/PageHeader';
 
-// 8 characters arranged front-to-back. Index 0 = front center (always first).
-// Display order: front row → middle row → back row
-const MEMBER_IMAGES = [
-  // Front row (frame: 393×338)
-  { src: '/assets/member-1.png', style: { left: '5%', top: '29%', width: '94%', height: '91%', zIndex: 8 } },
-  { src: '/assets/member-2.png', style: { left: '-24%', top: '29%', width: '77%', height: '71%', zIndex: 7 } },
-  { src: '/assets/member-3.png', style: { left: '45%', top: '29%', width: '77%', height: '75%', zIndex: 6 } },
+// 8 ThaiWell avatars (Notionists by Zoish via DiceBear, CC0) arranged as a group, front to back.
+// Index 0 = front center (always first). Positions are % of the stage; size in px.
+const MEMBER_AVATARS = [
+  // Front row
+  { src: '/assets/avatars/avatar-male.svg', left: 50, top: 66, size: 104 },
+  { src: '/assets/avatars/p5.svg', left: 24, top: 60, size: 84 },
+  { src: '/assets/avatars/p4.svg', left: 76, top: 60, size: 84 },
   // Middle row
-  { src: '/assets/member-4.png', style: { left: '-4%', top: '13%', width: '72%', height: '69%', zIndex: 5 } },
-  { src: '/assets/member-5.png', style: { left: '30%', top: '15%', width: '81%', height: '74%', zIndex: 4 } },
+  { src: '/assets/avatars/p9.svg', left: 36, top: 32, size: 72 },
+  { src: '/assets/avatars/avatar-female.svg', left: 64, top: 32, size: 72 },
   // Back row
-  { src: '/assets/member-6.png', style: { left: '-22%', top: '0%', width: '69%', height: '67%', zIndex: 3 } },
-  { src: '/assets/member-7.png', style: { left: '17%', top: '-3%', width: '68%', height: '66%', zIndex: 2 } },
-  { src: '/assets/member-8.png', style: { left: '46%', top: '2%', width: '81%', height: '74%', zIndex: 1 } },
+  { src: '/assets/avatars/p6.svg', left: 12, top: 30, size: 60 },
+  { src: '/assets/avatars/p7.svg', left: 50, top: 11, size: 60 },
+  { src: '/assets/avatars/p3.svg', left: 88, top: 30, size: 60 },
 ];
 
 function shuffleArray(arr) {
@@ -66,15 +66,18 @@ export default function MembersStep({ onBack, onSave }) {
         <PageHeader onBack={onBack} />
 
         <div className="members-characters">
-          {MEMBER_IMAGES.map((char, i) => (
-            <img
+          {MEMBER_AVATARS.map((m, i) => (
+            <span
               key={i}
-              src={char.src}
-              alt=""
               className={`member-char${visibleSet.has(i) ? ' visible' : ''}`}
-              style={char.style}
-            />
+              style={{ left: `${m.left}%`, top: `${m.top}%`, width: m.size, height: m.size, marginLeft: -m.size / 2, marginTop: -m.size / 2, zIndex: 8 - i }}
+            >
+              <img src={m.src} alt="" />
+            </span>
           ))}
+          {tripForm.memberCount > MEMBER_AVATARS.length && (
+            <span className="member-more">+{tripForm.memberCount - MEMBER_AVATARS.length}</span>
+          )}
         </div>
 
         <h2 className="page2-title">จำนวนสมาชิก</h2>

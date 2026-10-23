@@ -168,7 +168,7 @@ export default function CalendarModal({ startDate, endDate, onConfirm, onClose }
           <div className="cal-header">
             <button className="cal-nav-btn" onClick={handlePrev}>
               <svg width="8" height="13" viewBox="0 0 8 13" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M7 1L1 6.5L7 12" stroke="#222B45" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M7 1L1 6.5L7 12" stroke="#111827" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </button>
             <div className="cal-title">
@@ -177,7 +177,7 @@ export default function CalendarModal({ startDate, endDate, onConfirm, onClose }
             </div>
             <button className="cal-nav-btn" onClick={handleNext}>
               <svg width="8" height="13" viewBox="0 0 8 13" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M1 1L7 6.5L1 12" stroke="#222B45" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M1 1L7 6.5L1 12" stroke="#111827" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </button>
           </div>

@@ -39,24 +39,18 @@ export default function LandingPage() {
   return (
     <div className="app-container">
       <div className="landing-page">
-        {/* Polaroid Photo Collage */}
-        <div className="polaroid-collage">
-          {[1, 2, 3, 4, 5, 6].map(n => (
-            <div key={n} className={`polaroid polaroid-${n}`}>
-              <div className="polaroid-frame">
-                <div className="polaroid-photo">
-                  <img src={`/assets/photo${n}.jpg`} alt="" />
-                </div>
-              </div>
-            </div>
-          ))}
+        {/* Full-bleed photo backdrop */}
+        <div className="landing-backdrop">
+          <img src="/assets/photo5.jpg" alt="" />
         </div>
 
-        {/* Content Section */}
-        <div className="landing-content">
+        <div className="landing-hero">
           <h1 className="app-title-gradient">VOTAGEX</h1>
           <p className="app-tagline">" Traveling together builds more than memories "</p>
+        </div>
 
+        {/* Content card */}
+        <div className="landing-content">
           {/* Account pill (shown when logged in) */}
           {isAuthenticated && username && (
             <div className="landing-account-pill" onClick={() => setShowLogout(true)}>
@@ -77,7 +71,7 @@ export default function LandingPage() {
 
           {/* Google Sign-in (shown when not logged in) */}
           {!isAuthenticated && (
-            <div className="landing-buttons" style={{ marginTop: '24px' }}>
+            <div className="landing-buttons">
               <button
                 className={`btn-google-signin-landing ${signingIn ? 'loading' : ''}`}
                 onClick={handleSignIn}

@@ -5,7 +5,7 @@
   height: 100vh;
   height: 100dvh;
   margin: 0 auto;
-  background: #fff;
+  background: var(--tw-canvas);
   position: relative;
   overflow: hidden;
   box-shadow: 0 0 40px rgba(0,0,0,0.08);
@@ -19,33 +19,14 @@
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  padding: 48px 24px 24px;
-}
-
-.me-header-bg {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 0;
-  overflow: hidden;
-  border-radius: 0 0 24px 24px;
-}
-
-.me-header-bg img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center -108px;
+  padding: 20px 20px 12px;
 }
 
 .me-header-top {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
-  position: relative;
-  z-index: 2;
+  min-height: 48px;
 }
 
 .me-header-top > div:first-child {
@@ -55,21 +36,19 @@
 }
 
 .me-title {
-  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
-  font-size: 30px;
-  font-weight: 900;
-  background: linear-gradient(to right, #0a296b, #092834);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  filter: drop-shadow(0px 4px 8px rgba(0,0,0,0.1));
+  font-family: var(--font);
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 36px;
+  letter-spacing: -0.2px;
+  color: var(--tw-text);
 }
 
 .me-welcome {
-  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
+  font-family: var(--font);
   font-size: 12px;
   font-weight: 400;
-  color: #666;
+  color: #4b5563;
   display: block;
 }
 
@@ -77,10 +56,10 @@
 .me-content {
   flex: 1;
   overflow-y: auto;
-  padding: 16px 24px 100px;
+  padding: 8px 20px 120px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
@@ -89,84 +68,179 @@
   display: none;
 }
 
-/* ---- Menu Item ---- */
-.me-menu-item {
+/* ---- Panels (ThaiWell Panel + RowLink) ---- */
+.me-panel {
+  width: 100%;
+  background: var(--tw-surface);
+  border: 1px solid var(--tw-border);
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.me-profile {
   display: flex;
   align-items: center;
   gap: 12px;
-  height: 48px;
-  width: 100%;
-  padding: 0;
-  border: none;
-  background: none;
+  padding: 16px;
   cursor: pointer;
-  border-radius: 12px;
-  transition: background 0.15s;
+  text-align: left;
+  font-family: var(--font);
+  transition: transform 0.15s;
 }
 
-.me-menu-item:active {
-  background: rgba(0,0,0,0.03);
+.me-profile:active {
+  transform: scale(0.985);
 }
 
-.me-menu-item:active {
-  background: rgba(0,0,0,0.06);
+.me-profile .me-profile-avatar {
+  width: 68px;
+  height: 68px;
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+  background: #fff;
 }
 
-.me-menu-icon {
-  width: 24px;
-  height: 24px;
-  flex-shrink: 0;
+.me-profile-text {
+  flex: 1;
+  min-width: 0;
   display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.me-menu-icon svg {
-  width: 24px;
-  height: 24px;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .me-menu-label {
-  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
-  font-size: 14px;
-  font-weight: 500;
-  color: #000;
-}
-
-/* ---- Divider ---- */
-.me-divider {
-  width: 100%;
-  height: 1px;
-  background: #e5e7eb;
-  margin: 0;
-}
-
-/* ---- Email + Logout Row ---- */
-.me-email-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 4px 0;
-}
-
-.me-user-email {
-  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
-  font-size: 12px;
-  color: #999;
-  margin: 0;
-}
-
-.me-logout-text {
-  font-family: 'Google Sans', 'Inter', sans-serif, 'Inter', sans-serif;
-  font-size: 12px;
+  font-family: var(--font);
+  font-size: 18px;
   font-weight: 600;
-  color: #EF4444;
-  cursor: pointer;
+  line-height: 28px;
+  color: var(--tw-text);
+}
+
+.me-profile-hint {
+  font-family: var(--font);
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--tw-text-2);
+}
+
+.me-chevron {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  color: var(--tw-text-3);
+}
+
+.me-panel-title {
+  padding: 16px 16px 4px;
+  font-family: var(--font);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 22px;
+  color: var(--tw-text);
+}
+
+/* ---- Stat tiles (ThaiWell StatTile) ---- */
+.me-stats {
+  display: flex;
+  gap: 8px;
+}
+
+.me-stat {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px;
+  border-radius: var(--tw-r-lg);
+  background: #EEF0F2;
+}
+
+.me-stat-label {
+  font-family: var(--font);
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--tw-text-2);
   white-space: nowrap;
 }
 
-.me-logout-text:active {
-  opacity: 0.7;
+.me-stat-value {
+  font-family: var(--font);
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 36px;
+  color: var(--tw-text);
+}
+
+.me-stat-unit {
+  font-family: var(--font);
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--tw-text-3);
+}
+
+.me-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 56px;
+  padding: 12px 16px;
+  border: none;
+  background: none;
+  font-family: var(--font);
+  text-align: left;
+}
+
+.me-row + .me-row {
+  border-top: 1px solid var(--tw-border);
+}
+
+button.me-row {
+  cursor: pointer;
+}
+
+button.me-row:active {
+  background: var(--tw-sunken);
+}
+
+.me-row-icon {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(71, 85, 105, 0.12);
+  color: #475569;
+}
+
+.me-row-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.me-row.danger .me-row-icon {
+  background: rgba(214, 59, 59, 0.12);
+  color: var(--tw-danger);
+}
+
+.me-user-email {
+  font-family: var(--font);
+  font-size: 14px;
+  color: var(--tw-text);
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.me-logout-text {
+  font-family: var(--font);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--tw-danger);
+  white-space: nowrap;
 }
 
 /* ---- Profile Avatar (header) ---- */
@@ -175,7 +249,7 @@
   height: 48px;
   border-radius: 50%;
   overflow: hidden;
-  background: #e0e0e0;
+  background: #e5e7eb;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -191,6 +265,6 @@
 .me-profile-avatar svg {
   width: 24px;
   height: 24px;
-  color: #999;
+  color: #9ca3af;
 }
 
