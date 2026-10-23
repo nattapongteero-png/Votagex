@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { initializeApp } from 'firebase/app';
-import { connectAuthEmulator, getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
+import { connectAuthEmulator, getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signInWithRedirect, signOut } from 'firebase/auth';
 import {
   arrayRemove, arrayUnion, collection, connectFirestoreEmulator, doc, getDoc, getFirestore, onSnapshot, query,
   serverTimestamp, setDoc, Timestamp, updateDoc, where,
@@ -50,6 +50,7 @@ export function useSession() {
 }
 
 export const signInGoogle = () => signInWithPopup(auth, new GoogleAuthProvider());
+export const signInGoogleRedirect = () => signInWithRedirect(auth, new GoogleAuthProvider());
 export const signOutCloud = () => signOut(auth);
 
 // my public profile (name, photo): what friends in my groups see

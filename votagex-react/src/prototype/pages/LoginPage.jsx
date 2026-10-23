@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { signInGoogle } from '../cloud';
+import { signInGoogle, signInGoogleRedirect } from '../cloud';
 
 // First screen when not signed in: Google now, LINE soon (docs/ROADMAP.md), or look around with sample data.
 // A pending invite (opened before signing in) shows what you're about to join.
@@ -12,7 +12,11 @@ export default function LoginPage({ onDemo, invite }) {
     try {
       await signInGoogle();
     } catch (e) {
-      if (e?.code !== 'auth/popup-closed-by-user' && e?.code !== 'auth/cancelled-popup-request') setError('เข้าสู่ระบบไม่สำเร็จ ลองใหม่อีกครั้ง');
+      console.warn('sign-in failed:', e?.code);
+      if (e?.code === 'auth/popup-blocked') return signInGoogleRedirect(); // phones that block the popup: go the long way
+      // this address isn't allowed yet: the API key's website list or Firebase's authorized domains
+      if (e?.code === 'auth/unauthorized-domain' || e?.code?.startsWith('auth/requests-from-referer')) setError(`ยังเข้าสู่ระบบจาก ${location.hostname} ไม่ได้: ต้องเพิ่มโดเมนนี้ใน Firebase ก่อน`);
+      else if (e?.code !== 'auth/popup-closed-by-user' && e?.code !== 'auth/cancelled-popup-request') setError('เข้าสู่ระบบไม่สำเร็จ ลองใหม่อีกครั้ง');
       setBusy(false);
     }
   };
