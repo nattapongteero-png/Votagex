@@ -3,18 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { useProto } from './useProto';
 import { Sheet, Avatar } from './ui';
 import Icon from './icons';
-import { ME, PEOPLE, GROUP_COLORS, GROUP_ICONS, planStatus, thaiRange } from './data';
+import { ME, PEOPLE, GROUP_COLORS, GROUP_ICONS, planStatus, thaiRange, sendInvite } from './data';
 
 const INVITE = 'https://votagex.app/g/AB12CD'; // demo link
-
-// share the link (phone share sheet), else copy it
-async function sendInvite(link, name, showToast) {
-  if (navigator.share) {
-    try { await navigator.share({ title: 'VOTAGEX', text: `มาวางแผนเที่ยวกับ “${name}” กัน`, url: link }); return; } catch { /* closed: copy instead */ }
-  }
-  await navigator.clipboard?.writeText(link).catch(() => {});
-  showToast('คัดลอกลิงก์ชวนแล้ว');
-}
 
 function PeoplePicker({ members, setMembers }) {
   return (
@@ -104,11 +95,11 @@ export function GroupSheet({ onClose, groupId }) {
             </button>
           </div>
 
-          <div className="pt-label">ทริปของกลุ่ม</div>
+          <div className="pt-label">แผนของกลุ่ม</div>
           <div className="pt-results">
             <button className="pt-result accent" onClick={() => { close(); setTimeout(() => openSheet('createPlan', { groupId: g.id }), 320); }}>
               <span className="pt-cat-icon" style={{ width: 36, height: 36, background: g.color, color: '#fff' }}><Icon name="plus" size={18} /></span>
-              <span className="pt-grow"><span className="pt-strong">ทริปใหม่</span></span>
+              <span className="pt-grow"><span className="pt-strong">แผนใหม่</span></span>
             </button>
             {trips.map((p) => (
               <button key={p.id} className="pt-result" onClick={() => { close(); setTimeout(() => navigate(`/proto/plan/${p.id}`), 320); }}>

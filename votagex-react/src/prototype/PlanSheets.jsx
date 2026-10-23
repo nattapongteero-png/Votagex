@@ -1,0 +1,163 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useProto } from './useProto';
+import { Sheet, Avatar, Chip } from './ui';
+import Icon from './icons';
+import { ME, PEOPLE, KINDS, addDays, diffDays, dayList, thaiShort, directionsUrl, sendInvite } from './data';
+
+const after = (close, fn) => { close(); setTimeout(fn, 320); };
+
+function MenuRow({ icon, label, sub, danger, onClick }) {
+  return (
+    <button className={`pt-result${danger ? ' danger' : ''}`} onClick={onClick}>
+      <span className="pt-menu-icon"><Icon name={icon} size={18} /></span>
+      <span className="pt-grow"><span className="pt-strong">{label}</span>{sub && <span className="pt-muted sm">{sub}</span>}</span>
+    </button>
+  );
+}
+
+// ⋯ on a plan: edit, invite to its group, not going after all, delete.
+// A group's plan is deleted by whoever made it or made the group (as the rules allow), after a second tap.
+export function PlanMenuSheet({ onClose, planId }) {
+  const { plans, groups, actions, showToast, openSheet } = useProto();
+  const navigate = useNavigate();
+  const [confirm, setConfirm] = useState(false);
+  const plan = plans.find((p) => p.id === planId);
+  if (!plan) return null;
+  const group = groups.find((g) => g.id === plan.groupId);
+  const mine = !plan.createdBy || plan.createdBy === ME;
+  const canDelete = !plan.groupId || mine || group?.createdBy === ME;
+  const others = plan.members.filter((id) => id !== ME);
+
+  const remove = (close) => {
+    if (group && !confirm) { setConfirm(true); return; }
+    actions.removePlan(plan.id);
+    close();
+    navigate('/proto/plans', { replace: true });
+  };
+
+  return (
+    <Sheet title={plan.name} subtitle={KINDS[plan.kind].label} onClose={onClose}>
+      {(close) => (
+        <div className="pt-results">
+          <MenuRow icon="edit" label="แก้ไข" onClick={() => after(close, () => openSheet('editPlan', { planId }))} />
+          {group && (
+            <MenuRow icon="link" label={`ชวนเพื่อนเข้า “${group.name}”`} onClick={() => {
+              actions.invite(group).then((link) => sendInvite(link, group.name, showToast)).catch(() => showToast('สร้างลิงก์ไม่สำเร็จ'));
+            }} />
+          )}
+          {group && plan.members.includes(ME) && others.length > 0 && (
+            <MenuRow icon="leave" label="ไม่ไปแล้ว" onClick={() => { actions.leavePlan(plan.id); showToast('ออกจากแผนนี้แล้ว'); close(); }} />
+          )}
+          {canDelete && (
+            <MenuRow icon="trash" danger label={confirm ? 'แตะอีกครั้งเพื่อลบ' : 'ลบแผน'}
+              sub={confirm ? `“${group.name}” จะไม่เห็นแผนนี้อีก` : null} onClick={() => remove(close)} />
+          )}
+        </div>
+      )}
+    </Sheet>
+  );
+}
+
+// Name, dates and who's going. Moving the dates moves the stops with them.
+export function EditPlanSheet({ onClose, planId }) {
+  const { plans, groups, actions, showToast, cloud, today } = useProto();
+  const plan = plans.find((p) => p.id === planId);
+  const group = plan && groups.find((g) => g.id === plan.groupId);
+  // signed in, only people in the plan's group can come (they're the ones who can see it)
+  const people = group ? group.members : cloud ? [ME] : Object.keys(PEOPLE);
+  const outing = plan?.kind === 'outing';
+  const [name, setName] = useState(plan?.name || '');
+  const [start, setStart] = useState(plan?.startDate || addDays(today, 7));
+  const [end, setEnd] = useState(plan?.endDate || addDays(today, 9));
+  const [noDates, setNoDates] = useState(!plan?.startDate);
+  const [members, setMembers] = useState(() => (plan?.members || [ME]).filter((id) => people.includes(id)));
+  if (!plan) return null;
+
+  const save = (close) => {
+    const s = outing || !noDates ? start : null;
+    const e = !s ? null : outing || end < start ? start : end;
+    const kind = outing ? 'outing' : !s ? 'idea' : plan.country !== 'TH' ? 'abroad' : 'trip';
+    // each stop moves as many days as the start did, and stays inside the plan
+    const stopDates = {};
+    if (s) {
+      plan.stops.forEach((st) => {
+        const moved = st.date && plan.startDate ? addDays(st.date, diffDays(plan.startDate, s)) : s;
+        const d = moved < s ? s : moved > e ? e : moved;
+        if (d !== st.date) stopDates[st.id] = d;
+      });
+    }
+    actions.editPlan(plan.id, { name: name.trim() || plan.name, kind, startDate: s, endDate: e, members }, stopDates);
+    showToast('บันทึกแล้ว');
+    close();
+  };
+
+  return (
+    <Sheet title="แก้ไขแผน" onClose={onClose} tall footer={(close) => <button className="pt-btn block" onClick={() => save(close)}>บันทึก</button>}>
+      <div className="pt-label">ชื่อ</div>
+      <input className="pt-input" value={name} placeholder={plan.name} onChange={(e) => setName(e.target.value)} />
+      <div className="pt-label">เมื่อไร</div>
+      {outing ? (
+        <input type="date" className="pt-input" value={start} onChange={(e) => e.target.value && setStart(e.target.value)} />
+      ) : (
+        <>
+          {!noDates && (
+            <div className="pt-date-row">
+              <label><span>ไป</span><input type="date" className="pt-input" value={start} onChange={(e) => e.target.value && setStart(e.target.value)} /></label>
+              <label><span>กลับ</span><input type="date" className="pt-input" value={end} min={start} onChange={(e) => e.target.value && setEnd(e.target.value)} /></label>
+            </div>
+          )}
+          <div className="pt-chip-row"><Chip active={noDates} onClick={() => setNoDates((v) => !v)}>ยังไม่รู้วัน</Chip></div>
+        </>
+      )}
+      <div className="pt-label">ใครไป</div>
+      <div className="pt-people">
+        {people.map((id) => (
+          <button key={id} className={`pt-person check${members.includes(id) ? ' active' : ''}`} disabled={id === ME}
+            onClick={() => setMembers((m) => (m.includes(id) ? m.filter((x) => x !== id) : [...m, id]))}>
+            <Avatar id={id} size={40} /><span>{id === ME ? 'ฉัน' : PEOPLE[id]?.name}</span>
+            {members.includes(id) && <i className="pt-person-check"><Icon name="check" size={12} stroke={3} /></i>}
+          </button>
+        ))}
+      </div>
+    </Sheet>
+  );
+}
+
+// One stop: its time, day and note; directions; delete (with an undo)
+export function StopSheet({ onClose, planId, stopId }) {
+  const { plans, actions } = useProto();
+  const plan = plans.find((p) => p.id === planId);
+  const stop = plan?.stops.find((s) => s.id === stopId);
+  const [time, setTime] = useState(stop?.time || '');
+  const [date, setDate] = useState(stop?.date || null);
+  const [note, setNote] = useState(stop?.note || '');
+  if (!stop) return null;
+  const days = dayList(plan.startDate, plan.endDate);
+
+  return (
+    <Sheet title={stop.name} subtitle={stop.area} onClose={onClose}
+      footer={(close) => <button className="pt-btn block" onClick={() => { actions.updateStop(plan.id, stop.id, { time, date, note: note.trim() }); close(); }}>บันทึก</button>}>
+      {(close) => (
+        <>
+          <div className="pt-label">เวลา</div>
+          <input type="time" className="pt-input" value={time} onChange={(e) => setTime(e.target.value)} />
+          {days.length > 1 && (
+            <>
+              <div className="pt-label">วัน</div>
+              <div className="pt-chip-row wrap">
+                {days.map((d, i) => <Chip key={d} active={date === d} onClick={() => setDate(d)}>Day {i + 1} · {thaiShort(d)}</Chip>)}
+              </div>
+            </>
+          )}
+          <div className="pt-label">โน้ต</div>
+          <input className="pt-input" value={note} placeholder="โน้ต" onChange={(e) => setNote(e.target.value)} />
+          <div className="pt-row-actions">
+            <a className="pt-btn light" href={directionsUrl(stop)} target="_blank" rel="noreferrer"><Icon name="nav" size={16} /> นำทาง</a>
+            <button className="pt-btn light danger" onClick={() => { actions.removeStop(plan.id, stop.id); close(); }}><Icon name="trash" size={16} /> ลบ</button>
+          </div>
+        </>
+      )}
+    </Sheet>
+  );
+}

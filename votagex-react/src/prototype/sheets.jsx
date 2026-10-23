@@ -3,14 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import generatePayload from 'promptpay-qr';
 import QRCode from 'qrcode';
 import { useProto, useCollection } from './useProto';
-import { Sheet, Avatar, Chip, CatIcon, Progress } from './ui';
+import { Sheet, Avatar, Chip, CatIcon, Progress, Seg } from './ui';
 import Icon, { Flag } from './icons';
 import SavePlaceSheet, { ResultList } from './SavePlaceSheet';
 import { PiggySheet, NewJarSheet } from './PiggySheet';
 import { SaveEventSheet, EventSheet } from './EventSheet';
 import { NewGroupSheet, GroupSheet } from './GroupSheet';
+import { PlanMenuSheet, EditPlanSheet, StopSheet } from './PlanSheets';
 import {
-  ME, PEOPLE, CURRENCIES, EXPENSE_CATS, MOODS, KINDS, DEMO_PROMPTPAY,
+  ME, PEOPLE, CURRENCIES, EXPENSE_CATS, MOODS, KINDS, DEMO_PROMPTPAY, PLACE_CATS, sendInvite,
   countryOf, fmtMoney, addDays, parseISO, thaiShort, thaiRange, planStatus, diffDays,
 } from './data';
 import { usePlaceSearch } from './placeSearch';
@@ -18,20 +19,21 @@ import { usePlaceSearch } from './placeSearch';
 /* ---------- Quick add (center + in the dock) ---------- */
 function QuickAddSheet({ onClose }) {
   const { openSheet } = useProto();
-  const go = (name, close) => { close(); setTimeout(() => openSheet(name), 320); };
+  const go = (it, close) => { close(); setTimeout(() => openSheet(it.name, it.props), 320); };
   const items = [
     { name: 'expense', icon: 'wallet', label: 'จดรายจ่าย', tone: '#FFF1E6', color: '#EA580C' },
     { name: 'memory', icon: 'camera', label: 'รูป / โน้ต', tone: '#ECEEFE', color: '#4F46E5' },
     { name: 'savePlace', icon: 'bookmark', label: 'เซฟสถานที่', tone: '#E6F7F4', color: '#0D9488' },
     { name: 'saveEvent', icon: 'event', label: 'เก็บงาน', tone: '#F1EBFE', color: '#7C3AED' },
-    { name: 'createPlan', icon: 'plans', label: 'แผนใหม่', tone: '#FDECF4', color: '#DB2777' },
+    { name: 'createPlan', props: { type: 'outing' }, icon: 'shop', label: 'นัดใหม่', tone: '#FDECF4', color: '#DB2777' },
+    { name: 'createPlan', props: { type: 'trip' }, icon: 'plane', label: 'ทริปใหม่', tone: '#E5F4FC', color: '#0284C7' },
   ];
   return (
     <Sheet title="บันทึก" onClose={onClose}>
       {(close) => (
         <div className="pt-quick-grid">
           {items.map((it) => (
-            <button key={it.name} className="pt-quick" onClick={() => go(it.name, close)}>
+            <button key={it.label} className="pt-quick" onClick={() => go(it, close)}>
               <span className="pt-quick-icon" style={{ background: it.tone, color: it.color }}><Icon name={it.icon} size={24} /></span>
               <span className="pt-strong">{it.label}</span>
             </button>
@@ -43,17 +45,19 @@ function QuickAddSheet({ onClose }) {
 }
 
 /* ---------- Expense ---------- */
-function AddExpenseSheet({ onClose, planId: fixedPlanId }) {
-  const { plans, activePlan, ensureActivePlan, actions, showToast, today } = useProto();
-  const plan = plans.find((p) => p.id === fixedPlanId) || activePlan;
+// expenseId: change (or delete) one already written down
+function AddExpenseSheet({ onClose, planId: fixedPlanId, expenseId }) {
+  const { plans, expenses, activePlan, ensureActivePlan, actions, showToast, today } = useProto();
+  const editing = expenseId && expenses.find((e) => e.id === expenseId);
+  const plan = plans.find((p) => p.id === (editing?.planId || fixedPlanId)) || activePlan;
   const members = plan?.members || [ME];
   const planCur = plan?.currency || 'THB';
-  const [amount, setAmount] = useState('');
-  const [currency, setCurrency] = useState(planCur);
-  const [cat, setCat] = useState('food');
-  const [title, setTitle] = useState('');
-  const [paidBy, setPaidBy] = useState(ME);
-  const [split, setSplit] = useState(members);
+  const [amount, setAmount] = useState(editing ? String(editing.amount) : '');
+  const [currency, setCurrency] = useState(editing?.currency || planCur);
+  const [cat, setCat] = useState(editing?.cat || 'food');
+  const [title, setTitle] = useState(editing?.title || '');
+  const [paidBy, setPaidBy] = useState(editing?.paidBy || ME);
+  const [split, setSplit] = useState(editing?.split || members);
   const n = parseFloat(amount) || 0;
   const rate = CURRENCIES[currency].toTHB;
 
@@ -61,6 +65,12 @@ function AddExpenseSheet({ onClose, planId: fixedPlanId }) {
 
   const save = (close) => {
     if (!n) return;
+    if (editing) {
+      actions.updateExpense(editing.id, { title: title || EXPENSE_CATS[cat].label, amount: n, currency, toTHB: rate, cat, paidBy, split });
+      showToast('บันทึกแล้ว');
+      close();
+      return;
+    }
     const planId = plan?.id || ensureActivePlan();
     actions.addExpense({ planId, date: plan && planStatus(plan, today) !== 'ongoing' ? (plan.startDate || today) : today, title: title || EXPENSE_CATS[cat].label, amount: n, currency, toTHB: rate, cat, paidBy, split });
     showToast(`จดแล้ว ${fmtMoney(n, currency)}${currency !== 'THB' ? ` (≈ ${fmtMoney(n * rate)})` : ''}`);
@@ -68,42 +78,47 @@ function AddExpenseSheet({ onClose, planId: fixedPlanId }) {
   };
 
   return (
-    <Sheet title="จดรายจ่าย" subtitle={plan?.name} onClose={onClose}
+    <Sheet title={editing ? 'แก้รายจ่าย' : 'จดรายจ่าย'} subtitle={plan?.name} onClose={onClose}
       footer={(close) => <button className="pt-btn block" disabled={!n} onClick={() => save(close)}>บันทึก {n ? fmtMoney(n, currency) : ''}</button>}>
-      <div className="pt-amount">
-        <span className="pt-amount-cur">{CURRENCIES[currency].symbol}</span>
-        <input inputMode="decimal" autoFocus placeholder="0" value={amount} style={{ width: `${Math.max(1, amount.length) + 0.6}ch` }} onChange={(e) => setAmount(e.target.value.replace(/[^\d.]/g, ''))} />
-      </div>
-      <div className="pt-amount-sub">
-        {currency !== 'THB' && n > 0 ? `≈ ${fmtMoney(n * rate)}` : ' '}
-      </div>
-      <div className="pt-chip-row center">
-        {[...new Set([planCur, 'THB'])].map((c) => <Chip key={c} active={currency === c} onClick={() => setCurrency(c)}>{c} {CURRENCIES[c].symbol}</Chip>)}
-      </div>
-      <div className="pt-label">หมวด</div>
-      <div className="pt-chip-row wrap">
-        {Object.entries(EXPENSE_CATS).map(([k, c]) => <Chip key={k} active={cat === k} color={c.color} onClick={() => setCat(k)}>{c.label}</Chip>)}
-      </div>
-      <input className="pt-input" placeholder="ชื่อรายการ" value={title} onChange={(e) => setTitle(e.target.value)} />
-      {members.length > 1 && (
+      {(close) => (
         <>
-          <div className="pt-label">ใครจ่าย</div>
-          <div className="pt-people">
-            {members.map((id) => (
-              <button key={id} className={`pt-person${paidBy === id ? ' active' : ''}`} onClick={() => setPaidBy(id)}>
-                <Avatar id={id} size={40} /><span>{PEOPLE[id].name}</span>
-              </button>
-            ))}
+          <div className="pt-amount">
+            <span className="pt-amount-cur">{CURRENCIES[currency].symbol}</span>
+            <input inputMode="decimal" autoFocus placeholder="0" value={amount} style={{ width: `${Math.max(1, amount.length) + 0.6}ch` }} onChange={(e) => setAmount(e.target.value.replace(/[^\d.]/g, ''))} />
           </div>
-          <div className="pt-label">หารกับ <span className="pt-muted sm">{n ? `คนละ ${fmtMoney((n * rate) / split.length)}` : ''}</span></div>
-          <div className="pt-people">
-            {members.map((id) => (
-              <button key={id} className={`pt-person check${split.includes(id) ? ' active' : ''}`} onClick={() => toggle(id)}>
-                <Avatar id={id} size={40} /><span>{PEOPLE[id].name}</span>
-                {split.includes(id) && <i className="pt-person-check"><Icon name="check" size={12} stroke={3} /></i>}
-              </button>
-            ))}
+          <div className="pt-amount-sub">
+            {currency !== 'THB' && n > 0 ? `≈ ${fmtMoney(n * rate)}` : ' '}
           </div>
+          <div className="pt-chip-row center">
+            {[...new Set([planCur, 'THB', currency])].map((c) => <Chip key={c} active={currency === c} onClick={() => setCurrency(c)}>{c} {CURRENCIES[c].symbol}</Chip>)}
+          </div>
+          <div className="pt-label">หมวด</div>
+          <div className="pt-chip-row wrap">
+            {Object.entries(EXPENSE_CATS).map(([k, c]) => <Chip key={k} active={cat === k} color={c.color} onClick={() => setCat(k)}>{c.label}</Chip>)}
+          </div>
+          <input className="pt-input" placeholder="ชื่อรายการ" value={title} onChange={(e) => setTitle(e.target.value)} />
+          {members.length > 1 && (
+            <>
+              <div className="pt-label">ใครจ่าย</div>
+              <div className="pt-people">
+                {members.map((id) => (
+                  <button key={id} className={`pt-person${paidBy === id ? ' active' : ''}`} onClick={() => setPaidBy(id)}>
+                    <Avatar id={id} size={40} /><span>{PEOPLE[id].name}</span>
+                  </button>
+                ))}
+              </div>
+              <div className="pt-label">หารกับ <span className="pt-muted sm">{n ? `คนละ ${fmtMoney((n * rate) / split.length)}` : ''}</span></div>
+              <div className="pt-people">
+                {members.map((id) => (
+                  <button key={id} className={`pt-person check${split.includes(id) ? ' active' : ''}`} onClick={() => toggle(id)}>
+                    <Avatar id={id} size={40} /><span>{PEOPLE[id].name}</span>
+                    {split.includes(id) && <i className="pt-person-check"><Icon name="check" size={12} stroke={3} /></i>}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+          {editing && <button className="pt-btn light block danger" onClick={() => { actions.removeExpense(editing.id); close(); }}><Icon name="trash" size={16} /> ลบรายการนี้</button>}
         </>
       )}
     </Sheet>
@@ -182,43 +197,58 @@ function AddMemorySheet({ onClose, planId: fixedPlanId }) {
   );
 }
 
-/* ---------- Create plan (one screen) ---------- */
+/* ---------- Create: an outing (one day: a mall, an event) or a trip (nights away, abroad) ---------- */
 function nextSaturday(from) {
   const d = parseISO(from);
   const add = (6 - d.getDay() + 7) % 7 || 7;
   return addDays(from, add);
 }
 
-function CreatePlanSheet({ onClose, place, groupId }) {
-  const { actions, closeSheet, today, groups, settings, cloud } = useProto();
+const PLAN_TYPES = [{ value: 'outing', label: 'นัด · วันเดียว' }, { value: 'trip', label: 'ทริป · ค้างคืน' }];
+
+// place: start from a place (a saved one, or an event's venue); date/time/name/groupId: prefilled;
+// undated: a trip idea without dates yet
+function CreatePlanSheet({ onClose, place, groupId, type: startType, date, time: startTime = '', name: startName = '', undated = false }) {
+  const { actions, closeSheet, today, groups, settings, cloud, showToast } = useProto();
   const navigate = useNavigate();
+  const [type, setType] = useState(startType || 'outing');
   const [query, setQuery] = useState('');
   const [dest, setDest] = useState(place ? { ...place, key: 'prefill' } : null);
-  const [when, setWhen] = useState('today');
+  const [day, setDay] = useState(date && date >= today ? date : today);
+  const [time, setTime] = useState(startTime);
   const [start, setStart] = useState(addDays(today, 7));
   const [end, setEnd] = useState(addDays(today, 9));
-  const [name, setName] = useState('');
+  const [noDates, setNoDates] = useState(undated);
+  const [name, setName] = useState(startName);
   // the group it's for: the one asked for, else the one home is showing; its members come along by default
   const [group, setGroup] = useState(() => groups.find((g) => g.id === (groupId || settings.scope)) || null);
   const [members, setMembers] = useState(() => group?.members || [ME]);
   const pickGroup = (g) => { setGroup(g); setMembers(g ? g.members : [ME]); };
-  const search = usePlaceSearch(dest ? '' : query, { withDestinations: true });
+  const outing = type === 'outing';
+  const search = usePlaceSearch(dest ? '' : query, { withDestinations: !outing });
 
   const country = dest?.country || 'TH';
   const c = countryOf(country);
-  const dates = {
-    today: [today, today], tomorrow: [addDays(today, 1), addDays(today, 1)],
-    sat: [nextSaturday(today), nextSaturday(today)], range: [start, end < start ? start : end], idea: [null, null],
-  }[when];
-  const kind = when === 'idea' ? 'idea' : country !== 'TH' ? 'abroad' : dates[0] === dates[1] ? 'outing' : 'trip';
-  const autoName = dest ? (kind === 'outing' ? `ไป ${dest.name}` : `ทริป${dest.name}`) : 'ออกไปข้างนอก';
+  const quick = [['วันนี้', today], ['พรุ่งนี้', addDays(today, 1)], ['เสาร์นี้', nextSaturday(today)]];
+  const dates = outing ? [day, day] : noDates ? [null, null] : [start, end < start ? start : end];
+  const kind = outing ? 'outing' : noDates ? 'idea' : country !== 'TH' ? 'abroad' : 'trip';
+  const autoName = dest ? (outing ? `ไป ${dest.name}` : `ทริป${dest.name}`) : '';
+  const title = name.trim() || autoName;
+  // an outing is somewhere to go; a trip at least needs a name
+  const ready = outing ? Boolean(dest) : Boolean(title);
+  const cat = dest?.cat in PLACE_CATS ? dest.cat : 'sight';
 
   const create = () => {
+    // an outing's place is its first stop; a trip's is where it goes (unless it started from a place)
+    const firstStop = dest && dates[0] && (outing || place) ? [{
+      date: dates[0], time: outing ? time : '', name: dest.name, area: dest.area, prov: dest.prov, lat: dest.lat, lng: dest.lng, cat,
+      note: '', checkIns: {}, placeId: dest.id?.startsWith?.('p') ? dest.id : undefined, eventId: dest.eventId,
+    }] : [];
     const id = actions.addPlan({
-      name: name.trim() || autoName, kind, country, currency: c.currency,
+      name: title, kind, country, currency: c.currency,
       destination: dest ? { name: dest.name, lat: dest.lat, lng: dest.lng } : null,
       startDate: dates[0], endDate: dates[1], members, groupId: group?.id || null, budget: 0,
-      cover: { icon: kind === 'abroad' ? 'globe' : kind === 'outing' ? 'food' : 'sight', tint: kind === 'abroad' ? '#E8F3FF' : kind === 'outing' ? '#FFF1E6' : '#E6F7F4' },
+      cover: outing ? { icon: cat, tint: PLACE_CATS[cat].bg } : { icon: kind === 'abroad' ? 'globe' : 'sight', tint: kind === 'abroad' ? '#E8F3FF' : '#E6F7F4' },
       checklist: kind === 'abroad' ? [
         { id: 'a1', text: 'พาสปอร์ตอายุเหลือเกิน 6 เดือน', done: false },
         { id: 'a2', text: 'เช็กเงื่อนไขวีซ่า / ลงทะเบียนเข้าเมือง', done: false },
@@ -226,7 +256,7 @@ function CreatePlanSheet({ onClose, place, groupId }) {
         { id: 'a4', text: 'eSIM / Pocket WiFi', done: false },
         { id: 'a5', text: `แลกเงิน ${c.currency}`, done: false },
       ] : undefined,
-      stops: place && dates[0] ? [{ id: 'first', date: dates[0], time: '', name: place.name, area: place.area, prov: place.prov, lat: place.lat, lng: place.lng, cat: place.cat, note: '', checkIns: {}, placeId: place.id }] : [],
+      stops: firstStop,
     });
     closeSheet();
     navigate(`/proto/plan/${id}`);
@@ -234,11 +264,13 @@ function CreatePlanSheet({ onClose, place, groupId }) {
 
   return (
     <Sheet title="แผนใหม่" onClose={onClose} tall
-      footer={<button className="pt-btn block" onClick={create}>สร้าง “{name.trim() || autoName}”</button>}>
+      footer={<button className="pt-btn block" disabled={!ready} onClick={create}>สร้าง{ready ? ` “${title}”` : ''}</button>}>
+      <Seg value={type} onChange={setType} items={PLAN_TYPES} />
+
       <div className="pt-label">ไปไหน</div>
       {dest ? (
         <div className="pt-picked-row boxed">
-          <CatIcon cat={dest.cat || 'sight'} size={40} />
+          <CatIcon cat={cat} size={40} />
           <div className="pt-grow">
             <div className="pt-strong">{dest.name}</div>
             <div className="pt-muted"><Flag code={c.code} /> {c.name}{dest.area ? ` · ${dest.area}` : ''}</div>
@@ -249,7 +281,7 @@ function CreatePlanSheet({ onClose, place, groupId }) {
         <>
           <div className="pt-search">
             <Icon name="search" size={18} />
-            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="ค้นหาสถานที่" />
+            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={outing ? 'ห้าง ร้าน คาเฟ่ ที่จัดงาน' : 'จังหวัด เมือง ประเทศ'} />
           </div>
           <ResultList search={search} onPick={setDest} />
         </>
@@ -264,23 +296,31 @@ function CreatePlanSheet({ onClose, place, groupId }) {
       )}
 
       <div className="pt-label">เมื่อไร</div>
-      <div className="pt-chip-row wrap">
-        <Chip active={when === 'today'} onClick={() => setWhen('today')}>วันนี้</Chip>
-        <Chip active={when === 'tomorrow'} onClick={() => setWhen('tomorrow')}>พรุ่งนี้</Chip>
-        <Chip active={when === 'sat'} onClick={() => setWhen('sat')}>เสาร์นี้</Chip>
-        <Chip active={when === 'range'} onClick={() => setWhen('range')}>หลายวัน</Chip>
-        <Chip active={when === 'idea'} onClick={() => setWhen('idea')}>ยังไม่รู้</Chip>
-      </div>
-      {when === 'range' && (
-        <div className="pt-date-row">
-          <label><span>ไป</span><input type="date" className="pt-input" value={start} onChange={(e) => setStart(e.target.value)} /></label>
-          <label><span>กลับ</span><input type="date" className="pt-input" value={end} min={start} onChange={(e) => setEnd(e.target.value)} /></label>
-        </div>
+      {outing ? (
+        <>
+          <div className="pt-chip-row wrap">
+            {quick.map(([label, d]) => <Chip key={label} active={day === d} onClick={() => setDay(d)}>{label}</Chip>)}
+          </div>
+          <div className="pt-date-row">
+            <label><span>วัน</span><input type="date" className="pt-input" value={day} min={today} onChange={(e) => e.target.value && setDay(e.target.value)} /></label>
+            <label><span>เวลา</span><input type="time" className="pt-input" value={time} onChange={(e) => setTime(e.target.value)} /></label>
+          </div>
+        </>
+      ) : (
+        <>
+          {!noDates && (
+            <div className="pt-date-row">
+              <label><span>ไป</span><input type="date" className="pt-input" value={start} min={today} onChange={(e) => e.target.value && setStart(e.target.value)} /></label>
+              <label><span>กลับ</span><input type="date" className="pt-input" value={end} min={start} onChange={(e) => e.target.value && setEnd(e.target.value)} /></label>
+            </div>
+          )}
+          <div className="pt-kind-line">
+            <Chip active={noDates} onClick={() => setNoDates((v) => !v)}>ยังไม่รู้วัน</Chip>
+            <span className="pt-badge">{KINDS[kind].label}</span>
+            {dates[0] && <span className="pt-muted">{diffDays(dates[0], dates[1]) + 1} วัน</span>}
+          </div>
+        </>
       )}
-      <div className="pt-kind-line">
-        <span className="pt-badge">{KINDS[kind].label}</span>
-        <span className="pt-muted">{dates[0] ? thaiRange(dates[0], dates[1]) : ''}{dates[0] && dates[0] !== dates[1] ? ` · ${diffDays(dates[0], dates[1]) + 1} วัน` : ''}</span>
-      </div>
 
       <div className="pt-label">ไปกับใคร</div>
       {groups.length > 0 && (
@@ -290,7 +330,7 @@ function CreatePlanSheet({ onClose, place, groupId }) {
         </div>
       )}
       <div className="pt-people">
-        {/* signed in, only people in the trip's group can come (they're the ones who can see it) */}
+        {/* signed in, only people in the plan's group can come (they're the ones who can see it) */}
         {(cloud ? (group ? group.members : [ME]).map((id) => PEOPLE[id]).filter(Boolean) : Object.values(PEOPLE)).map((p) => (
           <button key={p.id} className={`pt-person check${members.includes(p.id) ? ' active' : ''}`} disabled={p.id === ME}
             onClick={() => setMembers((m) => (m.includes(p.id) ? m.filter((x) => x !== p.id) : [...m, p.id]))}>
@@ -298,44 +338,47 @@ function CreatePlanSheet({ onClose, place, groupId }) {
             {members.includes(p.id) && <i className="pt-person-check"><Icon name="check" size={12} stroke={3} /></i>}
           </button>
         ))}
-        <button className="pt-person invite" onClick={() => navigator.clipboard?.writeText('https://votagex.app/j/AB12CD').catch(() => {})}>
-          <span className="pt-invite-icon"><Icon name="link" size={18} /></span><span>ชวนด้วยลิงก์</span>
-        </button>
+        {group && (
+          <button className="pt-person invite" onClick={() => actions.invite(group).then((link) => sendInvite(link, group.name, showToast)).catch(() => showToast('สร้างลิงก์ไม่สำเร็จ'))}>
+            <span className="pt-invite-icon"><Icon name="link" size={18} /></span><span>ชวนเข้ากลุ่ม</span>
+          </button>
+        )}
       </div>
 
-      <input className="pt-input" placeholder={autoName} value={name} onChange={(e) => setName(e.target.value)} />
+      <input className="pt-input" placeholder={autoName || (outing ? 'ชื่อนัด' : 'ชื่อทริป')} value={name} onChange={(e) => setName(e.target.value)} />
     </Sheet>
   );
 }
 
 /* ---------- Add stop to a plan ---------- */
+// One search box: before typing it lists the places I want to go, typing narrows those and searches the map too.
+// The time comes after, from the toast or by tapping the stop.
 function AddStopSheet({ onClose, planId, date }) {
-  const { plans, places, actions, showToast } = useProto();
+  const { plans, places, actions, showToast, openSheet } = useProto();
   const plan = plans.find((p) => p.id === planId);
-  const [tab, setTab] = useState('saved');
   const [query, setQuery] = useState('');
-  const [time, setTime] = useState('');
   const bias = plan?.destination || undefined;
-  const search = usePlaceSearch(tab === 'search' ? query : '', { bias });
-  const saved = places.filter((p) => p.status === 'want' && (p.country || 'TH') === (plan?.country || 'TH'));
+  const search = usePlaceSearch(query, { bias });
+  const q = query.trim().toLowerCase();
+  const saved = places.filter((p) => p.status === 'want' && (p.country || 'TH') === (plan?.country || 'TH') && (!q || p.name.toLowerCase().includes(q)));
 
   const add = (pl, close) => {
-    actions.addStop(planId, { date: date || null, time, name: pl.name, area: pl.area, prov: pl.prov, lat: pl.lat, lng: pl.lng, cat: pl.cat, placeId: pl.id && pl.id.startsWith('p') ? pl.id : undefined });
-    showToast(`เพิ่ม “${pl.name}” แล้ว`);
+    const stopId = actions.addStop(planId, { date: date || null, time: '', name: pl.name, area: pl.area, prov: pl.prov, lat: pl.lat, lng: pl.lng, cat: pl.cat, placeId: pl.id && pl.id.startsWith('p') ? pl.id : undefined });
     close();
+    showToast(`เพิ่ม “${pl.name}” แล้ว`, { label: 'ใส่เวลา', onClick: () => openSheet('stop', { planId, stopId }) });
   };
 
   return (
     <Sheet title="เพิ่มจุดแวะ" subtitle={date ? `${plan?.name} · ${thaiShort(date)}` : plan?.name} onClose={onClose} tall>
       {(close) => (
         <>
-          <div className="pt-chip-row">
-            <Chip active={tab === 'saved'} onClick={() => setTab('saved')}>จากที่อยากไป ({saved.length})</Chip>
-            <Chip active={tab === 'search'} onClick={() => setTab('search')}>ค้นหาใหม่</Chip>
-            <label className="pt-time"><Icon name="clock" size={16} /><input type="time" value={time} onChange={(e) => setTime(e.target.value)} /></label>
+          <div className="pt-search">
+            <Icon name="search" size={18} />
+            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="ค้นหาสถานที่" />
           </div>
-          {tab === 'saved' ? (
-            saved.length ? (
+          {saved.length > 0 && (
+            <>
+              <div className="pt-label">ที่อยากไป</div>
               <div className="pt-results">
                 {saved.map((p) => (
                   <button key={p.id} className="pt-result" onClick={() => add(p, close)}>
@@ -345,14 +388,12 @@ function AddStopSheet({ onClose, planId, date }) {
                   </button>
                 ))}
               </div>
-            ) : <div className="pt-muted pad">ยังไม่มีที่อยากไป</div>
-          ) : (
+            </>
+          )}
+          {q && (
             <>
-              <div className="pt-search">
-                <Icon name="search" size={18} />
-                <input autoFocus value={query} onChange={(e) => setQuery(e.target.value)} placeholder="ชื่อสถานที่" />
-              </div>
-              <ResultList search={search} onPick={(r) => add(r, close)} />
+              {saved.length > 0 && <div className="pt-label">ผลค้นหา</div>}
+              <ResultList search={search} onPick={(r) => add(r, close)} icon="plus" />
             </>
           )}
         </>
@@ -464,6 +505,9 @@ const SHEETS = {
   event: EventSheet,
   newGroup: NewGroupSheet,
   group: GroupSheet,
+  planMenu: PlanMenuSheet,
+  editPlan: EditPlanSheet,
+  stop: StopSheet,
 };
 
 export default function ProtoSheets() {

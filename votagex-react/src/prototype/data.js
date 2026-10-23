@@ -112,6 +112,14 @@ export function setMe(id, people = DEMO_PEOPLE) {
   Object.assign(PEOPLE, people);
 }
 export const addPeople = (people) => Object.assign(PEOPLE, people);
+// share the link (phone share sheet), else copy it
+export async function sendInvite(link, name, showToast) {
+  if (navigator.share) {
+    try { await navigator.share({ title: 'VOTAGEX', text: `มาวางแผนเที่ยวกับ “${name}” กัน`, url: link }); return; } catch { /* closed: copy instead */ }
+  }
+  await navigator.clipboard?.writeText(link).catch(() => {});
+  showToast('คัดลอกลิงก์ชวนแล้ว');
+}
 // Travel groups: the same gang across many trips. A trip may belong to one (then anyone in it can plan it)
 // and takes along all or some of its members; a trip with no group is just mine.
 export const GROUP_COLORS = ['#0EA5E9', '#F97316', '#7C3AED', '#16A34A', '#DB2777'];
@@ -159,7 +167,7 @@ export const EXPENSE_CATS = {
   other: { label: 'อื่นๆ', color: '#6B7280' },
 };
 export const KINDS = {
-  outing: { label: 'ไปข้างนอก' },
+  outing: { label: 'นัด' },
   trip: { label: 'ทริปในไทย' },
   abroad: { label: 'ต่างประเทศ' },
   idea: { label: 'ไอเดีย' },

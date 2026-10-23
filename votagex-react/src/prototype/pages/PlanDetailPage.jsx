@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useProto } from '../useProto';
 import Icon, { Flag } from '../icons';
 import PiggyStage from '../PiggyStage';
@@ -69,7 +69,7 @@ function PlanTab({ plan, day, setDay, days, status }) {
         </div>
       )}
 
-      {plan.kind !== 'idea' && <DayChips days={days} value={day} onChange={setDay} plan={plan} />}
+      {plan.kind !== 'idea' && days.length > 1 && <DayChips days={days} value={day} onChange={setDay} plan={plan} />}
 
       <div className="pt-timeline">
         {stops.map((s, i) => {
@@ -80,7 +80,7 @@ function PlanTab({ plan, day, setDay, days, status }) {
             <div key={s.id} className={`pt-stop ${st}`}>
               <div className="pt-stop-time">{s.time || '—'}</div>
               <div className="pt-stop-rail"><span className="pt-stop-dot">{i + 1}</span></div>
-              <div className="pt-stop-card">
+              <div className="pt-stop-card" role="button" tabIndex={0} onClick={() => openSheet('stop', { planId: plan.id, stopId: s.id })}>
                 <CatIcon cat={s.cat} size={40} />
                 <div className="pt-grow">
                   <div className="pt-strong">{s.name}</div>
@@ -90,7 +90,7 @@ function PlanTab({ plan, day, setDay, days, status }) {
                     <div className="pt-stop-who"><Avatars ids={whoIn} size={18} /> <span>{st === 'late-done' ? 'มาสาย' : 'เช็คอินแล้ว'} {s.checkIns[whoIn[0]].at}</span></div>
                   )}
                 </div>
-                <div className="pt-stop-actions">
+                <div className="pt-stop-actions" onClick={(e) => e.stopPropagation()}>
                   {canCheck ? (
                     <button className="hp-step-checkin" onClick={() => actions.toggleCheckIn(plan.id, s.id, st === 'due')}>เช็คอิน</button>
                   ) : (
@@ -141,8 +141,9 @@ function MapTab({ plan, days }) {
 
 /* ---------- รายจ่าย ---------- */
 function MoneyTab({ plan }) {
-  const { expenses, jars, piggyLog, plans, today, openSheet } = useProto();
-  const jarOf = jars.find((j) => j.planId === plan.id);
+  const { expenses, jars, piggyLog, plans, today, openSheet, actions, showToast } = useProto();
+  const outing = plan.kind === 'outing'; // a day out spends, it doesn't save up
+  const jarOf = !outing && jars.find((j) => j.planId === plan.id);
   const jar = jarOf && { ...jarOf, ...jarStats(jarOf, piggyLog, plans, expenses) };
   const openJar = () => openSheet('piggy', { jarId: jar.id });
   const list = expenses.filter((e) => e.planId === plan.id).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
@@ -168,7 +169,7 @@ function MoneyTab({ plan }) {
           <Progress value={jar.goal ? jar.balance / jar.goal : 0} color="var(--tw-brand)" />
           <PiggyStage jar={jarOf} onOpen={openJar} />
         </div>
-      ) : planStatus(plan, today) !== 'past' && (
+      ) : !outing && planStatus(plan, today) !== 'past' && (
         <button className="hp-tile pt-jar-tile" onClick={() => openSheet('newJar', { planId: plan.id })}>
           <span className="pt-cat-icon" style={{ width: 40, height: 40, background: '#FDECF4', color: '#DB2777' }}><Icon name="piggy" size={22} /></span>
           <span className="pt-grow"><span className="pt-strong">เริ่มเก็บเงินทริปนี้</span><span className="pt-muted sm">หยอดทีละนิด แบ่งตามหมวดให้เอง</span></span>
@@ -176,23 +177,25 @@ function MoneyTab({ plan }) {
         </button>
       )}
 
-      <div className="hp-tile pt-budget">
-        <div className="pt-budget-row">
-          <div>
-            <div className="pt-muted sm">ส่วนของฉัน</div>
-            <div className="pt-spend-total">{fmtMoney(mine)}</div>
+      {(!outing || list.length > 0) && (
+        <div className="hp-tile pt-budget">
+          <div className="pt-budget-row">
+            <div>
+              <div className="pt-muted sm">ส่วนของฉัน</div>
+              <div className="pt-spend-total">{fmtMoney(mine)}</div>
+            </div>
+            {plan.budget > 0 && <div className="pt-right"><div className="pt-muted sm">งบต่อคน</div><div className="pt-strong">{fmtMoney(plan.budget)}</div></div>}
           </div>
-          {plan.budget > 0 && <div className="pt-right"><div className="pt-muted sm">งบต่อคน</div><div className="pt-strong">{fmtMoney(plan.budget)}</div></div>}
+          {plan.budget > 0 && <Progress value={mine / plan.budget} color={mine > plan.budget ? 'var(--tw-danger)' : 'var(--tw-brand)'} />}
+          <div className="pt-muted sm">{outing ? 'รวม' : 'ทั้งทริป'} {fmtMoney(total)} · {list.length} รายการ</div>
+          {byCat.length > 0 && (
+            <>
+              <div className="pt-stack">{byCat.map(([k, v]) => <span key={k} style={{ flex: v, background: EXPENSE_CATS[k].color }} />)}</div>
+              <div className="pt-legend">{byCat.map(([k, v]) => <span key={k}><i style={{ background: EXPENSE_CATS[k].color }} />{EXPENSE_CATS[k].label} {Math.round((v / total) * 100)}%</span>)}</div>
+            </>
+          )}
         </div>
-        {plan.budget > 0 && <Progress value={mine / plan.budget} color={mine > plan.budget ? 'var(--tw-danger)' : 'var(--tw-brand)'} />}
-        <div className="pt-muted sm">ทั้งทริป {fmtMoney(total)} · {list.length} รายการ</div>
-        {byCat.length > 0 && (
-          <>
-            <div className="pt-stack">{byCat.map(([k, v]) => <span key={k} style={{ flex: v, background: EXPENSE_CATS[k].color }} />)}</div>
-            <div className="pt-legend">{byCat.map(([k, v]) => <span key={k}><i style={{ background: EXPENSE_CATS[k].color }} />{EXPENSE_CATS[k].label} {Math.round((v / total) * 100)}%</span>)}</div>
-          </>
-        )}
-      </div>
+      )}
 
 
       {transfers.length > 0 && (
@@ -207,7 +210,12 @@ function MoneyTab({ plan }) {
                 <Icon name="next" size={14} />
                 <Avatar id={t.to} size={32} />
                 <span className="pt-grow"><span className="pt-strong">{PEOPLE[t.from].name} → {PEOPLE[t.to].name}</span><span className="pt-muted sm">{fmtMoney(t.amount)}</span></span>
-                {isDone ? <span className="pt-badge ok">โอนแล้ว</span> : (
+                {isDone ? (
+                  <button className="pt-badge ok" onClick={() => {
+                    actions.unsettle(plan.id, key);
+                    showToast('ยกเลิก “โอนแล้ว”', { label: 'เลิกทำ', onClick: () => actions.markSettled(plan.id, key) });
+                  }}>โอนแล้ว</button>
+                ) : (
                   <button className="pt-pill-btn sm" onClick={() => openSheet('settle', { planId: plan.id, ...t })}><Icon name="qr" size={14} /> QR พร้อมเพย์</button>
                 )}
               </div>
@@ -222,7 +230,7 @@ function MoneyTab({ plan }) {
         <div key={date} className="pt-exp-group">
           <div className="pt-muted sm">{date ? `${thaiDay(date)} ${thaiShort(date)}` : 'ไม่ระบุวัน'}</div>
           {items.map((e) => (
-            <div key={e.id} className="pt-exp">
+            <button key={e.id} className="pt-exp" onClick={() => openSheet('expense', { expenseId: e.id })}>
               <span className="pt-exp-dot" style={{ background: EXPENSE_CATS[e.cat].color }} />
               <span className="pt-grow">
                 <span className="pt-strong">{e.title}</span>
@@ -232,7 +240,7 @@ function MoneyTab({ plan }) {
                 <span className="pt-strong">{fmtMoney(e.amount, e.currency)}</span>
                 {e.currency !== 'THB' && <span className="pt-muted sm">≈ {fmtMoney(toTHB(e))}</span>}
               </span>
-            </div>
+            </button>
           ))}
         </div>
       ))}
@@ -242,7 +250,7 @@ function MoneyTab({ plan }) {
 
 /* ---------- ความทรงจำ ---------- */
 function MemoriesTab({ plan, status }) {
-  const { memories, openSheet } = useProto();
+  const { memories, openSheet, actions } = useProto();
   const navigate = useNavigate();
   const list = memories.filter((m) => m.planId === plan.id).sort((a, b) => (a.date || '').localeCompare(b.date || ''));
   return (
@@ -260,6 +268,7 @@ function MemoriesTab({ plan, status }) {
           const stop = plan.stops.find((s) => s.id === m.stopId);
           return (
             <div key={m.id} className={`pt-mem${m.photos?.length ? '' : ' text'}`}>
+              {m.by === ME && <button className="pt-mem-del" aria-label="ลบ" onClick={() => actions.removeMemory(m.id)}><Icon name="close" size={12} stroke={2.6} /></button>}
               {m.photos?.length > 0 && <div className="pt-mem-photo" style={{ backgroundImage: `url(${m.photos[0]})` }}>{m.photos.length > 1 && <span className="pt-badge glass right">+{m.photos.length - 1}</span>}</div>}
               <div className="pt-mem-body">
                 <div className="pt-mem-text"><Icon name={m.mood} size={16} className="pt-inline-icon" /> {m.text}</div>
@@ -269,7 +278,7 @@ function MemoriesTab({ plan, status }) {
           );
         })}
       </div>
-      {!list.length && <Empty>ยังไม่มีความทรงจำ</Empty>}
+      {!list.length && plan.kind !== 'outing' && <Empty>ยังไม่มีความทรงจำ</Empty>}
     </>
   );
 }
@@ -278,15 +287,26 @@ export default function PlanDetailPage() {
   const { planId } = useParams();
   const [params, setParams] = useSearchParams();
   const navigate = useNavigate();
-  const { plans, groups, today, showToast } = useProto();
+  const { plans, groups, today, openSheet, loading } = useProto();
   const plan = plans.find((p) => p.id === planId);
   const group = plan && groups.find((g) => g.id === plan.groupId);
   const days = plan ? dayList(plan.startDate, plan.endDate) : [];
   const status = plan ? planStatus(plan, today) : 'idea';
-  const [day, setDay] = useState(() => (days.includes(today) ? today : days[0]));
+  const [picked, setDay] = useState(() => (days.includes(today) ? today : days[0]));
+  const day = days.includes(picked) ? picked : days.includes(today) ? today : days[0]; // the dates may have moved
   const tab = params.get('tab') || 'plan';
 
-  if (!plan) return <Navigate to="/proto/plans" replace />;
+  // opened from a link or a reload: wait for the trips to load; gone (a friend deleted it): say so
+  if (!plan) {
+    return (
+      <div className="pt-page">
+        <div className="pt-detail-head">
+          <button className="pt-round-btn" aria-label="ย้อนกลับ" onClick={() => navigate('/proto/plans', { replace: true })}><Icon name="back" size={20} /></button>
+        </div>
+        {!loading && <Empty>ไม่พบแผนนี้ อาจถูกลบไปแล้ว</Empty>}
+      </div>
+    );
+  }
   const c = countryOf(plan.country);
 
   return (
@@ -294,10 +314,10 @@ export default function PlanDetailPage() {
       <div className="pt-detail-head">
         <button className="pt-round-btn" aria-label="ย้อนกลับ" onClick={() => (window.history.length > 1 ? navigate(-1) : navigate('/proto/plans'))}><Icon name="back" size={20} /></button>
         <span className="pt-detail-title">{KINDS[plan.kind].label}</span>
-        <button className="pt-round-btn" aria-label="ชวนเพื่อน" onClick={() => { navigator.clipboard?.writeText(`https://votagex.app/j/${plan.id}`).catch(() => {}); showToast('คัดลอกลิงก์ชวนเพื่อนแล้ว'); }}><Icon name="share" size={18} /></button>
+        <button className="pt-round-btn" aria-label="ตัวเลือก" onClick={() => openSheet('planMenu', { planId: plan.id })}><Icon name="more" size={20} /></button>
       </div>
       <div className="pt-scroll">
-        <Cover cover={plan.cover} className="pt-hero-cover">
+        <Cover cover={plan.cover} className={`pt-hero-cover${plan.kind === 'outing' ? ' short' : ''}`}>
           <span className="pt-badge glass"><Flag code={c.code} /> {c.name}</span>
           {status === 'ongoing' && <span className="pt-badge live right">กำลังเที่ยว</span>}
           {status === 'upcoming' && <span className="pt-badge dark right">อีก {diffDays(today, plan.startDate)} วัน</span>}
@@ -311,11 +331,23 @@ export default function PlanDetailPage() {
             <span className="pt-muted sm">{plan.members.map((id) => (id === ME ? 'ฉัน' : PEOPLE[id].name)).join(', ')}</span>
           </div>
         </div>
-        <Seg value={tab} onChange={(v) => setParams({ tab: v }, { replace: true })} items={TABS} />
-        {tab === 'plan' && <PlanTab plan={plan} day={day} setDay={setDay} days={days} status={status} />}
-        {tab === 'map' && <MapTab plan={plan} days={days} />}
-        {tab === 'money' && <MoneyTab plan={plan} />}
-        {tab === 'memories' && <MemoriesTab plan={plan} status={status} />}
+        {plan.kind === 'outing' ? (
+          <>
+            <PlanTab plan={plan} day={day} setDay={setDay} days={days} status={status} />
+            <SectionTitle title="รายจ่าย" />
+            <MoneyTab plan={plan} />
+            <SectionTitle title="ความทรงจำ" />
+            <MemoriesTab plan={plan} status={status} />
+          </>
+        ) : (
+          <>
+            <Seg value={tab} onChange={(v) => setParams({ tab: v }, { replace: true })} items={TABS} />
+            {tab === 'plan' && <PlanTab plan={plan} day={day} setDay={setDay} days={days} status={status} />}
+            {tab === 'map' && <MapTab plan={plan} days={days} />}
+            {tab === 'money' && <MoneyTab plan={plan} />}
+            {tab === 'memories' && <MemoriesTab plan={plan} status={status} />}
+          </>
+        )}
       </div>
     </div>
   );

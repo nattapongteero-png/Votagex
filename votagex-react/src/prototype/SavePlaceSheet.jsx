@@ -154,7 +154,8 @@ export default function SavePlaceSheet({ onClose }) {
   );
 }
 
-export function ResultList({ search, onPick }) {
+// icon: what tapping a result does right away (plus: adds it); none when it's only picked
+export function ResultList({ search, onPick, icon = null }) {
   if (search.loading && !search.results.length) return <div className="pt-muted pad">กำลังค้นหา…</div>;
   if (search.error && !search.results.length) return <div className="pt-muted pad">ค้นหาไม่ได้</div>;
   if (search.q && !search.results.length) return <div className="pt-muted pad">ไม่พบสถานที่</div>;
@@ -167,7 +168,7 @@ export function ResultList({ search, onPick }) {
             <span className="pt-strong">{r.name}</span>
             <span className="pt-muted">{r.area}{r.country && r.country !== 'TH' && <> <Flag code={r.country} /></>}</span>
           </span>
-          <Icon name="plus" size={18} />
+          {icon && <Icon name={icon} size={18} />}
         </button>
       ))}
     </div>

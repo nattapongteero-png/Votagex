@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { initializeApp } from 'firebase/app';
 import { connectAuthEmulator, getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signInWithRedirect, signOut } from 'firebase/auth';
 import {
-  addDoc, arrayRemove, arrayUnion, collection, connectFirestoreEmulator, deleteField, doc, getDoc,
+  arrayRemove, arrayUnion, collection, connectFirestoreEmulator, deleteDoc, deleteField, doc, getDoc,
   initializeFirestore, onSnapshot, query, serverTimestamp, setDoc, Timestamp, updateDoc, where, writeBatch,
 } from 'firebase/firestore';
 import { DEFAULT_AVATAR } from './data';
@@ -112,14 +112,17 @@ const plansPath = (uid, groupId) => (groupId ? `groups/${groupId}/plans` : `user
 const planRef = (uid, plan) => doc(db, plansPath(uid, plan.groupId), plan.id);
 
 // Every trip I can see: mine, and every trip of each of my groups (whether I go or not), each with its stops,
-// live. onChange gets the whole list whenever anything changes. Returns a function that stops listening.
+// live. onChange gets the whole list whenever anything changes, and whether every place has answered yet
+// (until then a trip that isn't there may only not have loaded). Returns a function that stops listening.
 export function watchPlans(uid, groupIds, onChange) {
   const plans = new Map(); // key "root/id" → plan without stops
   const stops = new Map(); // same key → stops
   const stopSubs = new Map();
-  const emit = () => onChange([...plans.entries()].map(([k, p]) => ({ ...p, stops: stops.get(k) || [] })));
+  const heard = new Set(); // roots that have answered at least once
+  const emit = () => onChange([...plans.entries()].map(([k, p]) => ({ ...p, stops: stops.get(k) || [] })), heard.size > groupIds.length);
   const watchRoot = (groupId) => onSnapshot(collection(db, plansPath(uid, groupId)), (snap) => {
     const root = groupId || 'me';
+    heard.add(root);
     const seen = new Set();
     snap.docs.forEach((d) => {
       const k = `${root}/${d.id}`;
@@ -136,7 +139,7 @@ export function watchPlans(uid, groupIds, onChange) {
       plans.delete(k); stops.delete(k); stopSubs.get(k)?.(); stopSubs.delete(k);
     });
     emit();
-  }, (e) => console.warn('plans listener:', e.code));
+  }, (e) => { console.warn('plans listener:', e.code); heard.add(groupId || 'me'); emit(); });
   const roots = [watchRoot(null), ...groupIds.map(watchRoot)];
   return () => { roots.forEach((u) => u()); stopSubs.forEach((u) => u()); };
 }
@@ -152,6 +155,27 @@ export function createPlan(uid, { members, stops = [], ...plan }) {
   return ref.id;
 }
 export const updatePlanFields = (uid, plan, fields) => updateDoc(planRef(uid, plan), fields);
-export const addStop = (uid, plan, stop) => addDoc(collection(planRef(uid, plan), 'stops'), { note: '', ...stop, checkIns: {} });
+// the trip's own fields and, when its dates moved, each stop's new day, in one go
+export function editPlan(uid, plan, fields, stopDates = {}) {
+  const batch = writeBatch(db);
+  batch.update(planRef(uid, plan), fields);
+  Object.entries(stopDates).forEach(([id, date]) => batch.update(doc(planRef(uid, plan), 'stops', id), { date }));
+  return batch.commit();
+}
+// the trip and its stops (its expenses and memories are still kept on each device)
+export function deletePlan(uid, plan) {
+  const batch = writeBatch(db);
+  plan.stops.forEach((s) => batch.delete(doc(planRef(uid, plan), 'stops', s.id)));
+  batch.delete(planRef(uid, plan));
+  return batch.commit();
+}
+// a new stop; its id is known at once (to open it right after)
+export function addStop(uid, plan, stop) {
+  const ref = doc(collection(planRef(uid, plan), 'stops'));
+  setDoc(ref, { note: '', ...stop, checkIns: {} });
+  return ref.id;
+}
+export const updateStop = (uid, plan, stopId, fields) => updateDoc(doc(planRef(uid, plan), 'stops', stopId), fields);
+export const deleteStop = (uid, plan, stopId) => deleteDoc(doc(planRef(uid, plan), 'stops', stopId));
 // my own check-in only (the rules refuse anyone else's): set it, or take it back with null
 export const setCheckIn = (uid, plan, stopId, value) => updateDoc(doc(planRef(uid, plan), 'stops', stopId), { [`checkIns.${uid}`]: value ?? deleteField() });

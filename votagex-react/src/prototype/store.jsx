@@ -41,13 +41,18 @@ const uid = (p) => `${p}${Date.now().toString(36)}${Math.random().toString(36).s
 export function ProtoProvider({ children, user = null, exit }) {
   const key = user ? `${KEY}.${user.uid}` : KEY;
   const [data, setData] = useState(() => load(key, Boolean(user)));
-  const [cloudGroups, setCloudGroups] = useState([]);
+  const [cloudGroups, setCloudGroups] = useState(null); // null until Firestore first answers
   const [cloudPlans, setCloudPlans] = useState([]);
+  const [plansReadyFor, setPlansReadyFor] = useState(null); // the groups whose trips have all answered once
   const [pendingPlans, setPendingPlans] = useState([]); // just created, until Firestore sends them back
   const [, setPeopleVersion] = useState(0);
   const [sheet, setSheet] = useState(null);
   const [toast, setToast] = useState(null);
   const toastTimer = useRef(null);
+  // deleted, waiting out the undo toast: plan ids, "planId/stopId", expense and memory ids
+  const [hidden, setHidden] = useState([]);
+  const dataRef = useRef(data);
+  useEffect(() => { dataRef.current = data; }, [data]);
 
   useEffect(() => {
     try { localStorage.setItem(key, JSON.stringify(data)); } catch { /* quota or private mode */ }
@@ -59,21 +64,30 @@ export function ProtoProvider({ children, user = null, exit }) {
     cloud.saveProfile(user).catch(() => {});
     return cloud.watchGroups(user.uid, setCloudGroups);
   }, [user]);
+  const myGroups = useMemo(() => cloudGroups || [], [cloudGroups]);
   // signed in: my trips and every trip of my groups, with their stops, live
-  const groupKey = cloudGroups.map((g) => g.id).sort().join(',');
+  const groupKey = myGroups.map((g) => g.id).sort().join(',');
   useEffect(() => {
     if (!user) return undefined;
-    return cloud.watchPlans(user.uid, groupKey ? groupKey.split(',') : [], setCloudPlans);
+    return cloud.watchPlans(user.uid, groupKey ? groupKey.split(',') : [], (list, ready) => {
+      setCloudPlans(list);
+      if (ready) setPlansReadyFor(groupKey);
+    });
   }, [user, groupKey]);
-  const plans = useMemo(() => (user
-    ? [...cloudPlans, ...pendingPlans.filter((p) => !cloudPlans.some((c) => c.id === p.id))]
-    : data.plans), [user, cloudPlans, pendingPlans, data.plans]);
+  // signed in, still waiting for the first answer: a trip that isn't there yet may only be on its way
+  const loading = Boolean(user) && (!cloudGroups || plansReadyFor !== groupKey);
+  const plans = useMemo(() => {
+    const all = user ? [...cloudPlans, ...pendingPlans.filter((p) => !cloudPlans.some((c) => c.id === p.id))] : data.plans;
+    if (!hidden.length) return all;
+    const gone = (p, s) => hidden.includes(`${p.id}/${s.id}`);
+    return all.filter((p) => !hidden.includes(p.id)).map((p) => (p.stops.some((s) => gone(p, s)) ? { ...p, stops: p.stops.filter((s) => !gone(p, s)) } : p));
+  }, [user, cloudPlans, pendingPlans, data.plans, hidden]);
   const plansRef = useRef(plans);
   useEffect(() => { plansRef.current = plans; }, [plans]);
   const findPlan = (id) => plansRef.current.find((p) => p.id === id);
 
   // names and photos of the people in my groups
-  const memberKey = [...new Set(cloudGroups.flatMap((g) => g.memberIds))].sort().join(',');
+  const memberKey = [...new Set(myGroups.flatMap((g) => g.memberIds))].sort().join(',');
   useEffect(() => {
     const unknown = memberKey ? memberKey.split(',').filter((id) => !PEOPLE[id]) : [];
     if (!unknown.length) return;
@@ -92,6 +106,14 @@ export function ProtoProvider({ children, user = null, exit }) {
     toastTimer.current = setTimeout(() => setToast(null), action ? 5000 : 2400);
   }, []);
   const hideToast = useCallback(() => { clearTimeout(toastTimer.current); setToast(null); }, []);
+
+  // Delete with an undo: hidden at once, gone for real once the toast has had its time
+  const removeLater = useCallback((key, msg, commit) => {
+    setHidden((h) => [...h, key]);
+    const unhide = () => setHidden((h) => h.filter((k) => k !== key));
+    const timer = setTimeout(() => { commit(); unhide(); }, 5200);
+    showToast(msg, { label: 'เลิกทำ', onClick: () => { clearTimeout(timer); unhide(); } });
+  }, [showToast]);
 
   const openSheet = useCallback((name, props = {}) => setSheet({ name, props }), []);
   const closeSheet = useCallback(() => setSheet(null), []);
@@ -141,16 +163,56 @@ export function ProtoProvider({ children, user = null, exit }) {
     addPlan: (plan) => {
       if (user) {
         const id = cloud.createPlan(user.uid, plan);
-        setPendingPlans((ps) => [...ps, { stops: [], ...plan, id, groupId: plan.groupId || null }]);
+        setPendingPlans((ps) => [...ps, { ...plan, stops: (plan.stops || []).map((st, i) => ({ ...st, id: `new${i}` })), id, groupId: plan.groupId || null }]);
         return id;
       }
       const id = uid('plan');
-      setData((d) => ({ ...d, plans: [{ stops: [], members: [ME], ...plan, id }, ...d.plans] }));
+      const stops = (plan.stops || []).map((s) => ({ ...s, id: uid('s') }));
+      setData((d) => ({ ...d, plans: [{ members: [ME], ...plan, stops, id }, ...d.plans] }));
       return id;
     },
+    // the trip's own fields (members, dates…) and the stops its new dates moved
+    editPlan: (planId, { members, ...fields }, stopDates = {}) => {
+      if (user) { cloud.editPlan(user.uid, findPlan(planId), { ...fields, memberIds: members }, stopDates); return; }
+      updatePlan(planId, (p) => ({ ...p, ...fields, members, stops: p.stops.map((s) => (s.id in stopDates ? { ...s, date: stopDates[s.id] } : s)) }));
+    },
+    removePlan: (planId) => {
+      const plan = findPlan(planId);
+      removeLater(planId, `ลบ “${plan.name}” แล้ว`, () => {
+        if (user) { setPendingPlans((ps) => ps.filter((p) => p.id !== planId)); cloud.deletePlan(user.uid, plan); }
+        // what's still on this device goes with it; the piggy stays, just no longer tied to the trip
+        setData((d) => ({
+          ...d,
+          plans: d.plans.filter((p) => p.id !== planId),
+          expenses: d.expenses.filter((e) => e.planId !== planId),
+          memories: d.memories.filter((m) => m.planId !== planId),
+          jars: d.jars.map((j) => (j.planId === planId ? { ...j, planId: null } : j)),
+        }));
+      });
+    },
+    // not going after all: the trip stays with the group
+    leavePlan: (planId) => {
+      const plan = findPlan(planId);
+      const members = plan.members.filter((id) => id !== ME);
+      if (user) { cloud.updatePlanFields(user.uid, plan, { memberIds: members }); return; }
+      updatePlan(planId, (p) => ({ ...p, members }));
+    },
     addStop: (planId, stop) => {
-      if (user) { cloud.addStop(user.uid, findPlan(planId), stop); return; }
-      updatePlan(planId, (p) => ({ ...p, stops: [...p.stops, { checkIns: {}, note: '', ...stop, id: uid('s') }] }));
+      if (user) return cloud.addStop(user.uid, findPlan(planId), stop);
+      const id = uid('s');
+      updatePlan(planId, (p) => ({ ...p, stops: [...p.stops, { checkIns: {}, note: '', ...stop, id }] }));
+      return id;
+    },
+    updateStop: (planId, stopId, fields) => {
+      if (user) { cloud.updateStop(user.uid, findPlan(planId), stopId, fields); return; }
+      updatePlan(planId, (p) => ({ ...p, stops: p.stops.map((s) => (s.id === stopId ? { ...s, ...fields } : s)) }));
+    },
+    removeStop: (planId, stopId) => {
+      const plan = findPlan(planId);
+      removeLater(`${planId}/${stopId}`, `ลบ “${plan.stops.find((s) => s.id === stopId)?.name}” แล้ว`, () => {
+        if (user) cloud.deleteStop(user.uid, plan, stopId);
+        else updatePlan(planId, (p) => ({ ...p, stops: p.stops.filter((s) => s.id !== stopId) }));
+      });
     },
     toggleCheckIn: (planId, stopId, late = false, auto = false) => {
       if (user) {
@@ -187,8 +249,16 @@ export function ProtoProvider({ children, user = null, exit }) {
       if (user) { const plan = findPlan(planId); cloud.updatePlanFields(user.uid, plan, { settled: [...(plan.settled || []), key] }); return; }
       updatePlan(planId, (p) => ({ ...p, settled: [...(p.settled || []), key] }));
     },
+    unsettle: (planId, key) => {
+      const settled = (findPlan(planId).settled || []).filter((k) => k !== key);
+      if (user) { cloud.updatePlanFields(user.uid, findPlan(planId), { settled }); return; }
+      updatePlan(planId, (p) => ({ ...p, settled }));
+    },
     addExpense: (e) => setData((d) => ({ ...d, expenses: [{ ...e, id: uid('e') }, ...d.expenses] })),
+    updateExpense: (id, fields) => setData((d) => ({ ...d, expenses: d.expenses.map((e) => (e.id === id ? { ...e, ...fields } : e)) })),
+    removeExpense: (id) => removeLater(id, `ลบ “${dataRef.current.expenses.find((e) => e.id === id)?.title}” แล้ว`, () => setData((d) => ({ ...d, expenses: d.expenses.filter((e) => e.id !== id) }))),
     addMemory: (m) => setData((d) => ({ ...d, memories: [{ ...m, id: uid('m') }, ...d.memories] })),
+    removeMemory: (id) => removeLater(id, 'ลบความทรงจำแล้ว', () => setData((d) => ({ ...d, memories: d.memories.filter((m) => m.id !== id) }))),
 
     // Piggies: 'in' splits across the jar's categories by share (target 'split') or goes to one category;
     // 'use' takes money out of one category
@@ -204,7 +274,7 @@ export function ProtoProvider({ children, user = null, exit }) {
       setData((d) => ({ ...d, jars: [...d.jars, { id, name, goal, icon: icon || 'piggy', planId: planId || null, cats: { ...(JAR_TEMPLATES[kind] || JAR_TEMPLATES.trip) } }] }));
       return id;
     },
-  }), [updatePlan, user]);
+  }), [updatePlan, user, removeLater]);
 
   // The plan that quick-add attaches to: the ongoing plan today, else a same-day outing created on demand
   const activePlan = useMemo(() => {
@@ -223,7 +293,10 @@ export function ProtoProvider({ children, user = null, exit }) {
 
   const value = {
     ...data, plans, today, activePlan, ensureActivePlan, actions,
-    groups: user ? cloudGroups : data.groups,
+    expenses: hidden.length ? data.expenses.filter((e) => !hidden.includes(e.id)) : data.expenses,
+    memories: hidden.length ? data.memories.filter((m) => !hidden.includes(m.id)) : data.memories,
+    groups: user ? myGroups : data.groups,
+    loading,
     cloud: Boolean(user),
     exit, // sign out, or leave the demo
     settings: data.settings || {},

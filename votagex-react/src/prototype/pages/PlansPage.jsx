@@ -81,7 +81,7 @@ export default function PlansPage() {
         {list.map((p) => <PlanCard key={p.id} plan={p} />)}
         {!list.length && <Empty>{tab === 'ideas' ? 'ยังไม่มีไอเดีย' : 'ยังไม่มีแผน'}</Empty>}
         {tab === 'ideas' && (
-          <button className="pt-dashed-btn" onClick={() => openSheet('createPlan')}><Icon name="plus" size={18} /> ไอเดียใหม่</button>
+          <button className="pt-dashed-btn" onClick={() => openSheet('createPlan', { type: 'trip', undated: true })}><Icon name="plus" size={18} /> ไอเดียใหม่</button>
         )}
       </div>
     </div>

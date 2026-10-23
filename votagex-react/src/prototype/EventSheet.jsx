@@ -1,12 +1,11 @@
 import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useProto } from './useProto';
 import { Sheet, Chip, CatIcon } from './ui';
 import Icon from './icons';
 import MapView from './MapView';
 import { ResultList, SourcePreview } from './SavePlaceSheet';
 import { parseShared, usePlaceSearch } from './placeSearch';
-import { EVENT_KINDS, HOME, PEOPLE, ME, addDays, distanceKm, fmtKm, directionsUrl, eventRange, thaiShort } from './data';
+import { EVENT_KINDS, HOME, PEOPLE, ME, addDays, distanceKm, fmtKm, directionsUrl, eventRange } from './data';
 
 // Concerts, flea markets and pop-ups live in posts, not in any free API, so people keep them from a link:
 // paste the post, and the title, kind, dates and time are read from its caption where they can be.
@@ -172,28 +171,22 @@ export function SaveEventSheet({ onClose }) {
   );
 }
 
-// One kept event: the post, when and where, and going (adds it as a stop on that day's plan)
+// One kept event: the post, when and where, and going (a new outing for it, with its group if it was shared)
 export function EventSheet({ onClose, eventId }) {
-  const { events, plans, groups, actions, showToast, today } = useProto();
-  const navigate = useNavigate();
+  const { events, groups, actions, showToast, openSheet, today } = useProto();
   const ev = events.find((e) => e.id === eventId);
   if (!ev) return null;
   const kind = EVENT_KINDS[ev.kind] || EVENT_KINDS.other;
   const shared = ev.source?.url ? { ...parseShared(ev.source.url), author: ev.source.author, caption: '' } : null;
   const ended = (ev.endDate || ev.startDate) < today;
 
+  // its own outing, never slipped into a trip that happens to cover the day; who comes is picked in the form
   const go = (close) => {
-    // the first day still ahead, on whichever plan already covers it, else a new outing for that day
-    const date = ev.startDate >= today ? ev.startDate : today;
-    const plan = plans.find((p) => p.kind !== 'idea' && p.startDate && date >= p.startDate && date <= (p.endDate || p.startDate));
-    const planId = plan?.id || actions.addPlan({
-      name: ev.title, kind: 'outing', country: ev.place.country || 'TH', currency: 'THB',
-      startDate: date, endDate: date, members: [ME], budget: 0, cover: { icon: 'event', tint: '#F1EBFE' },
-    });
-    actions.addStop(planId, { date, time: ev.time || '', name: ev.title, area: ev.place.name, prov: ev.place.prov, lat: ev.place.lat, lng: ev.place.lng, cat: 'event', eventId: ev.id });
-    showToast(`เพิ่ม “${ev.title}” ลงแผน ${thaiShort(date)} แล้ว`);
     close();
-    setTimeout(() => navigate(`/proto/plan/${planId}`), 320);
+    setTimeout(() => openSheet('createPlan', {
+      type: 'outing', name: ev.title, date: ev.startDate >= today ? ev.startDate : today, time: ev.time || '', groupId: ev.groupId,
+      place: { name: ev.title, area: ev.place.name, prov: ev.place.prov, lat: ev.place.lat, lng: ev.place.lng, country: ev.place.country, cat: 'event', eventId: ev.id },
+    }), 320);
   };
 
   return (

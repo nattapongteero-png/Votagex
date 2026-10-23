@@ -12,7 +12,7 @@ import HOLIDAYS from '../thHolidays.json';
 import {
   ME, PEOPLE, EXPENSE_CATS, CURRENCIES, HOME, addDays, parseISO, diffDays, thaiShort, byTime, localHM,
   stopState, keepThai, myShare, fmtMoney, distanceKm, fmtKm, directionsUrl, countryOf, planStatus, toTHB, jarStats,
-  EVENT_KINDS, eventOn, eventRange,
+  EVENT_KINDS, KINDS, eventOn, eventRange,
 } from '../data';
 
 const FOLD_TOP = 12; // folded calendar's distance from the top of the screen
@@ -138,6 +138,8 @@ export default function TodayPage() {
 
   const dayPlans = plans.filter((p) => p.startDate && selected >= p.startDate && selected <= (p.endDate || p.startDate));
   const plan = dayPlans.find((p) => p.kind !== 'outing') || dayPlans[0] || null;
+  // the day's other plans (an event during a trip, two outings…), each its own row under the main one
+  const morePlans = dayPlans.filter((p) => p !== plan).map((p) => ({ p, first: p.stops.filter((s) => s.date === selected).sort(byTime)[0] }));
   const stops = plan ? plan.stops.filter((s) => s.date === selected).sort(byTime) : [];
   const planGroup = plan && groups.find((g) => g.id === plan.groupId);
   const who = !plan ? '' : planGroup ? `ไปกับ${planGroup.name}` : plan.members.length > 1 ? `ไปกับ ${plan.members.filter((id) => id !== ME).map((id) => PEOPLE[id]?.name).join(', ')}` : 'ไปคนเดียว';
@@ -287,7 +289,7 @@ export default function TodayPage() {
                 <div className="pt-strong lg ellipsis">{group.name}</div>
                 <Avatars ids={group.members} size={22} />
               </div>
-              <button className="pt-btn sm" onClick={() => openSheet('createPlan', { groupId: group.id })}><Icon name="plus" size={16} /> ทริป</button>
+              <button className="pt-btn sm" onClick={() => openSheet('createPlan', { groupId: group.id })}><Icon name="plus" size={16} /> แผน</button>
               <button className="pt-round-btn sm" aria-label="ข้อมูลกลุ่ม" onClick={() => openSheet('group', { groupId: group.id })}><Icon name="more" size={18} /></button>
             </div>
           )}
@@ -304,7 +306,7 @@ export default function TodayPage() {
               <button className="pt-day-who" onClick={() => navigate(`/proto/plan/${plan.id}`)}>
                 {planGroup && <i className="pt-group-dot" style={{ background: planGroup.color }} />}
                 <Avatars ids={plan.members} size={22} />
-                <span className="pt-muted sm ellipsis">{who}{dayPlans.length > 1 ? ` · อีก ${dayPlans.length - 1} แผน` : ''}</span>
+                <span className="pt-muted sm ellipsis">{who}</span>
               </button>
             )}
             {!wxSel && (
@@ -347,6 +349,17 @@ export default function TodayPage() {
                 </div>
               )}
 
+              {morePlans.map(({ p, first }) => (
+                <button key={p.id} className="pt-day-more" onClick={() => navigate(`/proto/plan/${p.id}`)}>
+                  <CatIcon cat={first?.cat || p.cover?.icon} size={32} />
+                  <span className="pt-grow">
+                    <span className="pt-strong ellipsis">{p.name}</span>
+                    <span className="pt-muted sm">{first?.time ? `${first.time} · ` : ''}{KINDS[p.kind].label}</span>
+                  </span>
+                  <Avatars ids={p.members} size={20} max={3} />
+                </button>
+              ))}
+
               <div className="hp-plan-actions">
                 {plan ? (
                   <>
@@ -357,7 +370,7 @@ export default function TodayPage() {
                   </>
                 ) : (
                   <>
-                    <button className="hp-add-btn" onClick={() => openSheet('createPlan')}><Icon name="plus" size={18} stroke={2.2} /> สร้างแผนวันนี้</button>
+                    <button className="hp-add-btn" onClick={() => openSheet('createPlan', { date: selected })}><Icon name="plus" size={18} stroke={2.2} /> {selected === today ? 'สร้างแผนวันนี้' : 'สร้างแผน'}</button>
                     <button className="pt-btn light" onClick={() => setSeed((s) => s + 1)}>ไปไหนดี?</button>
                   </>
                 )}
@@ -390,7 +403,7 @@ export default function TodayPage() {
           {/* the group's trips still ahead (and ideas), for planning together */}
           {group && (
             <div className="hp-section">
-              <SectionTitle title="ทริปของกลุ่ม" action="ทริปใหม่" onAction={() => openSheet('createPlan', { groupId: group.id })} />
+              <SectionTitle title="แผนของกลุ่ม" action="แผนใหม่" onAction={() => openSheet('createPlan', { groupId: group.id })} />
               {groupTrips.length ? (
                 <div className="hp-tile pt-ev-list">
                   {groupTrips.map((p) => (
@@ -407,7 +420,7 @@ export default function TodayPage() {
                   ))}
                 </div>
               ) : (
-                <button className="hp-tile pt-ev-empty" onClick={() => openSheet('createPlan', { groupId: group.id })}><Icon name="plus" size={18} /> วางแผนทริปแรกของกลุ่ม</button>
+                <button className="hp-tile pt-ev-empty" onClick={() => openSheet('createPlan', { groupId: group.id })}><Icon name="plus" size={18} /> วางแผนแรกของกลุ่ม</button>
               )}
             </div>
           )}
