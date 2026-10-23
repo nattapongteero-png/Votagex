@@ -163,10 +163,16 @@ export function createPlan(uid, { members, stops = [], ...plan }) {
   const ref = doc(collection(db, plansPath(uid, plan.groupId)));
   const batch = writeBatch(db);
   batch.set(ref, { ...plan, groupId: plan.groupId || null, memberIds: members, createdBy: uid, createdAt: serverTimestamp() });
-  // stops get their own ids in Firestore
-  stops.forEach((st) => { const fields = { ...st }; delete fields.id; batch.set(doc(collection(ref, 'stops')), { checkIns: {}, ...fields }); });
+  // stops get their own ids in Firestore, known at once so the plan can be shown (or taken back) before it syncs
+  const stopIds = stops.map((st) => {
+    const fields = { ...st };
+    delete fields.id;
+    const stopRef = doc(collection(ref, 'stops'));
+    batch.set(stopRef, { checkIns: {}, ...fields });
+    return stopRef.id;
+  });
   batch.commit();
-  return ref.id;
+  return { id: ref.id, stopIds };
 }
 export const updatePlanFields = (uid, plan, fields) => updateDoc(planRef(uid, plan), fields);
 // the trip's own fields and, when its dates moved, each stop's new day, in one go

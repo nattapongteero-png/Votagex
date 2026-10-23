@@ -253,8 +253,8 @@ export function ProtoProvider({ children, user = null, exit }) {
 
     addPlan: (plan) => {
       if (user) {
-        const id = cloud.createPlan(user.uid, plan);
-        setPendingPlans((ps) => [...ps, { ...plan, stops: (plan.stops || []).map((st, i) => ({ ...st, id: `new${i}` })), id, groupId: plan.groupId || null }]);
+        const { id, stopIds } = cloud.createPlan(user.uid, plan);
+        setPendingPlans((ps) => [...ps, { ...plan, stops: (plan.stops || []).map((st, i) => ({ ...st, id: stopIds[i] })), id, groupId: plan.groupId || null }]);
         return id;
       }
       const id = uid('plan');
@@ -281,6 +281,16 @@ export function ProtoProvider({ children, user = null, exit }) {
         }));
       });
     },
+    // taking back a plan just made (the shuffle's undo): gone at once, nothing in it yet
+    discardPlan: (planId) => {
+      if (user) {
+        const plan = findPlan(planId);
+        setPendingPlans((ps) => ps.filter((p) => p.id !== planId));
+        if (plan) cloud.deletePlan(user.uid, plan);
+        return;
+      }
+      setData((d) => ({ ...d, plans: d.plans.filter((p) => p.id !== planId) }));
+    },
     // not going after all: the trip stays with the group
     leavePlan: (planId) => {
       const plan = findPlan(planId);
@@ -306,6 +316,14 @@ export function ProtoProvider({ children, user = null, exit }) {
       });
     },
     toggleCheckIn: (planId, stopId, late = false, auto = false) => {
+      // checking in at a saved place means I've been: it leaves the "want" list (and the shuffle)
+      const stop = findPlan(planId)?.stops.find((s) => s.id === stopId);
+      const place = stop?.placeId && findPlace(stop.placeId);
+      const me = user ? user.uid : ME;
+      if (place && !stop.checkIns?.[me] && place.status === 'want' && !place.startDate && (!place.by || place.by === me)) {
+        if (user) cloud.updatePlace(user.uid, place, { status: 'visited' });
+        else setData((d) => ({ ...d, places: d.places.map((p) => (p.id === place.id ? { ...p, status: 'visited' } : p)) }));
+      }
       if (user) {
         const plan = findPlan(planId);
         const now = new Date();

@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useProto } from '../useProto';
-import Icon, { Flag, SourceBadge } from '../icons';
+import Icon, { Flag } from '../icons';
 import { Avatars, CatIcon, Cover, Progress, SectionTitle } from '../ui';
 import MonthCalendar from '../MonthCalendar';
 import useSheetSnap from '../../hooks/useSheetSnap';
@@ -13,7 +13,7 @@ import HOLIDAYS from '../thHolidays.json';
 import {
   ME, PEOPLE, CURRENCIES, HOME, addDays, parseISO, diffDays, thaiShort, byTime, localHM,
   stopState, keepThai, fmtMoney, distanceKm, fmtKm, directionsUrl, countryOf, planStatus, toTHB, jarStats,
-  EVENT_KINDS, KINDS, eventOn,
+  EVENT_KINDS, KINDS, eventOn, shufflePool,
 } from '../data';
 
 const FOLD_TOP = 12; // folded calendar's distance from the top of the screen
@@ -52,7 +52,6 @@ export default function TodayPage() {
   const events = useMemo(() => places.filter((p) => p.startDate && (!group || p.groupId === group.id)), [places, group]);
   const navigate = useNavigate();
   const [picked, setPicked] = useState(null);
-  const [seed, setSeed] = useState(0);
   const [collapsed, setCollapsed] = useState(false);
   const pageRef = useRef(null);
   // the card sheet rests just under the calendar (its height changes with week/month and the day's stops),
@@ -204,7 +203,7 @@ export default function TodayPage() {
     { key: 'spend', icon: 'wallet', text: `วันนี้ใช้ไป ${fmtMoney(todaySpendLocal, plan.currency)} แล้วนะ`, onClick: () => openSheet('expense') },
   ] : [
     upcoming && { key: 'trip', icon: 'plane', text: `อีก ${diffDays(today, upcoming.startDate)} วันได้ไป${keepThai(upcoming.name)}แล้ว!`, onClick: () => navigate(`/proto/plan/${upcoming.id}`) },
-    wantCount > 0 && { key: 'want', icon: 'pin', text: `เก็บที่อยากไปไว้ ${wantCount} แห่งแล้ว ไปไหนดี?`, onClick: () => navigate('/proto/map') },
+    wantCount > 0 && shufflePool(places, allPlans, today, group).length > 0 && { key: 'want', icon: 'shuffle', text: `เก็บที่อยากไปไว้ ${wantCount} แห่งแล้ว สุ่มให้มั้ย?`, onClick: () => openSheet('shuffle', { date: today }) },
   ]),
   evNote,
   nextHoliday && { key: 'holiday', icon: 'calendar', text: nextHoliday === today ? `วันนี้${HOLIDAYS[today]} ไปเที่ยวไหนดี?` : `อีก ${diffDays(today, nextHoliday)} วันหยุด${HOLIDAYS[nextHoliday]}`, onClick: () => setSelected(nextHoliday) },
@@ -216,13 +215,8 @@ export default function TodayPage() {
   !upcoming && !live && { key: 'plan', icon: 'map', text: wantCount ? 'ยังไม่มีทริปเลย วางแผนสักที่มั้ย?' : 'อยากไปไหน เก็บไว้ในแผนที่ก่อนเลย', onClick: () => (wantCount ? openSheet('createPlan') : navigate('/proto/map')) },
   ].filter(Boolean);
 
-  // "where to go" suggestion: nearest saved places, rotated by the shuffle button
-  const nearby = useMemo(() => places
-    .filter((p) => p.status === 'want' && (p.country || 'TH') === 'TH')
-    .map((p) => ({ ...p, km: distanceKm(HOME, p) }))
-    .sort((a, b) => a.km - b.km)
-    .slice(0, 6), [places]);
-  const suggestion = nearby.length ? nearby[seed % nearby.length] : null;
+  // something saved I haven't been to yet, for the shuffle on an empty day
+  const canShuffle = selected >= today && shufflePool(places, allPlans, selected, group).length > 0;
 
   // memory from about a year ago, else the latest one with a photo
   const throwback = useMemo(() => {
@@ -362,34 +356,11 @@ export default function TodayPage() {
                 ) : (
                   <>
                     <button className="hp-add-btn" onClick={() => openSheet('createPlan', { date: selected })}><Icon name="plus" size={18} stroke={2.2} /> {selected === today ? 'สร้างแผนวันนี้' : 'สร้างแผน'}</button>
-                    <button className="pt-btn light" onClick={() => setSeed((s) => s + 1)}>ไปไหนดี?</button>
+                    {canShuffle && <button className="pt-btn light" onClick={() => openSheet('shuffle', { date: selected })}><Icon name="shuffle" size={16} /> สุ่มให้</button>}
                   </>
                 )}
               </div>
           </div>
-
-          {/* where to go */}
-          {!group && !live && suggestion && (
-            <div className="hp-section">
-              <SectionTitle title="ไปไหนดี?" action="ดูบนแผนที่" onAction={() => navigate('/proto/map')} />
-              <div className="hp-tile pt-suggest">
-                <div className="pt-suggest-top">
-                  <CatIcon cat={suggestion.cat} size={52} />
-                  <div className="pt-grow">
-                    <div className="pt-strong lg">{suggestion.name}</div>
-                    <div className="pt-muted">{suggestion.area} · ห่าง {fmtKm(suggestion.km)}</div>
-                    {suggestion.note && <div className="pt-note">“{suggestion.note}”</div>}
-                  </div>
-                  <SourceBadge type={suggestion.source?.type || 'manual'} size={26} />
-                </div>
-                <div className="pt-row-actions">
-                  <button className="pt-btn light sm" onClick={() => setSeed((s) => s + 1)}><Icon name="shuffle" size={16} /> สุ่มใหม่</button>
-                  <a className="pt-btn light sm" href={directionsUrl(suggestion)} target="_blank" rel="noreferrer"><Icon name="nav" size={16} /> นำทาง</a>
-                  <button className="pt-btn sm" onClick={() => openSheet('addToPlan', { placeId: suggestion.id })}>ไปวันนี้</button>
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* the next trip, only once it's 3 days away or less (the speech note counts down before that) */}
           {!live && upcoming && diffDays(today, upcoming.startDate) <= 3 && (

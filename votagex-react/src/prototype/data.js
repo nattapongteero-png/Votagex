@@ -159,6 +159,18 @@ export const EVENT_KINDS = {
   other: { label: 'อื่นๆ', icon: 'event' },
 };
 export const eventOn = (ev, d) => Boolean(ev.startDate) && d >= ev.startDate && d <= (ev.endDate || ev.startDate);
+
+// Somewhere I've saved and not been yet, picked for me. Events on the day come up more, and near beats far.
+export function shufflePool(places, plans, date, group) {
+  const taken = new Set(plans.flatMap((p) => p.stops.filter((s) => s.date === date && s.placeId).map((s) => s.placeId)));
+  return places
+    .filter((p) => (!p.groupId || p.groupId === group?.id) && p.status !== 'visited' && !taken.has(p.id))
+    .filter((p) => (p.startDate ? eventOn(p, date) : (p.country || 'TH') === 'TH'))
+    .map((p) => {
+      const km = distanceKm(HOME, p);
+      return { ...p, km, weight: (p.startDate ? 3 : 1) / (1 + km / 15) };
+    });
+}
 export const eventEnded = (ev, today) => Boolean(ev.startDate) && (ev.endDate || ev.startDate) < today;
 // an event saved before events were places: { title, place: { name, area, … }, … }
 export const eventToPlace = ({ title, place, ...ev }) => ({

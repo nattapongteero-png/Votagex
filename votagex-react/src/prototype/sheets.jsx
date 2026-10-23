@@ -8,6 +8,7 @@ import Icon, { Flag } from './icons';
 import SavePlaceSheet, { ResultList } from './SavePlaceSheet';
 import { PiggySheet, NewJarSheet } from './PiggySheet';
 import PlaceSheet from './PlaceSheet';
+import ShuffleSheet from './ShuffleSheet';
 import { NewGroupSheet, GroupSheet } from './GroupSheet';
 import { PlanMenuSheet, EditPlanSheet, StopSheet } from './PlanSheets';
 import { MonthSheet } from './MonthMoney';
@@ -563,6 +564,7 @@ const SHEETS = {
   piggy: PiggySheet,
   newJar: NewJarSheet,
   place: PlaceSheet,
+  shuffle: ShuffleSheet,
   newGroup: NewGroupSheet,
   group: GroupSheet,
   planMenu: PlanMenuSheet,
