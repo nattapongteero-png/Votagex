@@ -48,6 +48,7 @@ export default function PlaceSheet({ onClose, placeId }) {
               {p.source?.type && p.source.type !== 'web' && <SourceBadge type={p.source.type} size={28} />}
             </div>
           </div>
+          {shared && <SourcePreview shared={shared} saved />}
           {p.note && <div className="pt-note">“{p.note}”</div>}
           {!kind && mine && (
             <div className="pt-chip-row">
@@ -64,7 +65,6 @@ export default function PlaceSheet({ onClose, placeId }) {
               </div>
             </>
           )}
-          {shared && <SourcePreview shared={shared} />}
           <div className="pt-muted sm pt-ev-by">
             {!mine && <Avatar id={p.by} size={18} />} เก็บโดย {mine ? 'ฉัน' : PEOPLE[p.by]?.name || 'เพื่อน'}
             {ended ? ' · จบไปแล้ว' : kind && p.endDate && p.endDate !== p.startDate && p.endDate <= addDays(today, 2) && p.startDate <= today ? ' · ใกล้จบแล้ว' : ''}

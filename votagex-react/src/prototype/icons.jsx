@@ -91,6 +91,19 @@ export function Flag({ code, size = 14, className = '' }) {
 }
 
 // Platform marks drawn as simple glyph badges (not the brands' logos)
+// back to the post a place was saved from (on a phone it opens in TikTok / Instagram); otherwise just its badge
+const SOURCE_OPEN = { tiktok: 'ดูคลิป', instagram: 'ดูโพสต์', web: 'เปิดลิงก์' };
+export function SourceLink({ source, size = 22 }) {
+  const type = source?.type || 'manual';
+  const label = source?.url && SOURCE_OPEN[type];
+  if (!label) return <SourceBadge type={type} size={size} />;
+  return (
+    <a className="pt-src-link" href={source.url} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()}>
+      {type === 'web' ? <Icon name="link" size={16} /> : <SourceBadge type={type} size={size} />}{label}
+    </a>
+  );
+}
+
 export function SourceBadge({ type, size = 22 }) {
   const glyph = {
     tiktok: <path d="M14 4v9.5a3.5 3.5 0 1 1-3.5-3.5M14 4c.4 2.3 2 3.8 4.5 4" />,

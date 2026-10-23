@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useProto } from './useProto';
 import { Sheet, Avatar, Chip } from './ui';
-import Icon from './icons';
+import Icon, { SourceBadge } from './icons';
 import { ME, PEOPLE, KINDS, addDays, diffDays, dayList, thaiShort, directionsUrl, sendInvite } from './data';
 
 const after = (close, fn) => { close(); setTimeout(fn, 320); };
@@ -126,9 +126,11 @@ export function EditPlanSheet({ onClose, planId }) {
 
 // One stop: its time, day and note; directions; delete (with an undo)
 export function StopSheet({ onClose, planId, stopId }) {
-  const { plans, actions } = useProto();
+  const { plans, places, actions } = useProto();
   const plan = plans.find((p) => p.id === planId);
   const stop = plan?.stops.find((s) => s.id === stopId);
+  // the clip it was saved from, to look at again once there
+  const source = stop?.placeId && places.find((p) => p.id === stop.placeId)?.source;
   const [time, setTime] = useState(stop?.time || '');
   const [date, setDate] = useState(stop?.date || null);
   const [note, setNote] = useState(stop?.note || '');
@@ -154,6 +156,9 @@ export function StopSheet({ onClose, planId, stopId }) {
           <input className="pt-input" value={note} placeholder="โน้ต" onChange={(e) => setNote(e.target.value)} />
           <div className="pt-row-actions">
             <a className="pt-btn light" href={directionsUrl(stop)} target="_blank" rel="noreferrer"><Icon name="nav" size={16} /> นำทาง</a>
+            {['tiktok', 'instagram'].includes(source?.type) && source.url && (
+              <a className="pt-btn light" href={source.url} target="_blank" rel="noreferrer"><SourceBadge type={source.type} size={20} /> {source.type === 'tiktok' ? 'ดูคลิป' : 'ดูโพสต์'}</a>
+            )}
             <button className="pt-btn light danger" onClick={() => { actions.removeStop(plan.id, stop.id); close(); }}><Icon name="trash" size={16} /> ลบ</button>
           </div>
         </>

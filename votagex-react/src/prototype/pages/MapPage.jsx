@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useProto, useCollection } from '../useProto';
-import Icon, { Flag, SourceBadge } from '../icons';
+import Icon, { Flag, SourceLink } from '../icons';
 import MapView from '../MapView';
 import { CatIcon, Chip } from '../ui';
 import { PLACE_CATS, SOURCES, HOME, distanceKm, fmtKm, directionsUrl, planStatus, countryOf, eventRange, eventEnded } from '../data';
@@ -78,7 +78,7 @@ export default function MapPage() {
                 <div className="pt-strong ellipsis">{p.name}</div>
                 <div className="pt-muted sm ellipsis">{p.venue || p.area}{p.km != null ? ` · ${fmtKm(p.km)}` : ''}</div>
               </div>
-              {p.source?.type !== 'plan' && <SourceBadge type={p.source?.type || 'manual'} size={24} />}
+              {p.source?.type !== 'plan' && <SourceLink source={p.source} size={24} />}
             </div>
             <div className={`pt-place-note ellipsis${p.startDate ? ' dated' : ''}`}>
               {p.startDate ? `${eventRange(p)}${p.time ? ` · ${p.time} น.` : ''}${eventEnded(p, today) ? ' · จบแล้ว' : ''}` : p.source?.type === 'plan' ? `เคยไปใน “${p.planName}”` : p.note || `บันทึกจาก ${SOURCES[p.source?.type]?.label || 'ค้นหาเอง'}${p.source?.author ? ` ${p.source.author}` : ''}`}

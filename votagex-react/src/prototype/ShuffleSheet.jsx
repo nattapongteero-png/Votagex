@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useProto } from './useProto';
 import { Sheet, CatIcon } from './ui';
-import Icon, { SourceBadge } from './icons';
+import Icon, { SourceLink } from './icons';
 import { EVENT_KINDS, ME, PLACE_CATS, fmtKm, shufflePool, thaiShort } from './data';
 
 function pickFrom(pool, skip) {
@@ -84,7 +84,7 @@ export default function ShuffleSheet({ onClose, date }) {
             <div className="pt-muted">{shown.venue || shown.area} · ห่าง {fmtKm(shown.km)}</div>
             {!flash && shown.note && <div className="pt-note">“{shown.note}”</div>}
           </div>
-          {!flash && shown.source?.type && shown.source.type !== 'web' && <SourceBadge type={shown.source.type} size={26} />}
+          {!flash && shown.source?.url && <SourceLink source={shown.source} size={24} />}
         </div>
       ) : (
         <div className="pt-empty">ยังไม่มีที่อยากไปที่ยังไม่เคยไป</div>

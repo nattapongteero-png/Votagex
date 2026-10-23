@@ -1890,3 +1890,11 @@ button.pt-badge { border: none; font-family: var(--font); cursor: pointer; }
 .pt-shuffle-card.landed { animation: pt-shuffle-land .32s cubic-bezier(.2, 1.4, .4, 1); }
 @keyframes pt-shuffle-land { from { transform: scale(.94); opacity: .4; } to { transform: none; opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .pt-shuffle-card.landed { animation: none; } }
+
+/* back to the clip a place was saved from */
+.pt-src-link {
+  display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0;
+  min-height: 32px; padding: 3px 12px 3px 4px; border-radius: 999px;
+  background: var(--tw-sunken); color: var(--tw-text); font-size: 13px; font-weight: 600; text-decoration: none; white-space: nowrap;
+}
+.pt-src-link > .pt-icon:first-child, .pt-src-link > svg:first-child { margin-left: 6px; }

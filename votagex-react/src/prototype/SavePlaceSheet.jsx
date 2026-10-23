@@ -234,7 +234,8 @@ export function ResultList({ search, onPick, icon = null }) {
 
 // The shared post: where it's from, the clip or post itself (TikTok checked through oEmbed, public and
 // CORS-enabled) and its caption. Used when saving a place or an event.
-export function SourcePreview({ shared }) {
+// saved: the post of a place already kept: a link out to it instead of the checks run while saving
+export function SourcePreview({ shared, saved = false }) {
   const [clipResult, setClipResult] = useState({ url: null, state: 'idle' });
   const [showEmbed, setShowEmbed] = useState(shared.type === 'tiktok');
   const tiktokUrl = shared.type === 'tiktok' && !shared.short ? shared.url : null;
@@ -259,7 +260,12 @@ export function SourcePreview({ shared }) {
           <button className="pt-chip" onClick={() => setShowEmbed((v) => !v)}>{showEmbed ? 'ซ่อนโพสต์' : 'ดูโพสต์'}</button>
         )}
       </div>
-      {shared.type === 'tiktok' && (
+      {saved && shared.url && (
+        <a className="pt-btn light block" href={shared.url} target="_blank" rel="noreferrer">
+          <Icon name="link" size={16} /> เปิดใน {SOURCES[shared.type]?.label || 'เบราว์เซอร์'}
+        </a>
+      )}
+      {shared.type === 'tiktok' && !saved && (
         <div className={`pt-clip-status ${clip.state}`}>
           {shared.short && 'อ่านลิงก์สั้นไม่ได้'}
           {!shared.short && clip.state === 'loading' && 'กำลังโหลดคลิป…'}
@@ -273,7 +279,7 @@ export function SourcePreview({ shared }) {
       {shared.type === 'instagram' && shared.code && showEmbed && (
         <iframe className="pt-embed ig" src={instagramEmbed(shared.igKind, shared.code)} title="Instagram" />
       )}
-      {shared.type === 'maps' && !shared.place && (
+      {shared.type === 'maps' && !shared.place && !saved && (
         <div className="pt-clip-status fail">อ่านลิงก์สั้นไม่ได้</div>
       )}
       {shared.caption && (
