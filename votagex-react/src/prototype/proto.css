@@ -567,7 +567,7 @@ button.hp-chip { cursor: pointer; font-family: var(--font); }
 .pt-place-card.selected { box-shadow: 0 0 0 2px var(--tw-text), var(--tw-shadow-3); }
 .pt-place-card.empty { cursor: default; flex-basis: calc(100% - 0px); }
 .pt-place-top { display: flex; gap: 10px; align-items: center; }
-.pt-place-note { font-size: 12px; color: var(--tw-text-2); }
+.pt-place-note { font-size: 12px; color: var(--tw-text-2); min-height: 1.5em; }
 .pt-row-actions { display: flex; gap: 8px; }
 .pt-row-actions > * { flex: 1; }
 

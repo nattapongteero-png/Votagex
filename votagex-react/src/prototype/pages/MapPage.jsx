@@ -4,7 +4,7 @@ import { useProto, useCollection } from '../useProto';
 import Icon, { Flag, SourceLink } from '../icons';
 import MapView from '../MapView';
 import { CatIcon, Chip } from '../ui';
-import { PLACE_CATS, SOURCES, HOME, distanceKm, fmtKm, directionsUrl, planStatus, countryOf, eventRange, eventEnded } from '../data';
+import { PLACE_CATS, HOME, distanceKm, fmtKm, directionsUrl, planStatus, countryOf, eventRange, eventEnded } from '../data';
 
 export default function MapPage() {
   const { places, plans, today, openSheet } = useProto();
@@ -81,7 +81,7 @@ export default function MapPage() {
               {p.source?.type !== 'plan' && <SourceLink source={p.source} size={24} />}
             </div>
             <div className={`pt-place-note ellipsis${p.startDate ? ' dated' : ''}`}>
-              {p.startDate ? `${eventRange(p)}${p.time ? ` · ${p.time} น.` : ''}${eventEnded(p, today) ? ' · จบแล้ว' : ''}` : p.source?.type === 'plan' ? `เคยไปใน “${p.planName}”` : p.note || `บันทึกจาก ${SOURCES[p.source?.type]?.label || 'ค้นหาเอง'}${p.source?.author ? ` ${p.source.author}` : ''}`}
+              {p.startDate ? `${eventRange(p)}${p.time ? ` · ${p.time} น.` : ''}${eventEnded(p, today) ? ' · จบแล้ว' : ''}` : p.source?.type === 'plan' ? `เคยไปใน “${p.planName}”` : p.note}
             </div>
             <div className="pt-row-actions">
               <a className="pt-btn light sm" href={directionsUrl(p)} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()}><Icon name="nav" size={15} /> นำทาง</a>
