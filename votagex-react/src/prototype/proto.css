@@ -1777,3 +1777,20 @@ button.hp-chip { cursor: pointer; font-family: var(--font); }
 .pt-sim-loc { display: flex; flex-direction: column; gap: 8px; padding-bottom: 12px; }
 .pt-toast.has-action { display: flex; align-items: center; gap: 14px; pointer-events: auto; }
 .pt-toast-action { flex-shrink: 0; border: none; background: none; color: #A7F3D0; font: inherit; font-weight: 700; cursor: pointer; padding: 4px 0; }
+
+/* ===== Sign in / join a group ===== */
+.pt-login { min-height: 100dvh; display: flex; flex-direction: column; justify-content: space-between; padding: calc(env(safe-area-inset-top, 0px) + 96px) 24px calc(env(safe-area-inset-bottom, 0px) + 32px); background: var(--tw-bg, #F9FAFB); }
+.pt-login-hero { display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; }
+.pt-login-logo { font-family: 'Oswald', var(--font); font-size: 44px; font-weight: 700; letter-spacing: 2px; color: var(--tw-text, #111827); }
+.pt-login-logo.sm { font-family: var(--font); font-size: 26px; letter-spacing: 0; }
+.pt-login-tag { font-size: 16px; color: var(--tw-text-2, #4B5563); }
+.pt-login-invite { margin-top: 8px; padding: 8px 14px; border-radius: 999px; background: #F1EBFE; color: #7C3AED; font-size: 14px; font-weight: 600; }
+.pt-join-badge { background: #0EA5E9; }
+.pt-login-actions { display: flex; flex-direction: column; gap: 12px; }
+.pt-login-btn { display: flex; align-items: center; justify-content: center; gap: 10px; height: 54px; border-radius: 999px; border: 1px solid var(--tw-border, #E5E7EB); background: #fff; font: inherit; font-size: 16px; font-weight: 600; color: var(--tw-text, #111827); cursor: pointer; }
+.pt-login-btn:disabled { cursor: default; opacity: .6; }
+.pt-login-btn.line { background: #06C755; border-color: #06C755; color: #fff; }
+.pt-login-btn.primary { background: var(--tw-btn-primary, #111827); border-color: var(--tw-btn-primary, #111827); color: #fff; }
+.pt-login-btn small { font-size: 12px; font-weight: 500; opacity: .85; }
+.pt-login-error { text-align: center; font-size: 14px; color: #DC2626; }
+.pt-login-demo { height: 44px; border: none; background: none; font: inherit; font-size: 15px; color: var(--tw-text-2, #4B5563); text-decoration: underline; cursor: pointer; }

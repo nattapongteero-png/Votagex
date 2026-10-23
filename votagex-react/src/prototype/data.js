@@ -95,13 +95,23 @@ export const DESTINATIONS = [
 ];
 
 /* ---------- people ---------- */
-export const ME = 'u1';
-export const PEOPLE = {
+// Who "I" am and the people I know. The demo has four sample friends; signed in, ME is my Firebase uid and
+// PEOPLE fills with the members of my groups (setPeople). Both are live: every importer sees the change.
+const DEMO_PEOPLE = {
   u1: { id: 'u1', name: 'ต้น', avatar: '/assets/avatars/avatar-male.svg' },
   u2: { id: 'u2', name: 'ฝ้าย', avatar: '/assets/avatars/p5.svg' },
   u3: { id: 'u3', name: 'บิว', avatar: '/assets/avatars/p4.svg' },
   u4: { id: 'u4', name: 'แพร', avatar: '/assets/avatars/p9.svg' },
 };
+export const DEFAULT_AVATAR = '/assets/avatars/p6.svg';
+export let ME = 'u1';
+export const PEOPLE = { ...DEMO_PEOPLE };
+export function setMe(id, people = DEMO_PEOPLE) {
+  ME = id;
+  Object.keys(PEOPLE).forEach((k) => delete PEOPLE[k]);
+  Object.assign(PEOPLE, people);
+}
+export const addPeople = (people) => Object.assign(PEOPLE, people);
 // Travel groups: the same gang across many trips. A trip may belong to one (then anyone in it can plan it)
 // and takes along all or some of its members; a trip with no group is just mine.
 export const GROUP_COLORS = ['#0EA5E9', '#F97316', '#7C3AED', '#16A34A', '#DB2777'];

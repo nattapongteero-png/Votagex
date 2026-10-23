@@ -1,9 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ProtoCtx } from './useProto';
-import { TODAY, ME, addDays, diffDays, seedData, seedPiggy, seedEvents, withSeedGroups, shiftData, planStatus, splitByShare, jarCats, JAR_TEMPLATES, KINDS } from './data';
+import { TODAY, ME, PEOPLE, addPeople, addDays, diffDays, seedData, seedPiggy, seedEvents, withSeedGroups, shiftData, planStatus, splitByShare, jarCats, JAR_TEMPLATES, KINDS } from './data';
 
-// Prototype-only store: everything lives in memory + localStorage. No Firebase.
+import * as cloud from './cloud';
+
+// The app's data. Demo: sample data in memory + localStorage. Signed in: groups (and who's in them) live in
+// Firestore; the rest moves there piece by piece (docs/ROADMAP.md, phase 3) and until then starts empty and
+// is kept on this device, per account.
 const KEY = 'votagex.proto.v1';
+const emptyData = () => ({ v: 1, seededOn: TODAY, simMode: 'normal', plans: [], places: [], expenses: [], memories: [], jars: [], piggyLog: [], events: [], groups: [], settings: {} });
 
 // data saved while moods and piggies still used emoji
 const OLD_MOODS = { '😍': 'moodLove', '😊': 'moodHappy', '🙂': 'moodSmile', '😐': 'moodMeh', '😮‍💨': 'moodTired' };
@@ -14,9 +19,9 @@ const toIcons = (d) => ({
   jars: d.jars?.map(({ emoji, ...j }) => (emoji ? { ...j, icon: j.icon || OLD_JARS[emoji] || 'piggy' } : j)),
 });
 
-function load() {
+function load(key, signedIn) {
   try {
-    const raw = localStorage.getItem(KEY);
+    const raw = localStorage.getItem(key);
     if (raw) {
       const d = JSON.parse(raw);
       if (d.v === 1) {
@@ -27,20 +32,38 @@ function load() {
       }
     }
   } catch { /* storage unavailable: fall back to seed */ }
-  return seedData();
+  return signedIn ? emptyData() : seedData();
 }
 
 const uid = (p) => `${p}${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}`;
 
-export function ProtoProvider({ children }) {
-  const [data, setData] = useState(load);
+// user: the signed-in Firebase user, or null for the demo
+export function ProtoProvider({ children, user = null, exit }) {
+  const key = user ? `${KEY}.${user.uid}` : KEY;
+  const [data, setData] = useState(() => load(key, Boolean(user)));
+  const [cloudGroups, setCloudGroups] = useState([]);
+  const [, setPeopleVersion] = useState(0);
   const [sheet, setSheet] = useState(null);
   const [toast, setToast] = useState(null);
   const toastTimer = useRef(null);
 
   useEffect(() => {
-    try { localStorage.setItem(KEY, JSON.stringify(data)); } catch { /* quota or private mode */ }
-  }, [data]);
+    try { localStorage.setItem(key, JSON.stringify(data)); } catch { /* quota or private mode */ }
+  }, [key, data]);
+
+  // signed in: my profile for friends to see, and my groups, live
+  useEffect(() => {
+    if (!user) return undefined;
+    cloud.saveProfile(user).catch(() => {});
+    return cloud.watchGroups(user.uid, setCloudGroups);
+  }, [user]);
+  // names and photos of the people in my groups
+  const memberKey = [...new Set(cloudGroups.flatMap((g) => g.memberIds))].sort().join(',');
+  useEffect(() => {
+    const unknown = memberKey ? memberKey.split(',').filter((id) => !PEOPLE[id]) : [];
+    if (!unknown.length) return;
+    cloud.loadProfiles(unknown).then((found) => { addPeople(found); setPeopleVersion((v) => v + 1); });
+  }, [memberKey]);
 
   // "today" can be simulated to show the in-trip mode
   const today = data.simMode === 'trip'
@@ -68,19 +91,23 @@ export function ProtoProvider({ children }) {
     setSetting: (key, value) => setData((d) => ({ ...d, settings: { ...d.settings, [key]: value } })),
 
     addGroup: (group) => {
+      if (user) return cloud.createGroup(user.uid, group); // friends join by invite link
       const id = uid('g');
       setData((d) => ({ ...d, groups: [...d.groups, { ...group, id, createdBy: ME }] }));
       return id;
     },
-    // the group goes; its trips stay, as mine
-    removeGroup: (id) => setData((d) => ({
+    // signed in: a link friends open to join (demo: a sample link)
+    invite: (group) => (user ? cloud.createInvite(user.uid, group) : Promise.resolve('https://votagex.app/g/AB12CD')),
+    leaveGroup: (id) => (user ? cloud.leaveGroup(user.uid, id) : setData((d) => ({ ...d, groups: d.groups.filter((g) => g.id !== id) }))),
+    // the group goes; its trips stay, as mine (signed in: archived, members can still open its trips)
+    removeGroup: (id) => (user ? cloud.archiveGroup(id).then(() => setData((d) => ({ ...d, settings: d.settings?.scope === id ? { ...d.settings, scope: 'me' } : d.settings }))) : setData((d) => ({
       ...d,
       groups: d.groups.filter((g) => g.id !== id),
       plans: d.plans.map((p) => (p.groupId === id ? { ...p, groupId: null } : p)),
       events: d.events.map((e) => (e.groupId === id ? { ...e, groupId: null } : e)),
       settings: d.settings?.scope === id ? { ...d.settings, scope: 'me' } : d.settings,
-    })),
-    reset: () => setData(seedData()),
+    }))),
+    reset: () => setData(user ? emptyData() : seedData()),
 
     addPlace: (place) => {
       const id = uid('p');
@@ -142,7 +169,7 @@ export function ProtoProvider({ children }) {
       setData((d) => ({ ...d, jars: [...d.jars, { id, name, goal, icon: icon || 'piggy', planId: planId || null, cats: { ...(JAR_TEMPLATES[kind] || JAR_TEMPLATES.trip) } }] }));
       return id;
     },
-  }), [updatePlan]);
+  }), [updatePlan, user]);
 
   // The plan that quick-add attaches to: the ongoing plan today, else a same-day outing created on demand
   const activePlan = useMemo(() => {
@@ -161,6 +188,9 @@ export function ProtoProvider({ children }) {
 
   const value = {
     ...data, today, activePlan, ensureActivePlan, actions,
+    groups: user ? cloudGroups : data.groups,
+    cloud: Boolean(user),
+    exit, // sign out, or leave the demo
     settings: data.settings || {},
     sheet, openSheet, closeSheet, toast, showToast, hideToast,
     kindLabel: (k) => KINDS[k]?.label || k,

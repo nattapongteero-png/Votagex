@@ -7,6 +7,15 @@ import { ME, PEOPLE, GROUP_COLORS, GROUP_ICONS, planStatus, thaiRange } from './
 
 const INVITE = 'https://votagex.app/g/AB12CD'; // demo link
 
+// share the link (phone share sheet), else copy it
+async function sendInvite(link, name, showToast) {
+  if (navigator.share) {
+    try { await navigator.share({ title: 'VOTAGEX', text: `มาวางแผนเที่ยวกับ “${name}” กัน`, url: link }); return; } catch { /* closed: copy instead */ }
+  }
+  await navigator.clipboard?.writeText(link).catch(() => {});
+  showToast('คัดลอกลิงก์ชวนแล้ว');
+}
+
 function PeoplePicker({ members, setMembers }) {
   return (
     <div className="pt-people">
@@ -26,7 +35,7 @@ function PeoplePicker({ members, setMembers }) {
 
 // A new travel group; home then switches to it
 export function NewGroupSheet({ onClose }) {
-  const { groups, actions, showToast } = useProto();
+  const { groups, actions, showToast, cloud } = useProto();
   const [name, setName] = useState('');
   const [icon, setIcon] = useState('users');
   const [color, setColor] = useState(GROUP_COLORS[groups.length % GROUP_COLORS.length]);
@@ -37,6 +46,7 @@ export function NewGroupSheet({ onClose }) {
     actions.setSetting('scope', id);
     showToast(`สร้างกลุ่ม “${name.trim()}” แล้ว`);
     close();
+    if (cloud) setTimeout(() => actions.invite({ id, name: name.trim() }).then((link) => sendInvite(link, name.trim(), showToast)).catch(() => {}), 400);
   };
 
   return (
@@ -58,8 +68,13 @@ export function NewGroupSheet({ onClose }) {
           <button key={c} className={`pt-color-pick${color === c ? ' active' : ''}`} style={{ background: c }} onClick={() => setColor(c)} aria-label={c} />
         ))}
       </div>
-      <div className="pt-label">สมาชิก</div>
-      <PeoplePicker members={members} setMembers={setMembers} />
+      {/* signed in, friends join through the invite link once the group exists */}
+      {!cloud && (
+        <>
+          <div className="pt-label">สมาชิก</div>
+          <PeoplePicker members={members} setMembers={setMembers} />
+        </>
+      )}
     </Sheet>
   );
 }
@@ -67,6 +82,7 @@ export function NewGroupSheet({ onClose }) {
 // A group: who's in it, its trips, the invite link; whoever made it can delete it
 export function GroupSheet({ onClose, groupId }) {
   const { groups, plans, today, actions, showToast, openSheet } = useProto();
+  const [inviting, setInviting] = useState(false);
   const navigate = useNavigate();
   const g = groups.find((x) => x.id === groupId);
   if (!g) return null;
@@ -80,7 +96,10 @@ export function GroupSheet({ onClose, groupId }) {
             {g.members.map((id) => (
               <span key={id} className="pt-person"><Avatar id={id} size={40} /><span>{id === ME ? 'ฉัน' : PEOPLE[id]?.name}</span></span>
             ))}
-            <button className="pt-person invite" onClick={() => { navigator.clipboard?.writeText(INVITE).catch(() => {}); showToast('คัดลอกลิงก์ชวนแล้ว'); }}>
+            <button className="pt-person invite" disabled={inviting} onClick={() => {
+              setInviting(true);
+              actions.invite(g).then((link) => sendInvite(link, g.name, showToast)).catch(() => showToast('สร้างลิงก์ไม่สำเร็จ')).finally(() => setInviting(false));
+            }}>
               <span className="pt-invite-icon"><Icon name="link" size={18} /></span><span>ชวนเพื่อน</span>
             </button>
           </div>
@@ -102,8 +121,10 @@ export function GroupSheet({ onClose, groupId }) {
             ))}
           </div>
 
-          {g.createdBy === ME && (
+          {g.createdBy === ME ? (
             <button className="pt-btn light block pt-ev-remove" onClick={() => { actions.removeGroup(g.id); showToast(`ลบกลุ่ม “${g.name}” แล้ว ทริปยังอยู่`); close(); }}>ลบกลุ่ม</button>
+          ) : (
+            <button className="pt-btn light block pt-ev-remove" onClick={() => { actions.leaveGroup(g.id); actions.setSetting('scope', 'me'); showToast(`ออกจาก “${g.name}” แล้ว`); close(); }}>ออกจากกลุ่ม</button>
           )}
         </>
       )}

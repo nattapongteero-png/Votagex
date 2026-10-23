@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "holidays": "node scripts/th-holidays.mjs",
-    "test:rules": "cd .. && firebase emulators:exec --only firestore --project demo-votagex 'cd votagex-react && npx vitest run tests/rules'"
+    "test:rules": "cd .. && firebase emulators:exec --only firestore --project demo-votagex 'cd votagex-react && npx vitest run tests/rules'",
+    "dev:emu": "cd .. && firebase emulators:exec --only auth,firestore --project demo-votagex --ui 'cd votagex-react && VITE_USE_EMULATOR=true VITE_FIREBASE_PROJECT_ID=demo-votagex npx vite --host'"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",

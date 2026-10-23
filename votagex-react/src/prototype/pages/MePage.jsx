@@ -11,7 +11,7 @@ const CAL_THEMES = [['riso', 'Riso'], ['poster', 'โปสเตอร์ 1969'
 const TH_MONTHS = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
 
 export default function MePage() {
-  const { plans, expenses, places, jars, piggyLog, groups, today, simMode, settings, actions, openSheet, showToast } = useProto();
+  const { plans, expenses, places, jars, piggyLog, groups, today, simMode, settings, actions, openSheet, showToast, cloud, exit } = useProto();
   const navigate = useNavigate();
   const { provinces, countries } = useCollection();
   const [monthOffset, setMonthOffset] = useState(0);
@@ -160,13 +160,13 @@ export default function MePage() {
         </div>
 
         <div className="me-panel pt-demo">
-          <div className="me-panel-title">โหมดสาธิต (Prototype)</div>
-          <div className="pt-pad-x">
+          <div className="me-panel-title">{cloud ? 'บัญชี' : 'โหมดสาธิต (Prototype)'}</div>
+          {!cloud && <div className="pt-pad-x">
             <Seg value={simMode} onChange={(v) => { actions.setSimMode(v); showToast(v === 'trip' ? 'จำลอง Day 2 ที่โอซาก้า' : 'กลับมาวันปกติ'); }} items={[
               { value: 'normal', label: 'วันปกติ' },
               { value: 'trip', label: 'กำลังเที่ยวโอซาก้า' },
             ]} />
-          </div>
+          </div>}
           {autoOn && todayStops.length > 0 && (
             <div className="pt-pad-x pt-sim-loc">
               <div className="pt-muted sm">จำลองว่าอยู่ที่</div>
@@ -181,8 +181,8 @@ export default function MePage() {
           <button className="me-row" onClick={() => { actions.reset(); showToast('รีเซ็ตข้อมูลตัวอย่างแล้ว'); }}>
             <span className="me-row-icon"><Icon name="shuffle" size={16} /></span><span className="pt-grow">รีเซ็ตข้อมูลตัวอย่าง</span>
           </button>
-          <button className="me-row" onClick={() => navigate('/home')}>
-            <span className="me-row-icon"><Icon name="back" size={16} /></span><span className="pt-grow">กลับไปแอปเดิม</span>
+          <button className="me-row" onClick={exit}>
+            <span className="me-row-icon"><Icon name="back" size={16} /></span><span className="pt-grow">{cloud ? 'ออกจากระบบ' : 'ออกจากโหมดตัวอย่าง'}</span>
           </button>
         </div>
       </div>

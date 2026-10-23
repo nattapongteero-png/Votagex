@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Routes, Route, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { ProtoProvider } from './store';
 import { useProto } from './useProto';
@@ -9,6 +10,10 @@ import PlanDetailPage from './pages/PlanDetailPage';
 import MapPage from './pages/MapPage';
 import MePage from './pages/MePage';
 import RecapPage from './pages/RecapPage';
+import LoginPage from './pages/LoginPage';
+import JoinPage from './pages/JoinPage';
+import { profileOf, signOutCloud, useSession } from './cloud';
+import { setMe } from './data';
 import { useRates } from './rates';
 import AutoCheckIn from './AutoCheckIn';
 import './proto.css';
@@ -69,8 +74,20 @@ function Toast() {
 
 export default function ProtoApp() {
   useRates(); // live exchange rates; the app re-renders when they land
+  const session = useSession();
+  const { pathname } = useLocation();
+  const user = session.status === 'in' ? session.user : null;
+  // who "I" am, before anything below reads ME / PEOPLE
+  useMemo(() => (user ? setMe(user.uid, { [user.uid]: profileOf(user) }) : setMe('u1')), [user]);
+  const joining = /\/proto\/join\//.test(pathname);
+
+  if (session.status === 'loading') return <div className="loading-screen">กำลังโหลด...</div>;
+  // an invite needs a real account; otherwise sign in or look at the sample data
+  if (session.status === 'out' || (session.status === 'demo' && joining)) {
+    return <LoginPage onDemo={session.enterDemo} invite={joining ? 'กลุ่มที่เพื่อนชวน' : null} />;
+  }
   return (
-    <ProtoProvider>
+    <ProtoProvider key={user?.uid || 'demo'} user={user} exit={user ? signOutCloud : session.leaveDemo}>
       {/* display: contents — only here to scope the prototype's tokens (softer corners) */}
       <div className="pt-app">
       <Routes>
@@ -83,6 +100,7 @@ export default function ProtoApp() {
         </Route>
         <Route path="plan/:planId" element={<PlanDetailPage />} />
         <Route path="plan/:planId/recap" element={<RecapPage />} />
+        {user && <Route path="join/:code" element={<JoinPage />} />}
         <Route path="*" element={<Navigate to="today" replace />} />
       </Routes>
       <ProtoSheets />
