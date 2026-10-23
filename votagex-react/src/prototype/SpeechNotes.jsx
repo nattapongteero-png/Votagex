@@ -19,7 +19,8 @@ export default function SpeechNotes({ notes }) {
     range.selectNodeContents(el.querySelector('.pt-speech-text'));
     const scale = el.getBoundingClientRect().width / el.offsetWidth || 1; // the pop animation scales the bubble
     const pad = parseFloat(getComputedStyle(el).paddingLeft) * 2;
-    el.style.width = `${Math.ceil(range.getBoundingClientRect().width / scale + pad)}px`;
+    // +2px: sub-pixel rounding must not push the last word onto a new line
+    el.style.width = `${Math.ceil(range.getBoundingClientRect().width / scale + pad) + 2}px`;
   }, [id, note?.text]);
 
   if (!note) return null;

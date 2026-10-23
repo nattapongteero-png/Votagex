@@ -61,6 +61,8 @@ const P = {
   hot: (<><path className="tone" d="M14 4v10.5a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z" /><path d="M12 17.5v-5" /></>),
   beach: (<><circle className="tone" cx="16.5" cy="7.5" r="3" /><path d="M3 15.5c1.5 0 1.5 1 3 1s1.5-1 3-1 1.5 1 3 1 1.5-1 3-1 1.5 1 3 1 1.5-1 3-1M3 19.5c1.5 0 1.5 1 3 1s1.5-1 3-1 1.5 1 3 1 1.5-1 3-1 1.5 1 3 1 1.5-1 3-1" /></>),
   mountain: (<><path className="tone" d="m8.5 5 4 7 3-3.5L21 19H3Z" /><path d="m6.8 8 1.7 1.5L10.2 8" /></>),
+  music: (<><circle className="tone" cx="7.5" cy="17.5" r="2.5" /><circle className="tone" cx="17" cy="15.5" r="2.5" /><path d="M10 17.5V6.5l9.5-2v11" /><path d="M10 10l9.5-2" /></>),
+  event: (<><path className="tone" d="M4 7.5h16v3a2 2 0 0 0 0 3v3H4v-3a2 2 0 0 0 0-3Z" /><path d="m12 9.6.8 1.6 1.8.3-1.3 1.2.3 1.8-1.6-.9-1.6.9.3-1.8-1.3-1.2 1.8-.3Z" /></>),
   gift: (<><rect className="tone" x="4" y="8" width="16" height="4" rx="1" /><path d="M12 8v12M18.5 12v6.5a1.5 1.5 0 0 1-1.5 1.5H7a1.5 1.5 0 0 1-1.5-1.5V12M8 8a2.3 2.3 0 0 1 0-4.6C10.4 3.4 12 8 12 8s1.6-4.6 4-4.6A2.3 2.3 0 0 1 16 8" /></>),
   // moods: a face each
   moodLove: (<><circle className="tone" cx="12" cy="12" r="8.6" /><path d="M8.6 8.8c-.5-.7-1.8-.4-1.6.6.1.7 1.6 1.6 1.6 1.6s1.5-.9 1.6-1.6c.2-1-1.1-1.3-1.6-.6ZM15.4 8.8c-.5-.7-1.8-.4-1.6.6.1.7 1.6 1.6 1.6 1.6s1.5-.9 1.6-1.6c.2-1-1.1-1.3-1.6-.6Z" strokeWidth="1.3" /><path d="M8.3 13.8a4 4 0 0 0 7.4 0Z" /></>),

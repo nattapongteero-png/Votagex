@@ -278,8 +278,9 @@ export default function PlanDetailPage() {
   const { planId } = useParams();
   const [params, setParams] = useSearchParams();
   const navigate = useNavigate();
-  const { plans, today, showToast } = useProto();
+  const { plans, groups, today, showToast } = useProto();
   const plan = plans.find((p) => p.id === planId);
+  const group = plan && groups.find((g) => g.id === plan.groupId);
   const days = plan ? dayList(plan.startDate, plan.endDate) : [];
   const status = plan ? planStatus(plan, today) : 'idea';
   const [day, setDay] = useState(() => (days.includes(today) ? today : days[0]));
@@ -305,6 +306,7 @@ export default function PlanDetailPage() {
           <div className="pt-title">{plan.name}</div>
           <div className="pt-muted">{thaiRange(plan.startDate, plan.endDate)}{days.length > 1 ? ` · ${days.length} วัน` : ''} · {plan.stops.length} จุดแวะ</div>
           <div className="pt-hero-members">
+            {group && <span className="pt-group-chip" style={{ background: group.color }}><Icon name={group.icon} size={14} /> {group.name}</span>}
             <Avatars ids={plan.members} size={30} />
             <span className="pt-muted sm">{plan.members.map((id) => (id === ME ? 'ฉัน' : PEOPLE[id].name)).join(', ')}</span>
           </div>

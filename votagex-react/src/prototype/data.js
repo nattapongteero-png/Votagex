@@ -12,6 +12,9 @@ const rel = (n) => addDays(TODAY, n);
 
 const TH_MONTHS = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
 const TH_DAYS = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'];
+// Keep a Thai name on one line: browsers break Thai with a dictionary, and names it doesn't know (โอซาก้า)
+// get split mid-word. A word joiner between Thai letters stops that; spaces still break.
+export const keepThai = (s) => (s || '').replace(/([\u0E00-\u0E7F])(?=[\u0E01-\u0E30\u0E32\u0E33\u0E3F-\u0E46\u0E4F-\u0E5B])/g, '$1\u2060');
 export const thaiShort = (s) => { const d = parseISO(s); return `${d.getDate()} ${TH_MONTHS[d.getMonth()]}`; };
 export const thaiDay = (s) => TH_DAYS[parseISO(s).getDay()];
 export const thaiYear = (s) => parseISO(s).getFullYear() + 543;
@@ -99,6 +102,21 @@ export const PEOPLE = {
   u3: { id: 'u3', name: 'บิว', avatar: '/assets/avatars/p4.svg' },
   u4: { id: 'u4', name: 'แพร', avatar: '/assets/avatars/p9.svg' },
 };
+// Travel groups: the same gang across many trips. A trip may belong to one (then anyone in it can plan it)
+// and takes along all or some of its members; a trip with no group is just mine.
+export const GROUP_COLORS = ['#0EA5E9', '#F97316', '#7C3AED', '#16A34A', '#DB2777'];
+export const GROUP_ICONS = ['users', 'plane', 'beach', 'mountain', 'food', 'sparkle', 'gift'];
+const SEED_GROUPS = [
+  { id: 'g-uni', name: 'แก๊งมหาลัย', icon: 'users', color: '#0EA5E9', members: ['u1', 'u2', 'u3'], createdBy: 'u1' },
+  { id: 'g-four', name: 'สายเที่ยวธรรมชาติ', icon: 'mountain', color: '#16A34A', members: ['u1', 'u2', 'u3', 'u4'], createdBy: 'u4' },
+];
+const SEED_PLAN_GROUPS = { osaka: 'g-uni', tonight: 'g-uni', bangsaen: 'g-uni', cnx: 'g-four', khaoyai: 'g-four', krabi: 'g-four' };
+// sample groups, and the sample trips that belong to them (also for data saved before groups)
+export const withSeedGroups = (d) => ({
+  ...d,
+  groups: SEED_GROUPS.map((g) => ({ ...g })),
+  plans: d.plans.map((p) => ({ ...p, groupId: p.groupId ?? SEED_PLAN_GROUPS[p.id] ?? null })),
+});
 // Avatars: ThaiWell's set (Notionists by Zoish via DiceBear, CC0)
 // Placeholder PromptPay number — the QR is for demo only and must never point to a real account
 export const DEMO_PROMPTPAY = '0000000000';
@@ -111,7 +129,17 @@ export const PLACE_CATS = {
   shop: { label: 'ช้อปปิ้ง', color: '#DB2777', bg: '#FDECF4' },
   stay: { label: 'ที่พัก', color: '#4F46E5', bg: '#ECEEFE' },
   move: { label: 'เดินทาง', color: '#0284C7', bg: '#E5F4FC' },
+  event: { label: 'งาน', color: '#7C3AED', bg: '#F1EBFE' },
 };
+// events people keep from a post (concerts, markets, pop-ups): no API carries these, so they come from links
+export const EVENT_KINDS = {
+  concert: { label: 'คอนเสิร์ต', icon: 'music' },
+  market: { label: 'ตลาดนัด', icon: 'shop' },
+  popup: { label: 'งานขายของ', icon: 'gift' },
+  other: { label: 'อื่นๆ', icon: 'event' },
+};
+export const eventOn = (ev, d) => d >= ev.startDate && d <= (ev.endDate || ev.startDate);
+export const eventRange = (ev) => (ev.endDate && ev.endDate !== ev.startDate ? `${thaiShort(ev.startDate)} – ${thaiShort(ev.endDate)}` : thaiShort(ev.startDate));
 export const EXPENSE_CATS = {
   food: { label: 'อาหาร', color: '#EA580C' },
   move: { label: 'เดินทาง', color: '#0284C7' },
@@ -454,7 +482,20 @@ export function seedData() {
     { id: 'm7', planId: 'iconsiam', date: rel(-5), stopId: 'ic1', photos: [], text: 'ลมริมน้ำเย็นสบาย นั่งดูเรือจนเย็น', mood: 'moodSmile', by: 'u1' },
   ];
 
-  return { v: 1, seededOn: TODAY, simMode: 'normal', plans, places, expenses, memories, ...seedPiggy() };
+  return withSeedGroups({ v: 1, seededOn: TODAY, simMode: 'normal', plans, places, expenses, memories, ...seedPiggy(), ...seedEvents() });
+}
+
+// sample events around today: one on now, a weekend market, a concert, a pop-up next week
+export function seedEvents() {
+  const sat = (6 - new Date(`${TODAY}T00:00`).getDay() + 7) % 7 || 7; // days to the coming Saturday
+  const at = (name, area, lat, lng) => ({ name, area, prov: 'กรุงเทพมหานคร', country: 'TH', lat, lng });
+  const events = [
+    { id: 'ev1', title: 'ป๊อปอัปขนมโฮมเมด', kind: 'popup', startDate: TODAY, endDate: rel(1), time: '16:00', place: at('จ๊อดแฟร์ รัชดา', 'ดินแดง · กรุงเทพฯ', 13.7682, 100.5709), source: { type: 'instagram', author: '@homemade.bkk', url: 'https://www.instagram.com/' }, note: 'บราวนี่หมดไว ไปก่อน 6 โมง', by: 'u2' },
+    { id: 'ev2', title: 'ตลาดนัดวินเทจสุดสัปดาห์', kind: 'market', startDate: rel(sat), endDate: rel(sat + 1), time: '10:00', place: at('ช่างชุ่ย', 'บางพลัด · กรุงเทพฯ', 13.7906, 100.4791), source: { type: 'tiktok', author: '@vintage.th', url: 'https://www.tiktok.com/@vintage.th' }, note: 'เสื้อมือสอง ของแต่งบ้าน', by: 'u1' },
+    { id: 'ev3', title: 'Indie Night คอนเสิร์ตลานกลางแจ้ง', kind: 'concert', startDate: rel(sat), endDate: rel(sat), time: '19:00', place: at('Samyan Mitrtown', 'ปทุมวัน · กรุงเทพฯ', 13.7344, 100.5283), source: { type: 'instagram', author: '@indienight.bkk', url: 'https://www.instagram.com/' }, note: 'บัตรหน้างาน 350', by: 'u1', groupId: 'g-uni' },
+    { id: 'ev4', title: 'Handmade Market', kind: 'popup', startDate: rel(sat + 6), endDate: rel(sat + 8), time: '11:00', place: at('สยามดิสคัฟเวอรี่', 'ปทุมวัน · กรุงเทพฯ', 13.7466, 100.5309), source: { type: 'tiktok', author: '@craft.bkk', url: 'https://www.tiktok.com/@craft.bkk' }, note: '', by: 'u3' },
+  ];
+  return { events };
 }
 
 export function seedPiggy() {
@@ -490,5 +531,6 @@ export function shiftData(data, n) {
     expenses: data.expenses.map((e) => ({ ...e, date: s(e.date) })),
     memories: data.memories.map((m) => ({ ...m, date: s(m.date) })),
     piggyLog: (data.piggyLog || []).map((e) => ({ ...e, date: s(e.date) })),
+    events: (data.events || []).map((e) => ({ ...e, startDate: s(e.startDate), endDate: s(e.endDate) })),
   };
 }

@@ -31,10 +31,11 @@ function Starburst() {
 // Two-colour risograph wall calendar on grainy paper: huge month letters, circles on Saturdays and
 // starbursts on Sundays, public holidays in the accent ink like Sundays, inks picked per month. Changing
 // month tears the page off (or sticks the previous one back on). Shows plan markers and the forecast (trip
-// destination that day, else home) for the next 16 days.
+// destination that day, else home) for the next 16 days, a dot on days with a kept event, and on my own
+// calendar the colours of the groups I'm out with.
 // It always lays out the whole month; the page's sheet folds it (CSS --fold, 0 → 1 as the sheet rises)
 // down to the month header and the week holding the selected day.
-export default function MonthCalendar({ selected, today, onSelect, stopsOn, plans }) {
+export default function MonthCalendar({ selected, today, onSelect, stopsOn, eventsOn = {}, groupsOn = {}, plans }) {
   const root = useRef(null);
   const [theme] = useState(() => read(THEME_KEY, 'riso'));
   const [view, setView] = useState(() => selected.slice(0, 7)); // "YYYY-MM" shown
@@ -94,7 +95,7 @@ export default function MonthCalendar({ selected, today, onSelect, stopsOn, plan
     const keep = keepWeek(weeks);
     if (theme === 'poster') {
       return (
-        <PosterPage ym={ym} weeks={weeks} keep={keep} today={today} selected={selected} stopsOn={stopsOn} onSelect={onSelect}
+        <PosterPage ym={ym} weeks={weeks} keep={keep} today={today} selected={selected} stopsOn={stopsOn} eventsOn={eventsOn} groupsOn={groupsOn} onSelect={onSelect}
           renderWx={renderWx} className={className} style={torn ? { clipPath: TORN } : undefined} {...extra} />
       );
     }
@@ -131,6 +132,8 @@ export default function MonthCalendar({ selected, today, onSelect, stopsOn, plan
                       {parseISO(d).getDay() === 0 && d.slice(0, 7) === ym && <Starburst />}
                       {d === today && <svg className="pt-sk-swipe" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path d={swipePath(seed)} /></svg>}
                       <b>{parseISO(d).getDate()}</b>
+                      {eventsOn[d] && <i className="pt-ev-dot" />}
+                      {groupsOn[d] && <span className="pt-grp-dots">{groupsOn[d].map((c) => <i key={c} style={{ background: c }} />)}</span>}
                       {d === selected && <svg className="pt-sk-loop" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path d={loopPath(seed)} pathLength="1" /></svg>}
                     </span>
                     {renderWx(d)}

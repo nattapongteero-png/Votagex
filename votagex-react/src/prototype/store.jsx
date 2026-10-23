@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ProtoCtx } from './useProto';
-import { TODAY, ME, addDays, diffDays, seedData, seedPiggy, shiftData, planStatus, splitByShare, jarCats, JAR_TEMPLATES, KINDS } from './data';
+import { TODAY, ME, addDays, diffDays, seedData, seedPiggy, seedEvents, withSeedGroups, shiftData, planStatus, splitByShare, jarCats, JAR_TEMPLATES, KINDS } from './data';
 
 // Prototype-only store: everything lives in memory + localStorage. No Firebase.
 const KEY = 'votagex.proto.v1';
@@ -21,7 +21,9 @@ function load() {
       const d = JSON.parse(raw);
       if (d.v === 1) {
         const data = toIcons(shiftData(d, diffDays(d.seededOn, TODAY)));
-        return data.jars?.every((j) => j.cats) ? data : { ...data, ...seedPiggy() }; // saved before piggies had categories
+        const withJars = data.jars?.every((j) => j.cats) ? data : { ...data, ...seedPiggy() }; // saved before piggies had categories
+        const withEvents = withJars.events ? withJars : { ...withJars, ...seedEvents() }; // saved before events
+        return withEvents.groups ? withEvents : withSeedGroups(withEvents); // saved before groups
       }
     }
   } catch { /* storage unavailable: fall back to seed */ }
@@ -45,11 +47,13 @@ export function ProtoProvider({ children }) {
     ? addDays(data.plans.find((p) => p.id === 'osaka')?.startDate || TODAY, 1)
     : TODAY;
 
-  const showToast = useCallback((msg) => {
+  // action: { label, onClick } for a toast that can be undone; it stays a little longer
+  const showToast = useCallback((msg, action = null) => {
     clearTimeout(toastTimer.current);
-    setToast(msg);
-    toastTimer.current = setTimeout(() => setToast(null), 2400);
+    setToast({ msg, action });
+    toastTimer.current = setTimeout(() => setToast(null), action ? 5000 : 2400);
   }, []);
+  const hideToast = useCallback(() => { clearTimeout(toastTimer.current); setToast(null); }, []);
 
   const openSheet = useCallback((name, props = {}) => setSheet({ name, props }), []);
   const closeSheet = useCallback(() => setSheet(null), []);
@@ -60,6 +64,22 @@ export function ProtoProvider({ children }) {
 
   const actions = useMemo(() => ({
     setSimMode: (simMode) => setData((d) => ({ ...d, simMode })),
+    // autoCheckIn (on unless false), simStop (demo: pretend to stand at that stop), scope (home: 'me' or a group id)
+    setSetting: (key, value) => setData((d) => ({ ...d, settings: { ...d.settings, [key]: value } })),
+
+    addGroup: (group) => {
+      const id = uid('g');
+      setData((d) => ({ ...d, groups: [...d.groups, { ...group, id, createdBy: ME }] }));
+      return id;
+    },
+    // the group goes; its trips stay, as mine
+    removeGroup: (id) => setData((d) => ({
+      ...d,
+      groups: d.groups.filter((g) => g.id !== id),
+      plans: d.plans.map((p) => (p.groupId === id ? { ...p, groupId: null } : p)),
+      events: d.events.map((e) => (e.groupId === id ? { ...e, groupId: null } : e)),
+      settings: d.settings?.scope === id ? { ...d.settings, scope: 'me' } : d.settings,
+    })),
     reset: () => setData(seedData()),
 
     addPlace: (place) => {
@@ -67,6 +87,13 @@ export function ProtoProvider({ children }) {
       setData((d) => ({ ...d, places: [{ ...place, id, savedAt: TODAY }, ...d.places] }));
       return id;
     },
+    addEvent: (ev) => {
+      const id = uid('ev');
+      setData((d) => ({ ...d, events: [{ ...ev, id, by: ME, savedAt: TODAY }, ...(d.events || [])] }));
+      return id;
+    },
+    shareEvent: (id, groupId) => setData((d) => ({ ...d, events: d.events.map((e) => (e.id === id ? { ...e, groupId } : e)) })),
+    removeEvent: (id) => setData((d) => ({ ...d, events: d.events.filter((e) => e.id !== id) })),
     removePlace: (id) => setData((d) => ({ ...d, places: d.places.filter((p) => p.id !== id) })),
 
     addPlan: (plan) => {
@@ -77,7 +104,7 @@ export function ProtoProvider({ children }) {
     addStop: (planId, stop) => {
       updatePlan(planId, (p) => ({ ...p, stops: [...p.stops, { checkIns: {}, note: '', ...stop, id: uid('s') }] }));
     },
-    toggleCheckIn: (planId, stopId, late = false) => {
+    toggleCheckIn: (planId, stopId, late = false, auto = false) => {
       updatePlan(planId, (p) => ({
         ...p,
         stops: p.stops.map((s) => {
@@ -86,7 +113,7 @@ export function ProtoProvider({ children }) {
           if (checkIns[ME]) delete checkIns[ME];
           else {
             const now = new Date();
-            checkIns[ME] = { at: `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`, late };
+            checkIns[ME] = { at: `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`, late, ...(auto && { auto }) };
           }
           return { ...s, checkIns };
         }),
@@ -134,7 +161,8 @@ export function ProtoProvider({ children }) {
 
   const value = {
     ...data, today, activePlan, ensureActivePlan, actions,
-    sheet, openSheet, closeSheet, toast, showToast,
+    settings: data.settings || {},
+    sheet, openSheet, closeSheet, toast, showToast, hideToast,
     kindLabel: (k) => KINDS[k]?.label || k,
   };
   return <ProtoCtx.Provider value={value}>{children}</ProtoCtx.Provider>;

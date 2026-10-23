@@ -7,6 +7,8 @@ import { Sheet, Avatar, Chip, CatIcon, Progress } from './ui';
 import Icon, { Flag } from './icons';
 import SavePlaceSheet, { ResultList } from './SavePlaceSheet';
 import { PiggySheet, NewJarSheet } from './PiggySheet';
+import { SaveEventSheet, EventSheet } from './EventSheet';
+import { NewGroupSheet, GroupSheet } from './GroupSheet';
 import {
   ME, PEOPLE, CURRENCIES, EXPENSE_CATS, MOODS, KINDS, DEMO_PROMPTPAY,
   countryOf, fmtMoney, addDays, parseISO, thaiShort, thaiRange, planStatus, diffDays,
@@ -21,6 +23,7 @@ function QuickAddSheet({ onClose }) {
     { name: 'expense', icon: 'wallet', label: 'จดรายจ่าย', tone: '#FFF1E6', color: '#EA580C' },
     { name: 'memory', icon: 'camera', label: 'รูป / โน้ต', tone: '#ECEEFE', color: '#4F46E5' },
     { name: 'savePlace', icon: 'bookmark', label: 'เซฟสถานที่', tone: '#E6F7F4', color: '#0D9488' },
+    { name: 'saveEvent', icon: 'event', label: 'เก็บงาน', tone: '#F1EBFE', color: '#7C3AED' },
     { name: 'createPlan', icon: 'plans', label: 'แผนใหม่', tone: '#FDECF4', color: '#DB2777' },
   ];
   return (
@@ -186,8 +189,8 @@ function nextSaturday(from) {
   return addDays(from, add);
 }
 
-function CreatePlanSheet({ onClose, place }) {
-  const { actions, closeSheet, today } = useProto();
+function CreatePlanSheet({ onClose, place, groupId }) {
+  const { actions, closeSheet, today, groups, settings } = useProto();
   const navigate = useNavigate();
   const [query, setQuery] = useState('');
   const [dest, setDest] = useState(place ? { ...place, key: 'prefill' } : null);
@@ -195,7 +198,10 @@ function CreatePlanSheet({ onClose, place }) {
   const [start, setStart] = useState(addDays(today, 7));
   const [end, setEnd] = useState(addDays(today, 9));
   const [name, setName] = useState('');
-  const [members, setMembers] = useState([ME]);
+  // the group it's for: the one asked for, else the one home is showing; its members come along by default
+  const [group, setGroup] = useState(() => groups.find((g) => g.id === (groupId || settings.scope)) || null);
+  const [members, setMembers] = useState(() => group?.members || [ME]);
+  const pickGroup = (g) => { setGroup(g); setMembers(g ? g.members : [ME]); };
   const search = usePlaceSearch(dest ? '' : query, { withDestinations: true });
 
   const country = dest?.country || 'TH';
@@ -211,7 +217,7 @@ function CreatePlanSheet({ onClose, place }) {
     const id = actions.addPlan({
       name: name.trim() || autoName, kind, country, currency: c.currency,
       destination: dest ? { name: dest.name, lat: dest.lat, lng: dest.lng } : null,
-      startDate: dates[0], endDate: dates[1], members, budget: 0,
+      startDate: dates[0], endDate: dates[1], members, groupId: group?.id || null, budget: 0,
       cover: { icon: kind === 'abroad' ? 'globe' : kind === 'outing' ? 'food' : 'sight', tint: kind === 'abroad' ? '#E8F3FF' : kind === 'outing' ? '#FFF1E6' : '#E6F7F4' },
       checklist: kind === 'abroad' ? [
         { id: 'a1', text: 'พาสปอร์ตอายุเหลือเกิน 6 เดือน', done: false },
@@ -277,6 +283,12 @@ function CreatePlanSheet({ onClose, place }) {
       </div>
 
       <div className="pt-label">ไปกับใคร</div>
+      {groups.length > 0 && (
+        <div className="pt-chip-row wrap">
+          <Chip active={!group} onClick={() => pickGroup(null)}>ไม่มีกลุ่ม</Chip>
+          {groups.map((g) => <Chip key={g.id} active={group?.id === g.id} color={g.color} onClick={() => pickGroup(g)}><Icon name={g.icon} size={14} className="pt-inline-icon" /> {g.name}</Chip>)}
+        </div>
+      )}
       <div className="pt-people">
         {Object.values(PEOPLE).map((p) => (
           <button key={p.id} className={`pt-person check${members.includes(p.id) ? ' active' : ''}`} disabled={p.id === ME}
@@ -447,6 +459,10 @@ const SHEETS = {
   provinces: ProvinceSheet,
   piggy: PiggySheet,
   newJar: NewJarSheet,
+  saveEvent: SaveEventSheet,
+  event: EventSheet,
+  newGroup: NewGroupSheet,
+  group: GroupSheet,
 };
 
 export default function ProtoSheets() {

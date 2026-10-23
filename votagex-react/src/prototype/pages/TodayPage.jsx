@@ -11,7 +11,8 @@ import { pm25Level, useWeather, weatherKind } from '../weather';
 import HOLIDAYS from '../thHolidays.json';
 import {
   ME, PEOPLE, EXPENSE_CATS, CURRENCIES, HOME, addDays, parseISO, diffDays, thaiShort, byTime, localHM,
-  stopState, myShare, fmtMoney, distanceKm, fmtKm, directionsUrl, countryOf, planStatus, toTHB, jarStats,
+  stopState, keepThai, myShare, fmtMoney, distanceKm, fmtKm, directionsUrl, countryOf, planStatus, toTHB, jarStats,
+  EVENT_KINDS, eventOn, eventRange,
 } from '../data';
 
 const FOLD_TOP = 12; // folded calendar's distance from the top of the screen
@@ -25,8 +26,28 @@ function StepIcon({ state }) {
   return <svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.6" fill="none" stroke="currentColor" strokeWidth="1.4" strokeDasharray={state === 'missed' ? '2 2' : undefined} /></svg>;
 }
 
+// a kept event on the selected day, under the weather
+function EventTile({ ev, last, onOpen }) {
+  const kind = EVENT_KINDS[ev.kind] || EVENT_KINDS.other;
+  return (
+    <button className="hp-tile pt-ev-card" onClick={onOpen}>
+      <span className="pt-ev-icon"><Icon name={kind.icon} size={22} /></span>
+      <span className="pt-grow">
+        <span className="pt-muted sm">{kind.label}{ev.time ? ` · ${ev.time} น.` : ''}</span>
+        <span className="pt-strong ellipsis">{ev.title}</span>
+        <span className="pt-muted sm ellipsis">{ev.place.name} · ห่าง {fmtKm(distanceKm(HOME, ev.place))}</span>
+      </span>
+      {last ? <span className="pt-ev-badge">วันสุดท้าย</span> : <Icon name="next" size={18} />}
+    </button>
+  );
+}
+
 export default function TodayPage() {
-  const { plans, places, expenses, memories, jars, piggyLog, today, openSheet, actions } = useProto();
+  const { plans: allPlans, places, expenses, memories, jars, piggyLog, events: allEvents, groups, settings, today, openSheet, actions } = useProto();
+  // whose calendar: mine (every trip I'm on) or one group's (only its trips, and the events shared with it)
+  const group = groups.find((g) => g.id === settings.scope) || null;
+  const plans = useMemo(() => (group ? allPlans.filter((p) => p.groupId === group.id) : allPlans.filter((p) => p.members.includes(ME))), [allPlans, group]);
+  const events = useMemo(() => (group ? allEvents.filter((e) => e.groupId === group.id) : allEvents), [allEvents, group]);
   const navigate = useNavigate();
   const [picked, setPicked] = useState(null);
   const [seed, setSeed] = useState(0);
@@ -92,10 +113,35 @@ export default function TodayPage() {
     plans.forEach((p) => p.stops.forEach((s) => { if (s.date) m[s.date] = (m[s.date] || 0) + 1; }));
     return m;
   }, [plans]);
+  // on my calendar, which groups I'm out with each day (a dot in the group's colour, two at most)
+  const groupsOn = useMemo(() => {
+    const m = {};
+    if (group) return m;
+    plans.forEach((p) => {
+      const g = groups.find((x) => x.id === p.groupId);
+      if (!g || !p.startDate) return;
+      for (let d = p.startDate, i = 0; d <= (p.endDate || p.startDate) && i < 62; d = addDays(d, 1), i++) {
+        const day = (m[d] ||= []);
+        if (!day.includes(g.color) && day.length < 2) day.push(g.color);
+      }
+    });
+    return m;
+  }, [plans, groups, group]);
+  // days with a kept event (a dot on the calendar)
+  const eventsOn = useMemo(() => {
+    const m = {};
+    events.forEach((ev) => {
+      for (let d = ev.startDate, i = 0; d <= (ev.endDate || ev.startDate) && i < 62; d = addDays(d, 1), i++) m[d] = true;
+    });
+    return m;
+  }, [events]);
 
   const dayPlans = plans.filter((p) => p.startDate && selected >= p.startDate && selected <= (p.endDate || p.startDate));
   const plan = dayPlans.find((p) => p.kind !== 'outing') || dayPlans[0] || null;
   const stops = plan ? plan.stops.filter((s) => s.date === selected).sort(byTime) : [];
+  const planGroup = plan && groups.find((g) => g.id === plan.groupId);
+  const who = !plan ? '' : planGroup ? `ไปกับ${planGroup.name}` : plan.members.length > 1 ? `ไปกับ ${plan.members.filter((id) => id !== ME).map((id) => PEOPLE[id]?.name).join(', ')}` : 'ไปคนเดียว';
+  const groupTrips = group ? plans.filter((p) => planStatus(p, today) !== 'past').sort((a, b) => (a.startDate || '9').localeCompare(b.startDate || '9')) : [];
   const country = countryOf(plan?.country);
   const nowHM = localHM(country.utc);
   const live = plan && selected === today && planStatus(plan, today) === 'ongoing' && plan.kind !== 'outing';
@@ -127,6 +173,20 @@ export default function TodayPage() {
   const dayTitle = selected === today ? `วันนี้ · ${thaiShort(selected)}` : `${TH_DOW[parseISO(selected).getDay()]} ${thaiShort(selected)}`;
   const holiday = HOLIDAYS[selected];
   const daySub = [holiday, stops.length ? `${stops.length} จุดแวะ${plan ? ` · ${plan.name}` : ''}` : 'ยังไม่มีแผน'].filter(Boolean).join(' · ');
+  // kept events: those on the selected day, then the next ones still to come
+  const dayEvents = events.filter((ev) => eventOn(ev, selected)).sort((a, b) => (a.time || '99').localeCompare(b.time || '99'));
+  const laterEvents = events.filter((ev) => (ev.endDate || ev.startDate) >= today && !eventOn(ev, selected))
+    .sort((a, b) => a.startDate.localeCompare(b.startDate)).slice(0, 3);
+  // the soonest event worth a note: on today, tomorrow, or ending within two days
+  const evSoon = events.filter((ev) => (ev.endDate || ev.startDate) >= today && ev.startDate <= addDays(today, 1))
+    .sort((a, b) => a.startDate.localeCompare(b.startDate))[0];
+  const evNote = evSoon && (() => {
+    const away = `ห่าง ${fmtKm(distanceKm(HOME, evSoon.place))}`;
+    const open = () => openSheet('event', { eventId: evSoon.id });
+    if (evSoon.startDate > today) return { key: 'event', icon: EVENT_KINDS[evSoon.kind]?.icon || 'event', text: `พรุ่งนี้มีงาน${keepThai(evSoon.title)} ${away}`, onClick: open };
+    const left = diffDays(today, evSoon.endDate || evSoon.startDate);
+    return { key: 'event', icon: EVENT_KINDS[evSoon.kind]?.icon || 'event', text: left > 0 ? `${keepThai(evSoon.title)} อีก ${left} วันจบ ${away}` : `วันนี้วันสุดท้าย${keepThai(evSoon.title)}`, onClick: open };
+  })();
   // the next day off within a week (today included), so there's time to plan something
   const nextHoliday = Object.keys(HOLIDAYS).find((d) => d >= today && d <= addDays(today, 7));
   const wxNote = wxToday && (() => {
@@ -140,18 +200,19 @@ export default function TodayPage() {
 
   // notes the profile character says in a speech bubble (what used to be the stage chips)
   const notes = [...(live ? [
-    { key: 'day', flag: country.code, text: `Day ${diffDays(plan.startDate, today) + 1} ที่${country.name}แล้วน้า`, onClick: () => navigate(`/proto/plan/${plan.id}`) },
+    { key: 'day', flag: country.code, text: `Day ${diffDays(plan.startDate, today) + 1} ที่${keepThai(country.name)}แล้วน้า`, onClick: () => navigate(`/proto/plan/${plan.id}`) },
     { key: 'time', icon: 'clock', text: `ที่นั่นตอนนี้ ${nowHM} (${country.utc - 7 >= 0 ? '+' : ''}${country.utc - 7} ชม.)` },
     { key: 'spend', icon: 'wallet', text: `วันนี้ใช้ไป ${fmtMoney(todaySpendLocal, plan.currency)} แล้วนะ`, onClick: () => openSheet('expense') },
   ] : [
-    upcoming && { key: 'trip', icon: 'plane', text: `อีก ${diffDays(today, upcoming.startDate)} วันได้ไป${upcoming.name}แล้ว!`, onClick: () => navigate(`/proto/plan/${upcoming.id}`) },
+    upcoming && { key: 'trip', icon: 'plane', text: `อีก ${diffDays(today, upcoming.startDate)} วันได้ไป${keepThai(upcoming.name)}แล้ว!`, onClick: () => navigate(`/proto/plan/${upcoming.id}`) },
     wantCount > 0 && { key: 'want', icon: 'pin', text: `เก็บที่อยากไปไว้ ${wantCount} แห่งแล้ว ไปไหนดี?`, onClick: () => navigate('/proto/map') },
   ]),
+  evNote,
   nextHoliday && { key: 'holiday', icon: 'calendar', text: nextHoliday === today ? `วันนี้${HOLIDAYS[today]} ไปเที่ยวไหนดี?` : `อีก ${diffDays(today, nextHoliday)} วันหยุด${HOLIDAYS[nextHoliday]}`, onClick: () => setSelected(nextHoliday) },
   // always-there notes, so someone with no trips or places still gets something to read
   wxNote,
   jar
-    ? piggy.balance < jar.goal && { key: 'jar', icon: jar.icon || 'piggy', text: `${jar.name} อีก ${fmtMoney(jar.goal - piggy.balance)} ถึงเป้า`, onClick: openPiggy }
+    ? piggy.balance < jar.goal && { key: 'jar', icon: jar.icon || 'piggy', text: `${keepThai(jar.name)} อีก ${fmtMoney(jar.goal - piggy.balance)} ถึงเป้า`, onClick: openPiggy }
     : { key: 'jar', icon: 'piggy', text: 'เริ่มเก็บเงินไปเที่ยวกันมั้ย?', onClick: openPiggy },
   !upcoming && !live && { key: 'plan', icon: 'map', text: wantCount ? 'ยังไม่มีทริปเลย วางแผนสักที่มั้ย?' : 'อยากไปไหน เก็บไว้ในแผนที่ก่อนเลย', onClick: () => (wantCount ? openSheet('createPlan') : navigate('/proto/map')) },
   ].filter(Boolean);
@@ -183,13 +244,21 @@ export default function TodayPage() {
           {/* Instagram-style note floating above the avatar */}
           <div className="pt-avatar-note">
             <SpeechNotes notes={notes} />
-            <button className="hp-greet" onClick={() => navigate('/proto/me')}>
-              <span className="hp-profile-avatar"><img src={PEOPLE[ME].avatar} alt="" /></span>
-              <span className="hp-greet-text">
-                <span className="hp-welcome">สวัสดี,</span>
-                <span className="hp-logo">{PEOPLE[ME].name}</span>
-              </span>
+            {/* me: my own calendar (every trip I'm on); the groups sit beside me, same size */}
+            <button aria-pressed={!group} className={`pt-scope-btn${!group ? ' active' : ''}`} onClick={() => actions.setSetting('scope', 'me')}>
+              <span className="pt-group-badge pt-scope-me"><img src={PEOPLE[ME].avatar} alt="" /></span><span>{PEOPLE[ME].name}</span>
             </button>
+          </div>
+          {/* new group stays put; only the list of groups scrolls sideways */}
+          <button className="pt-scope-btn pt-scope-add" onClick={() => openSheet('newGroup')}>
+            <span className="pt-group-badge add"><Icon name="plus" size={22} /></span><span>กลุ่มใหม่</span>
+          </button>
+          <div className="pt-scope">
+            {groups.map((g) => (
+              <button key={g.id} aria-pressed={group?.id === g.id} className={`pt-scope-btn${group?.id === g.id ? ' active' : ''}`} onClick={() => actions.setSetting('scope', g.id)}>
+                <span className="pt-group-badge" style={{ background: g.color }}><Icon name={g.icon} size={22} /></span><span>{g.name}</span>
+              </button>
+            ))}
           </div>
         </div>
         {/* step 2 stop for the card sheet: it rises over the greeting up to here */}
@@ -199,7 +268,7 @@ export default function TodayPage() {
       <div className="hp-stage" ref={stageRef} style={sheet?.clip && atRest ? { clipPath: `inset(0 0 ${sheet.clip}px 0)` } : undefined}>
         {/* the calendar sits where the 3D piggy used to be; the sheet folds it to one week as it rises */}
         <div className="hp-tile hp-plan-card">
-          <MonthCalendar selected={selected} today={today} onSelect={setSelected} stopsOn={stopsOn} plans={plans} />
+          <MonthCalendar selected={selected} today={today} onSelect={setSelected} stopsOn={stopsOn} eventsOn={eventsOn} groupsOn={groupsOn} plans={plans} />
         </div>
       </div>
 
@@ -210,11 +279,34 @@ export default function TodayPage() {
 
         {/* one block for the whole sheet, so a drag anywhere on it (gaps and handle too) moves it */}
         <div className="pt-home-sheet">
+          {/* the group being looked at: who's in it, a new trip for it, its settings */}
+          {group && (
+            <div className="hp-tile pt-group-head">
+              <span className="pt-group-badge lg" style={{ background: group.color }}><Icon name={group.icon} size={24} /></span>
+              <div className="pt-grow">
+                <div className="pt-strong lg ellipsis">{group.name}</div>
+                <Avatars ids={group.members} size={22} />
+              </div>
+              <button className="pt-btn sm" onClick={() => openSheet('createPlan', { groupId: group.id })}><Icon name="plus" size={16} /> ทริป</button>
+              <button className="pt-round-btn sm" aria-label="ข้อมูลกลุ่ม" onClick={() => openSheet('group', { groupId: group.id })}><Icon name="more" size={18} /></button>
+            </div>
+          )}
+
           {/* the selected day's weather, its own card */}
           {wxSel && <WeatherCard wx={wxSel} place={selPlace || 'กรุงเทพฯ'} title={dayTitle} holiday={holiday} night={night} clock={selected === today} utc={countryOf(tripSel?.country).utc} />}
 
+          {/* events on the selected day */}
+          {dayEvents.map((ev) => <EventTile key={ev.id} ev={ev} last={ev.endDate && ev.endDate !== ev.startDate && ev.endDate === selected} onOpen={() => openSheet('event', { eventId: ev.id })} />)}
+
           {/* the selected day's plan */}
           <div className="hp-tile pt-day-card">
+            {plan && (
+              <button className="pt-day-who" onClick={() => navigate(`/proto/plan/${plan.id}`)}>
+                {planGroup && <i className="pt-group-dot" style={{ background: planGroup.color }} />}
+                <Avatars ids={plan.members} size={22} />
+                <span className="pt-muted sm ellipsis">{who}{dayPlans.length > 1 ? ` · อีก ${dayPlans.length - 1} แผน` : ''}</span>
+              </button>
+            )}
             {!wxSel && (
               <div className="pt-day-head">
                 <span className="pt-grow">
@@ -272,8 +364,56 @@ export default function TodayPage() {
               </div>
           </div>
 
+          {/* kept events still to come */}
+          <div className="hp-section">
+            <SectionTitle title="งานที่เก็บไว้" action="เก็บงาน" onAction={() => openSheet('saveEvent')} />
+            {laterEvents.length ? (
+              <div className="hp-tile pt-ev-list">
+                {laterEvents.map((ev) => (
+                  <button key={ev.id} className="pt-ev-row" onClick={() => openSheet('event', { eventId: ev.id })}>
+                    <span className="pt-ev-date"><b>{parseISO(ev.startDate).getDate()}</b>{thaiShort(ev.startDate).split(' ')[1]}</span>
+                    <span className="pt-grow">
+                      <span className="pt-strong ellipsis">{ev.title}</span>
+                      <span className="pt-muted sm ellipsis">{eventRange(ev)} · {ev.place.name}</span>
+                    </span>
+                    <Icon name={EVENT_KINDS[ev.kind]?.icon || 'event'} size={18} />
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <button className="hp-tile pt-ev-empty" onClick={() => openSheet('saveEvent')}>
+                <Icon name="link" size={18} /> วางลิงก์โพสต์งานที่อยากไป
+              </button>
+            )}
+          </div>
+
+          {/* the group's trips still ahead (and ideas), for planning together */}
+          {group && (
+            <div className="hp-section">
+              <SectionTitle title="ทริปของกลุ่ม" action="ทริปใหม่" onAction={() => openSheet('createPlan', { groupId: group.id })} />
+              {groupTrips.length ? (
+                <div className="hp-tile pt-ev-list">
+                  {groupTrips.map((p) => (
+                    <button key={p.id} className="pt-ev-row" onClick={() => navigate(`/proto/plan/${p.id}`)}>
+                      <span className="pt-ev-date" style={{ background: `${group.color}1F`, color: group.color }}>
+                        {p.startDate ? <><b>{parseISO(p.startDate).getDate()}</b>{thaiShort(p.startDate).split(' ')[1]}</> : <Icon name="sparkle" size={18} />}
+                      </span>
+                      <span className="pt-grow">
+                        <span className="pt-strong ellipsis">{p.name}</span>
+                        <span className="pt-muted sm ellipsis">{p.startDate ? thaiShort(p.startDate) : 'ยังไม่กำหนดวัน'} · {p.members.length} คน · {p.stops.length} จุดแวะ</span>
+                      </span>
+                      <Avatars ids={p.members} size={20} max={3} />
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <button className="hp-tile pt-ev-empty" onClick={() => openSheet('createPlan', { groupId: group.id })}><Icon name="plus" size={18} /> วางแผนทริปแรกของกลุ่ม</button>
+              )}
+            </div>
+          )}
+
           {/* where to go */}
-          {!live && suggestion && (
+          {!group && !live && suggestion && (
             <div className="hp-section">
               <SectionTitle title="ไปไหนดี?" action="ดูบนแผนที่" onAction={() => navigate('/proto/map')} />
               <div className="hp-tile pt-suggest">
@@ -295,8 +435,8 @@ export default function TodayPage() {
             </div>
           )}
 
-          {/* upcoming */}
-          {!live && upcoming && (
+          {/* the next trip, only once it's 3 days away or less (the speech note counts down before that) */}
+          {!live && upcoming && diffDays(today, upcoming.startDate) <= 3 && (
             <div className="hp-section">
               <SectionTitle title="กำลังจะไป" action="แผนทั้งหมด" onAction={() => navigate('/proto/plans')} />
               <button className="hp-tile pt-upcoming" onClick={() => navigate(`/proto/plan/${upcoming.id}`)}>
@@ -336,8 +476,8 @@ export default function TodayPage() {
             </div>
           )}
 
-          {/* month spending */}
-          <div className="hp-section">
+          {/* month spending (mine) */}
+          {!group && <div className="hp-section">
             <SectionTitle title="ใช้จ่ายเดือนนี้" action="ดูทั้งหมด" onAction={() => navigate('/proto/me')} />
             <div className="hp-tile pt-spend">
               <div className="pt-spend-total">{fmtMoney(monthSpend)}</div>
@@ -350,7 +490,7 @@ export default function TodayPage() {
                 ))}
               </div>
             </div>
-          </div>
+          </div>}
         </div>
       </div>
     </div>

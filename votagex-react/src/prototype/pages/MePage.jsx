@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useProto, useCollection } from '../useProto';
 import Icon from '../icons';
-import { Seg, SectionTitle, Progress } from '../ui';
+import { Seg, SectionTitle, Progress, Avatars } from '../ui';
 import { ME, PEOPLE, EXPENSE_CATS, parseISO, myShare, fmtMoney, planStatus, jarStats } from '../data';
 
 const CAL_THEME_KEY = 'votagex.proto.calTheme'; // read by the home calendar
@@ -11,7 +11,7 @@ const CAL_THEMES = [['riso', 'Riso'], ['poster', 'โปสเตอร์ 1969'
 const TH_MONTHS = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
 
 export default function MePage() {
-  const { plans, expenses, places, jars, piggyLog, today, simMode, actions, openSheet, showToast } = useProto();
+  const { plans, expenses, places, jars, piggyLog, groups, today, simMode, settings, actions, openSheet, showToast } = useProto();
   const navigate = useNavigate();
   const { provinces, countries } = useCollection();
   const [monthOffset, setMonthOffset] = useState(0);
@@ -31,6 +31,9 @@ export default function MePage() {
   const byPlan = Object.entries(monthExp.reduce((m, e) => ({ ...m, [e.planId]: (m[e.planId] || 0) + myShare(e) }), {})).sort((a, b) => b[1] - a[1]);
   const maxCat = byCat[0]?.[1] || 1;
   const pastPlans = plans.filter((p) => planStatus(p, today) === 'past').length;
+  // demo: today's stops I could pretend to be standing at
+  const todayStops = plans.flatMap((p) => (p.startDate && today >= p.startDate && today <= (p.endDate || p.startDate) ? p.stops.filter((s) => s.date === today) : []));
+  const autoOn = settings.autoCheckIn !== false;
 
   return (
     <div className="me-page pt-me" style={{ display: 'flex' }}>
@@ -47,6 +50,20 @@ export default function MePage() {
           <div className="me-stat"><span className="me-stat-label">เที่ยวมาแล้ว</span><span className="me-stat-value">{pastPlans}</span><span className="me-stat-unit">แผน</span></div>
           <button className="me-stat pt-stat-btn" onClick={() => openSheet('provinces')}><span className="me-stat-label">จังหวัด</span><span className="me-stat-value">{provinces.length}<small>/77</small></span><span className="me-stat-unit">สะสมแล้ว</span></button>
           <div className="me-stat"><span className="me-stat-label">ที่อยากไป</span><span className="me-stat-value">{places.filter((p) => p.status === 'want').length}</span><span className="me-stat-unit">แห่ง · {countries.length} ประเทศ</span></div>
+        </div>
+
+        <div className="me-panel">
+          <div className="me-panel-title">กลุ่มเที่ยว</div>
+          {groups.map((g) => (
+            <button key={g.id} className="me-row" onClick={() => openSheet('group', { groupId: g.id })}>
+              <span className="me-row-icon" style={{ background: g.color, color: '#fff' }}><Icon name={g.icon} size={16} /></span>
+              <span className="pt-grow">{g.name}</span>
+              <Avatars ids={g.members} size={22} max={3} />
+            </button>
+          ))}
+          <button className="me-row" onClick={() => openSheet('newGroup')}>
+            <span className="me-row-icon"><Icon name="plus" size={16} /></span><span className="pt-grow">สร้างกลุ่ม</span>
+          </button>
         </div>
 
         {/* every piggy, including ones not tied to a trip */}
@@ -115,6 +132,10 @@ export default function MePage() {
           <div className="me-row">
             <span className="me-row-icon"><Icon name="clock" size={16} /></span><span className="pt-grow">แจ้งเตือนก่อนถึงจุดแวะ</span><span className="pt-muted">30 นาที</span>
           </div>
+          <button className="me-row" role="switch" aria-checked={autoOn} onClick={() => actions.setSetting('autoCheckIn', !autoOn)}>
+            <span className="me-row-icon"><Icon name="pin" size={16} /></span><span className="pt-grow">เช็คอินอัตโนมัติเมื่อถึงที่</span>
+            <span className={`pt-switch${autoOn ? ' on' : ''}`} />
+          </button>
           <div className="me-row">
             <span className="me-row-icon"><Icon name="calendar" size={16} /></span><span className="pt-grow">ธีมปฏิทิน</span>
             <span className="pt-theme-pick">
@@ -146,6 +167,17 @@ export default function MePage() {
               { value: 'trip', label: 'กำลังเที่ยวโอซาก้า' },
             ]} />
           </div>
+          {autoOn && todayStops.length > 0 && (
+            <div className="pt-pad-x pt-sim-loc">
+              <div className="pt-muted sm">จำลองว่าอยู่ที่</div>
+              <div className="pt-chip-row wrap">
+                {todayStops.map((s) => (
+                  <button key={s.id} className={`pt-chip${settings.simStop === s.id ? ' active' : ''}`} disabled={!!s.checkIns?.[ME]}
+                    onClick={() => actions.setSetting('simStop', settings.simStop === s.id ? null : s.id)}>{s.name}</button>
+                ))}
+              </div>
+            </div>
+          )}
           <button className="me-row" onClick={() => { actions.reset(); showToast('รีเซ็ตข้อมูลตัวอย่างแล้ว'); }}>
             <span className="me-row-icon"><Icon name="shuffle" size={16} /></span><span className="pt-grow">รีเซ็ตข้อมูลตัวอย่าง</span>
           </button>

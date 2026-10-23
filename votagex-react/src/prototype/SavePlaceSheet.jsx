@@ -21,8 +21,6 @@ export default function SavePlaceSheet({ onClose }) {
   const [cat, setCat] = useState('sight');
   const [note, setNote] = useState('');
   const [status, setStatus] = useState('want');
-  const [clipResult, setClipResult] = useState({ url: null, state: 'idle' });
-  const [showEmbed, setShowEmbed] = useState(true);
 
   const shared = useMemo(() => parseShared(text), [text]);
 
@@ -30,7 +28,6 @@ export default function SavePlaceSheet({ onClose }) {
   const applyText = (t) => {
     const s = parseShared(t);
     setText(t);
-    setShowEmbed(s?.type === 'tiktok');
     if (s?.type === 'maps' && s.place) {
       setPicked({ ...s.place, key: 'maps', area: 'จากลิงก์ Google Maps', country: 'TH', prov: '', cat: 'sight' });
       setQuery('');
@@ -39,18 +36,6 @@ export default function SavePlaceSheet({ onClose }) {
     setPicked(null);
     setQuery(!s ? '' : s.type === 'text' ? s.caption : (s.candidates[0] || ''));
   };
-
-  // Confirm TikTok clips through oEmbed (public, CORS-enabled)
-  const tiktokUrl = shared?.type === 'tiktok' && !shared.short ? shared.url : null;
-  useEffect(() => {
-    if (!tiktokUrl) return undefined;
-    let alive = true;
-    checkTikTok(tiktokUrl)
-      .then(() => alive && setClipResult({ url: tiktokUrl, state: 'ok' }))
-      .catch(() => alive && setClipResult({ url: tiktokUrl, state: 'fail' }));
-    return () => { alive = false; };
-  }, [tiktokUrl]);
-  const clip = { state: !tiktokUrl ? 'idle' : clipResult.url === tiktokUrl ? clipResult.state : 'loading' };
 
   const search = usePlaceSearch(picked ? '' : query);
 
@@ -117,40 +102,7 @@ export default function SavePlaceSheet({ onClose }) {
       )}
 
       {/* 2. source preview */}
-      {shared && shared.type !== 'text' && (
-        <div className="pt-source-card">
-          <div className="pt-source-head">
-            <SourceBadge type={shared.type === 'web' ? 'manual' : shared.type} size={30} />
-            <div className="pt-grow">
-              <div className="pt-strong">{SOURCES[shared.type]?.label || 'ลิงก์เว็บ'}{shared.author ? ` · ${shared.author}` : ''}</div>
-              <div className="pt-muted ellipsis">{shared.url}</div>
-            </div>
-            {shared.type === 'instagram' && shared.code && (
-              <button className="pt-chip" onClick={() => setShowEmbed((v) => !v)}>{showEmbed ? 'ซ่อนโพสต์' : 'ดูโพสต์'}</button>
-            )}
-          </div>
-          {shared.type === 'tiktok' && (
-            <div className={`pt-clip-status ${clip.state}`}>
-              {shared.short && 'อ่านลิงก์สั้นไม่ได้'}
-              {!shared.short && clip.state === 'loading' && 'กำลังโหลดคลิป…'}
-              {!shared.short && clip.state === 'ok' && <><Icon name="check" size={14} stroke={2.4} className="pt-inline-icon" /> พบคลิป</>}
-              {!shared.short && clip.state === 'fail' && 'เปิดคลิปไม่ได้'}
-            </div>
-          )}
-          {shared.type === 'tiktok' && shared.videoId && clip.state === 'ok' && showEmbed && (
-            <iframe className="pt-embed tiktok" src={tiktokPlayer(shared.videoId)} title="TikTok" allow="encrypted-media; fullscreen" />
-          )}
-          {shared.type === 'instagram' && shared.code && showEmbed && (
-            <iframe className="pt-embed ig" src={instagramEmbed(shared.igKind, shared.code)} title="Instagram" />
-          )}
-          {shared.type === 'maps' && !shared.place && (
-            <div className="pt-clip-status fail">อ่านลิงก์สั้นไม่ได้</div>
-          )}
-          {shared.caption && (
-            <div className="pt-caption">“{shared.caption}”</div>
-          )}
-        </div>
-      )}
+      {shared && shared.type !== 'text' && <SourcePreview key={shared.url} shared={shared} />}
 
       {/* 3. which place? */}
       {shared && !picked && (
@@ -218,6 +170,57 @@ export function ResultList({ search, onPick }) {
           <Icon name="plus" size={18} />
         </button>
       ))}
+    </div>
+  );
+}
+
+// The shared post: where it's from, the clip or post itself (TikTok checked through oEmbed, public and
+// CORS-enabled) and its caption. Used when saving a place or an event.
+export function SourcePreview({ shared }) {
+  const [clipResult, setClipResult] = useState({ url: null, state: 'idle' });
+  const [showEmbed, setShowEmbed] = useState(shared.type === 'tiktok');
+  const tiktokUrl = shared.type === 'tiktok' && !shared.short ? shared.url : null;
+  useEffect(() => {
+    if (!tiktokUrl) return undefined;
+    let alive = true;
+    checkTikTok(tiktokUrl)
+      .then(() => alive && setClipResult({ url: tiktokUrl, state: 'ok' }))
+      .catch(() => alive && setClipResult({ url: tiktokUrl, state: 'fail' }));
+    return () => { alive = false; };
+  }, [tiktokUrl]);
+  const clip = { state: !tiktokUrl ? 'idle' : clipResult.url === tiktokUrl ? clipResult.state : 'loading' };
+  return (
+    <div className="pt-source-card">
+      <div className="pt-source-head">
+        <SourceBadge type={shared.type === 'web' ? 'manual' : shared.type} size={30} />
+        <div className="pt-grow">
+          <div className="pt-strong">{SOURCES[shared.type]?.label || 'ลิงก์เว็บ'}{shared.author ? ` · ${shared.author}` : ''}</div>
+          <div className="pt-muted ellipsis">{shared.url}</div>
+        </div>
+        {shared.type === 'instagram' && shared.code && (
+          <button className="pt-chip" onClick={() => setShowEmbed((v) => !v)}>{showEmbed ? 'ซ่อนโพสต์' : 'ดูโพสต์'}</button>
+        )}
+      </div>
+      {shared.type === 'tiktok' && (
+        <div className={`pt-clip-status ${clip.state}`}>
+          {shared.short && 'อ่านลิงก์สั้นไม่ได้'}
+          {!shared.short && clip.state === 'loading' && 'กำลังโหลดคลิป…'}
+          {!shared.short && clip.state === 'ok' && <><Icon name="check" size={14} stroke={2.4} className="pt-inline-icon" /> พบคลิป</>}
+          {!shared.short && clip.state === 'fail' && 'เปิดคลิปไม่ได้'}
+        </div>
+      )}
+      {shared.type === 'tiktok' && shared.videoId && clip.state === 'ok' && showEmbed && (
+        <iframe className="pt-embed tiktok" src={tiktokPlayer(shared.videoId)} title="TikTok" allow="encrypted-media; fullscreen" />
+      )}
+      {shared.type === 'instagram' && shared.code && showEmbed && (
+        <iframe className="pt-embed ig" src={instagramEmbed(shared.igKind, shared.code)} title="Instagram" />
+      )}
+      {shared.type === 'maps' && !shared.place && (
+        <div className="pt-clip-status fail">อ่านลิงก์สั้นไม่ได้</div>
+      )}
+      {shared.caption && (
+        <div className="pt-caption">“{shared.caption}”</div>
+      )}
     </div>
   );
 }

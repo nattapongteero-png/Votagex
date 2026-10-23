@@ -100,7 +100,7 @@ function Art({ month }) {
   );
 }
 
-export function PosterPage({ ym, weeks, keep, today, selected, stopsOn, onSelect, renderWx, className = '', style, ...rest }) {
+export function PosterPage({ ym, weeks, keep, today, selected, stopsOn, eventsOn = {}, groupsOn = {}, onSelect, renderWx, className = '', style, ...rest }) {
   const [y, m] = ym.split('-').map(Number);
   return (
     <div className={`pt-riso-page pt-poster ${className}`} style={style} {...rest}>
@@ -128,7 +128,7 @@ export function PosterPage({ ym, weeks, keep, today, selected, stopsOn, onSelect
                 const cls = `pt-poster-day${dow === 6 ? ' sun' : ''}${d.slice(0, 7) !== ym ? ' other' : ''}${d === today ? ' today' : ''}${d === selected ? ' selected' : ''}${d < today ? ' past' : ''}${stopsOn[d] ? ' plan' : ''}${HOLIDAYS[d] ? ' holiday' : ''}`;
                 return (
                   <button key={d} className={cls} title={HOLIDAYS[d]} onClick={() => onSelect(d)}>
-                    <b>{Number(d.slice(8))}</b>
+                    <b>{Number(d.slice(8))}{eventsOn[d] && <i className="pt-ev-dot" />}{groupsOn[d] && <span className="pt-grp-dots">{groupsOn[d].map((c) => <i key={c} style={{ background: c }} />)}</span>}</b>
                     {renderWx(d)}
                   </button>
                 );

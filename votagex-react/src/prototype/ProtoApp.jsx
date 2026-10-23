@@ -10,6 +10,7 @@ import MapPage from './pages/MapPage';
 import MePage from './pages/MePage';
 import RecapPage from './pages/RecapPage';
 import { useRates } from './rates';
+import AutoCheckIn from './AutoCheckIn';
 import './proto.css';
 
 const TABS = [
@@ -56,8 +57,14 @@ function TabsLayout() {
 }
 
 function Toast() {
-  const { toast } = useProto();
-  return toast ? <div className="pt-toast" role="status">{toast}</div> : null;
+  const { toast, hideToast } = useProto();
+  if (!toast) return null;
+  return (
+    <div className={`pt-toast${toast.action ? ' has-action' : ''}`} role="status">
+      <span>{toast.msg}</span>
+      {toast.action && <button className="pt-toast-action" onClick={() => { toast.action.onClick(); hideToast(); }}>{toast.action.label}</button>}
+    </div>
+  );
 }
 
 export default function ProtoApp() {
@@ -79,6 +86,7 @@ export default function ProtoApp() {
         <Route path="*" element={<Navigate to="today" replace />} />
       </Routes>
       <ProtoSheets />
+      <AutoCheckIn />
       <Toast />
       </div>
     </ProtoProvider>
