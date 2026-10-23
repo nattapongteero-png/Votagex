@@ -4,7 +4,7 @@ import { useProto, useCollection } from '../useProto';
 import Icon, { Flag, SourceBadge } from '../icons';
 import MapView from '../MapView';
 import { CatIcon, Chip } from '../ui';
-import { PLACE_CATS, SOURCES, HOME, distanceKm, fmtKm, directionsUrl, planStatus, countryOf } from '../data';
+import { PLACE_CATS, SOURCES, HOME, distanceKm, fmtKm, directionsUrl, planStatus, countryOf, eventRange, eventEnded } from '../data';
 
 export default function MapPage() {
   const { places, plans, today, openSheet } = useProto();
@@ -25,10 +25,14 @@ export default function MapPage() {
   }, [places, plans, today]);
 
   const regions = [...new Set(all.map((p) => p.country))];
+  // places with dates (events) are places too: the ones still to come lead, soonest first; ended ones
+  // drop out of "อยากไป" but stay under "ทั้งหมด"
+  const upcoming = (p) => Boolean(p.startDate) && !eventEnded(p, today);
+  const shown = (p) => (status === 'all' ? true : status === 'dated' ? upcoming(p) : p.status === status && !eventEnded(p, today));
   const list = all
-    .filter((p) => p.country === region && (status === 'all' || p.status === status) && (cat === 'all' || p.cat === cat))
+    .filter((p) => p.country === region && shown(p) && (cat === 'all' || p.cat === cat))
     .map((p) => ({ ...p, km: region === 'TH' ? distanceKm(HOME, p) : null }))
-    .sort((a, b) => (a.km ?? 0) - (b.km ?? 0));
+    .sort((a, b) => (upcoming(b) - upcoming(a)) || (upcoming(a) && a.startDate.localeCompare(b.startDate)) || (a.km ?? 0) - (b.km ?? 0));
 
   const select = (id) => {
     setSel(id);
@@ -44,12 +48,13 @@ export default function MapPage() {
         <div className="pt-map-bar">
           <div>
             <div className="pt-title sm">แผนที่ของฉัน</div>
-            <div className="pt-sub">{list.length} แห่ง · {status === 'want' ? 'ที่อยากไป' : status === 'visited' ? 'ที่เคยไป' : 'ทั้งหมด'}</div>
+            <div className="pt-sub">{list.length} แห่ง · {{ want: 'ที่อยากไป', visited: 'ที่เคยไป', dated: 'มีวันจัด' }[status] || 'ทั้งหมด'}</div>
           </div>
-          <button className="pt-pill-btn" onClick={() => openSheet('savePlace')}><Icon name="bookmark" size={16} /> เซฟสถานที่</button>
+          <button className="pt-pill-btn" onClick={() => openSheet('savePlace')}><Icon name="bookmark" size={16} /> เก็บ</button>
         </div>
         <div className="pt-chip-row scroll">
           <Chip active={status === 'want'} onClick={() => setStatus('want')}>อยากไป</Chip>
+          <Chip active={status === 'dated'} onClick={() => setStatus('dated')}><Icon name="event" size={14} className="pt-inline-icon" /> มีวันจัด</Chip>
           <Chip active={status === 'visited'} onClick={() => setStatus('visited')}>เคยไป</Chip>
           <Chip active={status === 'all'} onClick={() => setStatus('all')}>ทั้งหมด</Chip>
           <button className="pt-chip trophy" onClick={() => openSheet('provinces')}><Icon name="trophy" size={14} /> {provinces.length}/77 จังหวัด</button>
@@ -64,22 +69,26 @@ export default function MapPage() {
 
       <div className="pt-rail" ref={railRef}>
         {list.map((p) => (
-          <div key={p.id} data-id={p.id} className={`pt-place-card${sel === p.id ? ' selected' : ''}`} onClick={() => setSel(p.id)}>
+          // a second tap on the chosen card opens it
+          <div key={p.id} data-id={p.id} className={`pt-place-card${sel === p.id ? ' selected' : ''}${eventEnded(p, today) ? ' ended' : ''}`}
+            onClick={() => (sel === p.id && p.source?.type !== 'plan' ? openSheet('place', { placeId: p.id }) : setSel(p.id))}>
             <div className="pt-place-top">
               <CatIcon cat={p.cat} size={44} />
               <div className="pt-grow">
                 <div className="pt-strong ellipsis">{p.name}</div>
-                <div className="pt-muted sm ellipsis">{p.area}{p.km != null ? ` · ${fmtKm(p.km)}` : ''}</div>
+                <div className="pt-muted sm ellipsis">{p.venue || p.area}{p.km != null ? ` · ${fmtKm(p.km)}` : ''}</div>
               </div>
               {p.source?.type !== 'plan' && <SourceBadge type={p.source?.type || 'manual'} size={24} />}
             </div>
-            <div className="pt-place-note ellipsis">
-              {p.source?.type === 'plan' ? `เคยไปใน “${p.planName}”` : p.note || `บันทึกจาก ${SOURCES[p.source?.type]?.label || 'ค้นหาเอง'}${p.source?.author ? ` ${p.source.author}` : ''}`}
+            <div className={`pt-place-note ellipsis${p.startDate ? ' dated' : ''}`}>
+              {p.startDate ? `${eventRange(p)}${p.time ? ` · ${p.time} น.` : ''}${eventEnded(p, today) ? ' · จบแล้ว' : ''}` : p.source?.type === 'plan' ? `เคยไปใน “${p.planName}”` : p.note || `บันทึกจาก ${SOURCES[p.source?.type]?.label || 'ค้นหาเอง'}${p.source?.author ? ` ${p.source.author}` : ''}`}
             </div>
             <div className="pt-row-actions">
               <a className="pt-btn light sm" href={directionsUrl(p)} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()}><Icon name="nav" size={15} /> นำทาง</a>
               {p.source?.type === 'plan' ? (
                 <button className="pt-btn sm" onClick={(e) => { e.stopPropagation(); navigate(`/proto/plan/${p.planId}?tab=memories`); }}>ดูความทรงจำ</button>
+              ) : upcoming(p) ? (
+                <button className="pt-btn sm" onClick={(e) => { e.stopPropagation(); openSheet('place', { placeId: p.id }); }}>ไปงานนี้</button>
               ) : (
                 <button className="pt-btn sm" onClick={(e) => { e.stopPropagation(); openSheet('addToPlan', { placeId: p.id }); }}>เพิ่มลงแผน</button>
               )}

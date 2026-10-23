@@ -132,3 +132,35 @@ export async function checkTikTok(url) {
 
 export const tiktokPlayer = (id) => `https://www.tiktok.com/player/v1/${id}?description=1&music_info=0&rel=0`;
 export const instagramEmbed = (kind, code) => `https://www.instagram.com/${kind}/${code}/embed/`;
+
+/* ---------- reading a post's caption: when, what kind of event, its name ---------- */
+const MONTHS = [
+  ['ม.ค.', 'มกรา'], ['ก.พ.', 'กุมภา'], ['มี.ค.', 'มีนา'], ['เม.ย.', 'เมษา'], ['พ.ค.', 'พฤษภา'], ['มิ.ย.', 'มิถุนา'],
+  ['ก.ค.', 'กรกฎา'], ['ส.ค.', 'สิงหา'], ['ก.ย.', 'กันยา'], ['ต.ค.', 'ตุลา'], ['พ.ย.', 'พฤศจิกา'], ['ธ.ค.', 'ธันวา'],
+];
+const esc = (s) => s.replace(/\./g, '\\.');
+const MONTH_RE = MONTHS.map(([a, b]) => `${esc(a)}|${b}\\S*`).join('|');
+const DATE_RE = new RegExp(`(\\d{1,2})(?:\\s*[-–]\\s*(\\d{1,2}))?\\s*(${MONTH_RE})`);
+const TIME_RE = /(?:^|\D)([01]?\d|2[0-3])[:.]([0-5]\d)(?!\d)/;
+const KIND_WORDS = [
+  ['concert', /คอนเสิร์ต|concert|ดนตรี|live|เฟส|fest/i],
+  ['market', /ตลาด|market|flea/i],
+  ['popup', /ป๊อป|pop.?up|ขาย|ร้าน|booth/i],
+];
+
+// "1-2 พ.ย." → this year's (or next year's, if it has passed) start and end
+export function guessDates(caption, today) {
+  const m = caption?.match(DATE_RE);
+  if (!m) return null;
+  const month = MONTHS.findIndex(([a, b]) => m[3] === a || m[3].startsWith(b));
+  let year = Number(today.slice(0, 4));
+  const at = (d) => `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+  const end = Number(m[2] || m[1]);
+  if (at(end) < today) year++;
+  return { start: at(Number(m[1])), end: at(end) };
+}
+export const guessTime = (caption) => { const m = caption?.match(TIME_RE); return m ? `${m[1].padStart(2, '0')}:${m[2]}` : ''; };
+export const guessKind = (caption) => KIND_WORDS.find(([, re]) => re.test(caption || ''))?.[0] || 'other';
+// the caption up to the first date, pin or hashtag
+export const guessTitle = (caption) => (caption || '').split(/📍|#|\n|\d{1,2}\s*[-–]?\s*\d{0,2}\s*(?:ม\.ค|ก\.พ|มี\.ค|เม\.ย|พ\.ค|มิ\.ย|ก\.ค|ส\.ค|ก\.ย|ต\.ค|พ\.ย|ธ\.ค)|เสาร์|อาทิตย์/)[0]
+  .replace(/[^\p{L}\p{M}\p{N}\s\-&'’.]/gu, '').trim().slice(0, 60);

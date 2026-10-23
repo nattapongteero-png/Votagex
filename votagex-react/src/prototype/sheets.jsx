@@ -7,12 +7,12 @@ import { Sheet, Avatar, Chip, CatIcon, Progress, Seg } from './ui';
 import Icon, { Flag } from './icons';
 import SavePlaceSheet, { ResultList } from './SavePlaceSheet';
 import { PiggySheet, NewJarSheet } from './PiggySheet';
-import { SaveEventSheet, EventSheet } from './EventSheet';
+import PlaceSheet from './PlaceSheet';
 import { NewGroupSheet, GroupSheet } from './GroupSheet';
 import { PlanMenuSheet, EditPlanSheet, StopSheet } from './PlanSheets';
 import { MonthSheet } from './MonthMoney';
 import {
-  ME, PEOPLE, CURRENCIES, EXPENSE_CATS, MOODS, KINDS, DEMO_PROMPTPAY, PLACE_CATS, sendInvite, compressImage,
+  ME, PEOPLE, CURRENCIES, EXPENSE_CATS, MOODS, KINDS, DEMO_PROMPTPAY, PLACE_CATS, sendInvite, compressImage, eventEnded,
   countryOf, fmtMoney, addDays, parseISO, thaiShort, thaiRange, planStatus, diffDays,
 } from './data';
 import { usePlaceSearch } from './placeSearch';
@@ -24,8 +24,7 @@ function QuickAddSheet({ onClose }) {
   const items = [
     { name: 'expense', icon: 'wallet', label: 'จดรายจ่าย', tone: '#FFF1E6', color: '#EA580C' },
     { name: 'memory', icon: 'camera', label: 'รูป / โน้ต', tone: '#ECEEFE', color: '#4F46E5' },
-    { name: 'savePlace', icon: 'bookmark', label: 'เซฟสถานที่', tone: '#E6F7F4', color: '#0D9488' },
-    { name: 'saveEvent', icon: 'event', label: 'เก็บงาน', tone: '#F1EBFE', color: '#7C3AED' },
+    { name: 'savePlace', icon: 'bookmark', label: 'เก็บที่อยากไป', tone: '#E6F7F4', color: '#0D9488' },
     { name: 'createPlan', props: { type: 'outing' }, icon: 'shop', label: 'นัดใหม่', tone: '#FDECF4', color: '#DB2777' },
     { name: 'createPlan', props: { type: 'trip' }, icon: 'plane', label: 'ทริปใหม่', tone: '#E5F4FC', color: '#0284C7' },
   ];
@@ -339,13 +338,13 @@ function CreatePlanSheet({ onClose, place, groupId, type: startType, date, time:
 // One search box: before typing it lists the places I want to go, typing narrows those and searches the map too.
 // The time comes after, from the toast or by tapping the stop.
 function AddStopSheet({ onClose, planId, date }) {
-  const { plans, places, actions, showToast, openSheet } = useProto();
+  const { plans, places, actions, showToast, openSheet, today } = useProto();
   const plan = plans.find((p) => p.id === planId);
   const [query, setQuery] = useState('');
   const bias = plan?.destination || undefined;
   const search = usePlaceSearch(query, { bias });
   const q = query.trim().toLowerCase();
-  const saved = places.filter((p) => p.status === 'want' && (p.country || 'TH') === (plan?.country || 'TH') && (!q || p.name.toLowerCase().includes(q)));
+  const saved = places.filter((p) => p.status === 'want' && !eventEnded(p, today) && (p.country || 'TH') === (plan?.country || 'TH') && (!q || p.name.toLowerCase().includes(q)));
 
   const add = (pl, close) => {
     const stopId = actions.addStop(planId, { date: date || null, time: '', name: pl.name, area: pl.area, prov: pl.prov, lat: pl.lat, lng: pl.lng, cat: pl.cat, placeId: pl.savedAt ? pl.id : undefined });
@@ -563,8 +562,7 @@ const SHEETS = {
   provinces: ProvinceSheet,
   piggy: PiggySheet,
   newJar: NewJarSheet,
-  saveEvent: SaveEventSheet,
-  event: EventSheet,
+  place: PlaceSheet,
   newGroup: NewGroupSheet,
   group: GroupSheet,
   planMenu: PlanMenuSheet,

@@ -22,15 +22,14 @@
 ```
 users/{uid}                          โปรไฟล์: name, avatar
   private/settings                   ตั้งค่า: autoCheckIn, scope, calTheme, monthBudget, promptpay (สำเนาไป groups/*/members)
-  places/{id}                        สถานที่ที่เซฟ
-  events/{id}                        งานที่เก็บ (ยังไม่แชร์)
+  places/{id}                        ที่อยากไป (ของฉันคนเดียว) งานที่มีวันจัดก็อยู่ที่นี่: startDate, endDate, time, kind, venue
   plans/{pid}                        ทริปคนเดียว  ─┐ โครงเดียวกับทริปกลุ่ม
     stops/ expenses/ memories/                   ─┘
   jars/{jid}, jars/{jid}/log/{id}    กระปุกเก็บเงิน (ควรมี)
 
 groups/{gid}                         name, icon, color, createdBy, memberIds[], archived, hidden?, joinCode?
   members/{uid}                      ข้อมูลของฉันในกลุ่ม: promptpay (ให้เพื่อนสแกนโอนคืน)
-  events/{id}                        งานที่แชร์ให้กลุ่ม: …, sharedBy
+  places/{id}                        ที่อยากไปที่แชร์ให้กลุ่ม (รวมงาน): …, by (คนแชร์)
   plans/{pid}                        name, kind, startDate, endDate, memberIds[] (คนที่ไป), currency, budget,
                                      destination, cover, checklist[], settled[], createdBy, groupId
     stops/{sid}                      date, time, name, area, lat, lng, cat, note, placeId?, eventId?,
@@ -64,12 +63,12 @@ invites/{code}                       groupId, createdBy, expiresAt (≤ 30 ว�
 | การโอนคืน | สมาชิก | คนโอนบันทึก "โอนแล้ว" หรือคนรับบันทึก "ได้รับแล้ว" (เงินสด); **คนรับเท่านั้นที่ยืนยัน** | คนโอนหรือคนรับ |
 | สลิป | **คนโอนกับคนรับเท่านั้น** | คนโอน | คนโอนหรือคนรับ |
 | ความทรงจำ | สมาชิก | ของตัวเอง | ของตัวเอง |
-| งานที่แชร์ | สมาชิก | คนแชร์ | คนแชร์ |
+| ที่อยากไปที่แชร์ให้กลุ่ม (รวมงาน) | สมาชิก | คนแชร์ | คนแชร์ |
 | พร้อมเพย์ `members/{uid}` | สมาชิกกลุ่มเดียวกัน | เจ้าของ | เจ้าของ |
 
 คนที่ลบทริปได้ (คนสร้างทริปหรือคนสร้างกลุ่ม) ลบของข้างในได้ด้วย เพื่อให้ลบทริปทีเดียวหมด
 
-ชุดทดสอบตรวจทุกข้อในตารางนี้ ทั้งกรณีที่ต้องผ่านและกรณีที่ต้องถูกปฏิเสธ (22 ข้อ ผ่านครบ)
+ชุดทดสอบตรวจทุกข้อในตารางนี้ ทั้งกรณีที่ต้องผ่านและกรณีที่ต้องถูกปฏิเสธ (23 ข้อ ผ่านครบ)
 
 **ทำไมสลิปอยู่ใน Firestore:** ที่เก็บไฟล์ของ Firebase (Storage) ต้องผูกบัตรตั้งแต่ 3 ก.พ. 2569 จึงย่อรูปสลิปแล้วเก็บเป็นเอกสาร
 ใน Firestore แทน (เอกสารละไม่เกิน 1 MiB, โควตาฟรี 1 GiB เก็บได้ราวหมื่นใบ) และแยกเอกสารออกมาเพื่อให้กฎซ่อนจากคนอื่นในกลุ่มได้

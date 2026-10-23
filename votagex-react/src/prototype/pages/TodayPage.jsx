@@ -13,7 +13,7 @@ import HOLIDAYS from '../thHolidays.json';
 import {
   ME, PEOPLE, CURRENCIES, HOME, addDays, parseISO, diffDays, thaiShort, byTime, localHM,
   stopState, keepThai, fmtMoney, distanceKm, fmtKm, directionsUrl, countryOf, planStatus, toTHB, jarStats,
-  EVENT_KINDS, KINDS, eventOn, eventRange,
+  EVENT_KINDS, KINDS, eventOn,
 } from '../data';
 
 const FOLD_TOP = 12; // folded calendar's distance from the top of the screen
@@ -27,7 +27,7 @@ function StepIcon({ state }) {
   return <svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.6" fill="none" stroke="currentColor" strokeWidth="1.4" strokeDasharray={state === 'missed' ? '2 2' : undefined} /></svg>;
 }
 
-// a kept event on the selected day, under the weather
+// a saved place with dates (an event) on the selected day, under the weather
 function EventTile({ ev, last, onOpen }) {
   const kind = EVENT_KINDS[ev.kind] || EVENT_KINDS.other;
   return (
@@ -35,8 +35,8 @@ function EventTile({ ev, last, onOpen }) {
       <span className="pt-ev-icon"><Icon name={kind.icon} size={22} /></span>
       <span className="pt-grow">
         <span className="pt-muted sm">{kind.label}{ev.time ? ` · ${ev.time} น.` : ''}</span>
-        <span className="pt-strong ellipsis">{ev.title}</span>
-        <span className="pt-muted sm ellipsis">{ev.place.name} · ห่าง {fmtKm(distanceKm(HOME, ev.place))}</span>
+        <span className="pt-strong ellipsis">{ev.name}</span>
+        <span className="pt-muted sm ellipsis">{ev.venue || ev.area} · ห่าง {fmtKm(distanceKm(HOME, ev))}</span>
       </span>
       {last ? <span className="pt-ev-badge">วันสุดท้าย</span> : <Icon name="next" size={18} />}
     </button>
@@ -44,11 +44,12 @@ function EventTile({ ev, last, onOpen }) {
 }
 
 export default function TodayPage() {
-  const { plans: allPlans, places, expenses, memories, jars, piggyLog, events: allEvents, groups, settings, today, openSheet, actions } = useProto();
+  const { plans: allPlans, places, expenses, memories, jars, piggyLog, groups, settings, today, openSheet, actions } = useProto();
   // whose calendar: mine (every trip I'm on) or one group's (only its trips, and the events shared with it)
   const group = groups.find((g) => g.id === settings.scope) || null;
   const plans = useMemo(() => (group ? allPlans.filter((p) => p.groupId === group.id) : allPlans.filter((p) => p.members.includes(ME))), [allPlans, group]);
-  const events = useMemo(() => (group ? allEvents.filter((e) => e.groupId === group.id) : allEvents), [allEvents, group]);
+  // events are saved places with dates
+  const events = useMemo(() => places.filter((p) => p.startDate && (!group || p.groupId === group.id)), [places, group]);
   const navigate = useNavigate();
   const [picked, setPicked] = useState(null);
   const [seed, setSeed] = useState(0);
@@ -144,7 +145,6 @@ export default function TodayPage() {
   const stops = plan ? plan.stops.filter((s) => s.date === selected).sort(byTime) : [];
   const planGroup = plan && groups.find((g) => g.id === plan.groupId);
   const who = !plan ? '' : planGroup ? `ไปกับ${planGroup.name}` : plan.members.length > 1 ? `ไปกับ ${plan.members.filter((id) => id !== ME).map((id) => PEOPLE[id]?.name).join(', ')}` : 'ไปคนเดียว';
-  const groupTrips = group ? plans.filter((p) => planStatus(p, today) !== 'past').sort((a, b) => (a.startDate || '9').localeCompare(b.startDate || '9')) : [];
   const country = countryOf(plan?.country);
   const nowHM = localHM(country.utc);
   const live = plan && selected === today && planStatus(plan, today) === 'ongoing' && plan.kind !== 'outing';
@@ -174,19 +174,17 @@ export default function TodayPage() {
   const dayTitle = selected === today ? `วันนี้ · ${thaiShort(selected)}` : `${TH_DOW[parseISO(selected).getDay()]} ${thaiShort(selected)}`;
   const holiday = HOLIDAYS[selected];
   const daySub = [holiday, stops.length ? `${stops.length} จุดแวะ${plan ? ` · ${plan.name}` : ''}` : 'ยังไม่มีแผน'].filter(Boolean).join(' · ');
-  // kept events: those on the selected day, then the next ones still to come
+  // events on the selected day
   const dayEvents = events.filter((ev) => eventOn(ev, selected)).sort((a, b) => (a.time || '99').localeCompare(b.time || '99'));
-  const laterEvents = events.filter((ev) => (ev.endDate || ev.startDate) >= today && !eventOn(ev, selected))
-    .sort((a, b) => a.startDate.localeCompare(b.startDate)).slice(0, 3);
   // the soonest event worth a note: on today, tomorrow, or ending within two days
   const evSoon = events.filter((ev) => (ev.endDate || ev.startDate) >= today && ev.startDate <= addDays(today, 1))
     .sort((a, b) => a.startDate.localeCompare(b.startDate))[0];
   const evNote = evSoon && (() => {
-    const away = `ห่าง ${fmtKm(distanceKm(HOME, evSoon.place))}`;
-    const open = () => openSheet('event', { eventId: evSoon.id });
-    if (evSoon.startDate > today) return { key: 'event', icon: EVENT_KINDS[evSoon.kind]?.icon || 'event', text: `พรุ่งนี้มีงาน${keepThai(evSoon.title)} ${away}`, onClick: open };
+    const away = `ห่าง ${fmtKm(distanceKm(HOME, evSoon))}`;
+    const open = () => openSheet('place', { placeId: evSoon.id });
+    if (evSoon.startDate > today) return { key: 'event', icon: EVENT_KINDS[evSoon.kind]?.icon || 'event', text: `พรุ่งนี้มีงาน${keepThai(evSoon.name)} ${away}`, onClick: open };
     const left = diffDays(today, evSoon.endDate || evSoon.startDate);
-    return { key: 'event', icon: EVENT_KINDS[evSoon.kind]?.icon || 'event', text: left > 0 ? `${keepThai(evSoon.title)} อีก ${left} วันจบ ${away}` : `วันนี้วันสุดท้าย${keepThai(evSoon.title)}`, onClick: open };
+    return { key: 'event', icon: EVENT_KINDS[evSoon.kind]?.icon || 'event', text: left > 0 ? `${keepThai(evSoon.name)} อีก ${left} วันจบ ${away}` : `วันนี้วันสุดท้าย${keepThai(evSoon.name)}`, onClick: open };
   })();
   // the next day off within a week (today included), so there's time to plan something
   const nextHoliday = Object.keys(HOLIDAYS).find((d) => d >= today && d <= addDays(today, 7));
@@ -283,7 +281,6 @@ export default function TodayPage() {
                 <div className="pt-strong lg ellipsis">{group.name}</div>
                 <Avatars ids={group.members} size={22} />
               </div>
-              <button className="pt-btn sm" onClick={() => openSheet('createPlan', { groupId: group.id })}><Icon name="plus" size={16} /> แผน</button>
               <button className="pt-round-btn sm" aria-label="ข้อมูลกลุ่ม" onClick={() => openSheet('group', { groupId: group.id })}><Icon name="more" size={18} /></button>
             </div>
           )}
@@ -292,7 +289,7 @@ export default function TodayPage() {
           {wxSel && <WeatherCard wx={wxSel} place={selPlace || 'กรุงเทพฯ'} title={dayTitle} holiday={holiday} night={night} clock={selected === today} utc={countryOf(tripSel?.country).utc} />}
 
           {/* events on the selected day */}
-          {dayEvents.map((ev) => <EventTile key={ev.id} ev={ev} last={ev.endDate && ev.endDate !== ev.startDate && ev.endDate === selected} onOpen={() => openSheet('event', { eventId: ev.id })} />)}
+          {dayEvents.map((ev) => <EventTile key={ev.id} ev={ev} last={ev.endDate && ev.endDate !== ev.startDate && ev.endDate === selected} onOpen={() => openSheet('place', { placeId: ev.id })} />)}
 
           {/* the selected day's plan */}
           <div className="hp-tile pt-day-card">
@@ -370,54 +367,6 @@ export default function TodayPage() {
                 )}
               </div>
           </div>
-
-          {/* kept events still to come */}
-          <div className="hp-section">
-            <SectionTitle title="งานที่เก็บไว้" action="เก็บงาน" onAction={() => openSheet('saveEvent')} />
-            {laterEvents.length ? (
-              <div className="hp-tile pt-ev-list">
-                {laterEvents.map((ev) => (
-                  <button key={ev.id} className="pt-ev-row" onClick={() => openSheet('event', { eventId: ev.id })}>
-                    <span className="pt-ev-date"><b>{parseISO(ev.startDate).getDate()}</b>{thaiShort(ev.startDate).split(' ')[1]}</span>
-                    <span className="pt-grow">
-                      <span className="pt-strong ellipsis">{ev.title}</span>
-                      <span className="pt-muted sm ellipsis">{eventRange(ev)} · {ev.place.name}</span>
-                    </span>
-                    <Icon name={EVENT_KINDS[ev.kind]?.icon || 'event'} size={18} />
-                  </button>
-                ))}
-              </div>
-            ) : (
-              <button className="hp-tile pt-ev-empty" onClick={() => openSheet('saveEvent')}>
-                <Icon name="link" size={18} /> วางลิงก์โพสต์งานที่อยากไป
-              </button>
-            )}
-          </div>
-
-          {/* the group's trips still ahead (and ideas), for planning together */}
-          {group && (
-            <div className="hp-section">
-              <SectionTitle title="แผนของกลุ่ม" action="แผนใหม่" onAction={() => openSheet('createPlan', { groupId: group.id })} />
-              {groupTrips.length ? (
-                <div className="hp-tile pt-ev-list">
-                  {groupTrips.map((p) => (
-                    <button key={p.id} className="pt-ev-row" onClick={() => navigate(`/proto/plan/${p.id}`)}>
-                      <span className="pt-ev-date" style={{ background: `${group.color}1F`, color: group.color }}>
-                        {p.startDate ? <><b>{parseISO(p.startDate).getDate()}</b>{thaiShort(p.startDate).split(' ')[1]}</> : <Icon name="sparkle" size={18} />}
-                      </span>
-                      <span className="pt-grow">
-                        <span className="pt-strong ellipsis">{p.name}</span>
-                        <span className="pt-muted sm ellipsis">{p.startDate ? thaiShort(p.startDate) : 'ยังไม่กำหนดวัน'} · {p.members.length} คน · {p.stops.length} จุดแวะ</span>
-                      </span>
-                      <Avatars ids={p.members} size={20} max={3} />
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <button className="hp-tile pt-ev-empty" onClick={() => openSheet('createPlan', { groupId: group.id })}><Icon name="plus" size={18} /> วางแผนแรกของกลุ่ม</button>
-              )}
-            </div>
-          )}
 
           {/* where to go */}
           {!group && !live && suggestion && (

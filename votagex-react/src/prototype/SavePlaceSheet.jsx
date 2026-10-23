@@ -3,31 +3,55 @@ import { useProto } from './useProto';
 import { Sheet, CatIcon, Chip } from './ui';
 import Icon, { Flag, SourceBadge } from './icons';
 import MapView from './MapView';
-import { PLACE_CATS, SOURCES, distanceKm } from './data';
-import { parseShared, usePlaceSearch, checkTikTok, tiktokPlayer, instagramEmbed } from './placeSearch';
+import { PLACE_CATS, SOURCES, EVENT_KINDS, distanceKm } from './data';
+import { parseShared, usePlaceSearch, checkTikTok, tiktokPlayer, instagramEmbed, guessDates, guessKind, guessTime, guessTitle } from './placeSearch';
 
 // Demo inputs. The TikTok sample uses TikTok's own documented example clip so the embed really loads.
 const SAMPLES = [
-  { label: 'แชร์จาก TikTok', text: 'ร้านลับในซอยเก่า กาแฟดี วิวสตรีทอาร์ต ☕️ 📍ตลาดน้อย #คาเฟ่กรุงเทพ #ตลาดน้อย https://www.tiktok.com/@scout2015/video/6718335390845095173' },
-  { label: 'แชร์จาก IG', text: 'ทะเลน้ำใสใกล้กรุงเทพ 🏝️ 📍หาดตาแหวน #เกาะล้าน #เที่ยวชลบุรี https://www.instagram.com/reel/C0ffee12345/' },
-  { label: 'ลิงก์ Google Maps', text: 'https://www.google.com/maps/place/Wat+Arun/@13.7437,100.4888,17z' },
+  { label: 'คาเฟ่จาก TikTok', text: 'ร้านลับในซอยเก่า กาแฟดี วิวสตรีทอาร์ต ☕️ 📍ตลาดน้อย #คาเฟ่กรุงเทพ #ตลาดน้อย https://www.tiktok.com/@scout2015/video/6718335390845095173' },
+  { label: 'ทะเลจาก IG', text: 'ทะเลน้ำใสใกล้กรุงเทพ 🏝️ 📍หาดตาแหวน #เกาะล้าน #เที่ยวชลบุรี https://www.instagram.com/reel/C0ffee12345/' },
+  { label: 'Google Maps', text: 'https://www.google.com/maps/place/Wat+Arun/@13.7437,100.4888,17z' },
+  { label: 'ป๊อปอัปจาก IG', text: 'Pop-up ขนมโฮมเมด 🍪 1-2 พ.ย. 12.00 น. 📍สามย่านมิตรทาวน์ #popupbkk https://www.instagram.com/p/C0ffee12345/' },
+  { label: 'คอนเสิร์ตจาก TikTok', text: 'คอนเสิร์ตฟรีริมน้ำ เสาร์ 8 พ.ย. 18:30 📍ล้ง 1919 #ดนตรีสด https://www.tiktok.com/@scout2015/video/6718335390845095173' },
 ];
 
-export default function SavePlaceSheet({ onClose }) {
-  const { places, actions, showToast, openSheet } = useProto();
+// Keep somewhere from a link (or a name): a place, or an event at a place when the post has dates.
+// One list for both: an event is a place I want to go that has dates. dated: start with dates on.
+export default function SavePlaceSheet({ onClose, dated: startDated = false }) {
+  const { places, groups, actions, showToast, openSheet, today, settings } = useProto();
   const [text, setText] = useState('');
   const [query, setQuery] = useState('');
   const [picked, setPicked] = useState(null);
   const [cat, setCat] = useState('sight');
   const [note, setNote] = useState('');
   const [status, setStatus] = useState('want');
+  // dates and the rest of an event: read from the caption until the person changes them
+  const [dated, setDated] = useState(startDated);
+  const [title, setTitle] = useState(null);
+  const [kind, setKind] = useState(null);
+  const [start, setStart] = useState(null);
+  const [end, setEnd] = useState(null);
+  const [time, setTime] = useState(null);
+  // shared with the group home is showing, by default
+  const [groupId, setGroupId] = useState(() => (groups.some((g) => g.id === settings.scope) ? settings.scope : null));
 
   const shared = useMemo(() => parseShared(text), [text]);
+  const caption = shared?.caption || '';
+  const dates = guessDates(caption, today);
+  const ev = {
+    title: title ?? (guessTitle(caption) || picked?.name || ''),
+    kind: kind ?? guessKind(caption),
+    start: start ?? dates?.start ?? today,
+    time: time ?? guessTime(caption),
+  };
+  ev.end = end && end >= ev.start ? end : end ? ev.start : dates?.end ?? ev.start;
 
-  // New input: reset the pick and seed the search from the caption
+  // New input: reset the pick and the event fields, seed the search from the caption
   const applyText = (t) => {
     const s = parseShared(t);
     setText(t);
+    [setTitle, setKind, setStart, setEnd, setTime].forEach((f) => f(null));
+    setDated(startDated || Boolean(guessDates(s?.caption, today)));
     if (s?.type === 'maps' && s.place) {
       setPicked({ ...s.place, key: 'maps', area: 'จากลิงก์ Google Maps', country: 'TH', prov: '', cat: 'sight' });
       setQuery('');
@@ -44,18 +68,20 @@ export default function SavePlaceSheet({ onClose }) {
     setCat(r.cat || 'sight');
   };
 
-  const duplicate = picked && places.find((p) => distanceKm(p, picked) < 0.08);
+  const duplicate = picked && !dated && places.find((p) => !p.startDate && distanceKm(p, picked) < 0.08);
 
   const source = shared && ['tiktok', 'instagram', 'maps'].includes(shared.type)
     ? { type: shared.type, url: shared.url, author: shared.author || '' }
-    : { type: 'manual' };
+    : shared?.url ? { type: 'web', url: shared.url } : { type: 'manual' };
 
   const save = (thenAddToPlan, close) => {
-    const id = actions.addPlace({
-      name: picked.name, area: picked.area, prov: picked.prov, country: picked.country || 'TH',
-      lat: picked.lat, lng: picked.lng, cat, status, source, note: note || shared?.caption?.slice(0, 80) || '',
-    });
-    showToast(status === 'want' ? `บันทึก “${picked.name}” ลงที่อยากไปแล้ว` : `บันทึก “${picked.name}” ว่าเคยไปแล้ว`);
+    const at = { area: picked.area, prov: picked.prov, country: picked.country || 'TH', lat: picked.lat, lng: picked.lng };
+    const place = dated
+      ? { ...at, name: ev.title || picked.name, venue: picked.name, cat: 'event', kind: ev.kind, startDate: ev.start, endDate: ev.end, time: ev.time, status: 'want' }
+      : { ...at, name: picked.name, cat, status };
+    const id = actions.addPlace({ ...place, source, groupId, note: note || caption.slice(0, 80) || '' });
+    const group = groups.find((g) => g.id === groupId);
+    showToast(`เก็บ “${place.name}” แล้ว${group ? ` · แชร์ให้${group.name}` : ''}`);
     close();
     if (thenAddToPlan) setTimeout(() => openSheet('addToPlan', { placeId: id }), 340);
   };
@@ -70,11 +96,11 @@ export default function SavePlaceSheet({ onClose }) {
   };
 
   return (
-    <Sheet title="บันทึกสถานที่" onClose={onClose} tall
+    <Sheet title="เก็บที่อยากไป" onClose={onClose} tall
       footer={picked ? (close) => (
         <div className="pt-foot-row">
-          <button className="pt-btn light" onClick={() => save(true, close)}>บันทึก + เพิ่มลงแผน</button>
-          <button className="pt-btn" onClick={() => save(false, close)}>บันทึก</button>
+          {!dated && <button className="pt-btn light" onClick={() => save(true, close)}>เก็บ + เพิ่มลงแผน</button>}
+          <button className="pt-btn" onClick={() => save(false, close)}>เก็บ</button>
         </div>
       ) : null}
     >
@@ -83,7 +109,7 @@ export default function SavePlaceSheet({ onClose }) {
         <textarea
           className="pt-input pt-textarea"
           rows={2}
-          placeholder="วางลิงก์ หรือพิมพ์ชื่อสถานที่"
+          placeholder="วางลิงก์โพสต์ หรือพิมพ์ชื่อสถานที่"
           value={text}
           onChange={(e) => applyText(e.target.value)}
         />
@@ -123,13 +149,13 @@ export default function SavePlaceSheet({ onClose }) {
         </div>
       )}
 
-      {/* 4. confirm */}
+      {/* 4. confirm: a place, or (with dates) an event there */}
       {picked && (
         <div className="pt-field">
           <div className="pt-picked">
-            <MapView className="pt-map-mini" points={[{ id: 'x', lat: picked.lat, lng: picked.lng, cat }]} interactive={false} />
+            <MapView className="pt-map-mini" points={[{ id: 'x', lat: picked.lat, lng: picked.lng, cat: dated ? 'event' : cat }]} interactive={false} />
             <div className="pt-picked-row">
-              <CatIcon cat={cat} size={40} />
+              <CatIcon cat={dated ? 'event' : cat} size={40} />
               <div className="pt-grow">
                 <div className="pt-strong">{picked.name}</div>
                 <div className="pt-muted">{picked.area}{picked.country && picked.country !== 'TH' && <> · <Flag code={picked.country} /></>}</div>
@@ -137,16 +163,47 @@ export default function SavePlaceSheet({ onClose }) {
               {picked.key !== 'maps' && <button className="pt-chip" onClick={() => setPicked(null)}>เปลี่ยน</button>}
             </div>
           </div>
-          {duplicate && <div className="pt-clip-status fail">บันทึกไว้แล้ว</div>}
-          <div className="pt-label">หมวด</div>
-          <div className="pt-chip-row wrap">
-            {Object.entries(PLACE_CATS).map(([k, c]) => <Chip key={k} active={cat === k} color={c.color} onClick={() => setCat(k)}>{c.label}</Chip>)}
-          </div>
-          <div className="pt-label">สถานะ</div>
+          {duplicate && <div className="pt-clip-status fail">เก็บไว้แล้ว</div>}
+
           <div className="pt-chip-row">
-            <Chip active={status === 'want'} onClick={() => setStatus('want')}>อยากไป</Chip>
-            <Chip active={status === 'visited'} onClick={() => setStatus('visited')}>เคยไปแล้ว</Chip>
+            <Chip active={!dated} onClick={() => setDated(false)}>สถานที่</Chip>
+            <Chip active={dated} onClick={() => setDated(true)}><Icon name="event" size={14} className="pt-inline-icon" /> งานที่มีวันจัด</Chip>
           </div>
+          {dated ? (
+            <>
+              <input className="pt-input" placeholder="ชื่องาน" value={ev.title} onChange={(e) => setTitle(e.target.value)} />
+              <div className="pt-chip-row wrap">
+                {Object.entries(EVENT_KINDS).map(([k, c]) => (
+                  <Chip key={k} active={ev.kind === k} onClick={() => setKind(k)}><Icon name={c.icon} size={14} className="pt-inline-icon" /> {c.label}</Chip>
+                ))}
+              </div>
+              <div className="pt-ev-dates">
+                <input type="date" className="pt-input" value={ev.start} onChange={(e) => setStart(e.target.value)} />
+                <span className="pt-muted">ถึง</span>
+                <input type="date" className="pt-input" value={ev.end} min={ev.start} onChange={(e) => setEnd(e.target.value)} />
+                <label className="pt-time"><Icon name="clock" size={16} /><input type="time" value={ev.time} onChange={(e) => setTime(e.target.value)} /></label>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="pt-chip-row wrap">
+                {Object.entries(PLACE_CATS).filter(([k]) => k !== 'event').map(([k, c]) => <Chip key={k} active={cat === k} color={c.color} onClick={() => setCat(k)}>{c.label}</Chip>)}
+              </div>
+              <div className="pt-chip-row">
+                <Chip active={status === 'want'} onClick={() => setStatus('want')}>อยากไป</Chip>
+                <Chip active={status === 'visited'} onClick={() => setStatus('visited')}>เคยไปแล้ว</Chip>
+              </div>
+            </>
+          )}
+          {groups.length > 0 && (
+            <>
+              <div className="pt-label">แชร์ให้กลุ่ม</div>
+              <div className="pt-chip-row wrap">
+                <Chip active={!groupId} onClick={() => setGroupId(null)}>เฉพาะฉัน</Chip>
+                {groups.map((g) => <Chip key={g.id} active={groupId === g.id} color={g.color} onClick={() => setGroupId(g.id)}>{g.name}</Chip>)}
+              </div>
+            </>
+          )}
           <input className="pt-input" placeholder="โน้ต" value={note} onChange={(e) => setNote(e.target.value)} />
         </div>
       )}

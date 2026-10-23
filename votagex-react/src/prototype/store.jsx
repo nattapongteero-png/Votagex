@@ -1,17 +1,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ProtoCtx } from './useProto';
 import {
-  TODAY, ME, PEOPLE, addPeople, addDays, diffDays, seedData, seedPiggy, seedEvents, withSeedGroups, shiftData, planStatus,
+  TODAY, ME, PEOPLE, addPeople, addDays, diffDays, seedData, seedPiggy, withSeedGroups, shiftData, planStatus, eventToPlace,
   splitByShare, jarCats, settleUp, fmtMoney, JAR_TEMPLATES, KINDS, DEMO_PROMPTPAY,
 } from './data';
 
 import * as cloud from './cloud';
 
 // The app's data. Demo: sample data in memory + localStorage. Signed in: groups, trips with their stops,
-// expenses and transfers, settings and saved places live in Firestore; the rest (events, memories, savings
+// expenses and transfers, settings and saved places (events too) live in Firestore; the rest (memories, savings
 // piggies) moves there piece by piece (docs/ROADMAP.md, phase 3) and until then is kept on this device, per account.
 const KEY = 'votagex.proto.v1';
-const emptyData = () => ({ v: 1, seededOn: TODAY, simMode: 'normal', plans: [], places: [], expenses: [], payments: [], memories: [], jars: [], piggyLog: [], events: [], groups: [], settings: {} });
+const emptyData = () => ({ v: 1, seededOn: TODAY, simMode: 'normal', plans: [], places: [], expenses: [], payments: [], memories: [], jars: [], piggyLog: [], groups: [], settings: {} });
 
 // data saved while moods and piggies still used emoji
 const OLD_MOODS = { '😍': 'moodLove', '😊': 'moodHappy', '🙂': 'moodSmile', '😐': 'moodMeh', '😮‍💨': 'moodTired' };
@@ -40,7 +40,9 @@ function load(key, signedIn) {
       if (d.v === 1) {
         const data = toIcons(shiftData(d, diffDays(d.seededOn, TODAY)));
         const withJars = data.jars?.every((j) => j.cats) ? data : { ...data, ...seedPiggy() }; // saved before piggies had categories
-        const withEvents = withJars.events ? withJars : { ...withJars, ...seedEvents() }; // saved before events
+        // saved while events were kept apart from places: they become places with dates
+        const { events, ...withEvents } = withJars;
+        if (events) withEvents.places = [...events.map(eventToPlace), ...withEvents.places];
         return withPayments(withEvents.groups ? withEvents : withSeedGroups(withEvents)); // groups: saved before groups
       }
     }
@@ -77,35 +79,45 @@ export function ProtoProvider({ children, user = null, exit }) {
   }, [user]);
   const myGroups = useMemo(() => cloudGroups || [], [cloudGroups]);
 
-  // signed in: settings and saved places, live. What this device kept before they moved goes up once.
+  // signed in: settings and saved places (mine and my groups'), live.
+  // What this device kept before they moved goes up once.
   const [cloudSettings, setCloudSettings] = useState(null);
   const [cloudPlaces, setCloudPlaces] = useState([]);
   const local = useRef(data);
   useEffect(() => {
     if (!user) return undefined;
+    const off = cloud.watchSettings(user.uid, setCloudSettings);
+    // '1': settings and places went up before events joined them, so only the events are left
     const moved = `votagex.moved.${user.uid}`;
-    let first = true;
-    const offSettings = cloud.watchSettings(user.uid, setCloudSettings);
-    const offPlaces = cloud.watchPlaces(user.uid, (list) => {
-      setCloudPlaces(list);
-      if (!first) return;
-      first = false;
-      try {
-        if (localStorage.getItem(moved)) return;
-        localStorage.setItem(moved, '1');
-      } catch { return; }
-      const { settings = {}, places = [] } = local.current;
-      if (Object.keys(settings).length) cloud.saveSettings(user.uid, settings);
-      if (!list.length) places.forEach((p) => cloud.addPlace(user.uid, p));
-    });
-    return () => { offSettings(); offPlaces(); };
+    let before;
+    try {
+      before = localStorage.getItem(moved);
+      if (before === '2') return off;
+      localStorage.setItem(moved, '2');
+    } catch { return off; }
+    const { settings = {}, places = [] } = local.current;
+    if (!before && Object.keys(settings).length) cloud.saveSettings(user.uid, settings);
+    places.filter((p) => !before || p.startDate).forEach((p) => cloud.addPlace(user.uid, p));
+    return off;
   }, [user]);
   const settings = useMemo(() => (user ? cloudSettings || {} : data.settings || {}), [user, cloudSettings, data.settings]);
   const settingsRef = useRef(settings);
   useEffect(() => { settingsRef.current = settings; }, [settings]);
 
-  // signed in: my PromptPay, copied into each group I'm in whenever either changes
   const groupKey = myGroups.map((g) => g.id).sort().join(',');
+  useEffect(() => {
+    if (!user) return undefined;
+    return cloud.watchPlaces(user.uid, groupKey ? groupKey.split(',') : [], setCloudPlaces);
+  }, [user, groupKey]);
+  const places = useMemo(() => {
+    const all = user ? cloudPlaces : data.places;
+    return hidden.length ? all.filter((p) => !hidden.includes(p.id)) : all;
+  }, [user, cloudPlaces, data.places, hidden]);
+  const placesRef = useRef(places);
+  useEffect(() => { placesRef.current = places; }, [places]);
+  const findPlace = (id) => placesRef.current.find((p) => p.id === id);
+
+  // signed in: my PromptPay, copied into each group I'm in whenever either changes
   useEffect(() => {
     if (!user || !cloudSettings || !groupKey) return;
     const mark = `votagex.pp.${user.uid}`;
@@ -209,25 +221,35 @@ export function ProtoProvider({ children, user = null, exit }) {
       ...d,
       groups: d.groups.filter((g) => g.id !== id),
       plans: d.plans.map((p) => (p.groupId === id ? { ...p, groupId: null } : p)),
-      events: d.events.map((e) => (e.groupId === id ? { ...e, groupId: null } : e)),
+      places: d.places.map((p) => (p.groupId === id ? { ...p, groupId: null } : p)),
       settings: d.settings?.scope === id ? { ...d.settings, scope: 'me' } : d.settings,
     }))),
     reset: () => setData(user ? emptyData() : seedData()),
 
+    // places, events included (they have dates); groupId: shared with that group
     addPlace: (place) => {
       if (user) return cloud.addPlace(user.uid, { ...place, savedAt: TODAY });
       const id = uid('p');
-      setData((d) => ({ ...d, places: [{ ...place, id, savedAt: TODAY }, ...d.places] }));
+      setData((d) => ({ ...d, places: [{ ...place, id, by: ME, savedAt: TODAY }, ...d.places] }));
       return id;
     },
-    addEvent: (ev) => {
-      const id = uid('ev');
-      setData((d) => ({ ...d, events: [{ ...ev, id, by: ME, savedAt: TODAY }, ...(d.events || [])] }));
-      return id;
+    updatePlace: (id, fields) => {
+      if (user) { cloud.updatePlace(user.uid, findPlace(id), fields); return; }
+      setData((d) => ({ ...d, places: d.places.map((p) => (p.id === id ? { ...p, ...fields } : p)) }));
     },
-    shareEvent: (id, groupId) => setData((d) => ({ ...d, events: d.events.map((e) => (e.id === id ? { ...e, groupId } : e)) })),
-    removeEvent: (id) => setData((d) => ({ ...d, events: d.events.filter((e) => e.id !== id) })),
-    removePlace: (id) => (user ? cloud.deletePlace(user.uid, id) : setData((d) => ({ ...d, places: d.places.filter((p) => p.id !== id) }))),
+    sharePlace: (id, groupId) => {
+      const place = findPlace(id);
+      if ((place.groupId || null) === (groupId || null)) return;
+      if (user) { cloud.movePlace(user.uid, place, groupId); return; }
+      setData((d) => ({ ...d, places: d.places.map((p) => (p.id === id ? { ...p, groupId } : p)) }));
+    },
+    removePlace: (id) => {
+      const place = findPlace(id);
+      removeLater(id, `ลบ “${place.name}” แล้ว`, () => {
+        if (user) cloud.deletePlace(user.uid, place);
+        else setData((d) => ({ ...d, places: d.places.filter((p) => p.id !== id) }));
+      });
+    },
 
     addPlan: (plan) => {
       if (user) {
@@ -407,7 +429,7 @@ export function ProtoProvider({ children, user = null, exit }) {
     cloud: Boolean(user),
     exit, // sign out, or leave the demo
     settings,
-    places: user ? cloudPlaces : data.places,
+    places,
     sheet, openSheet, closeSheet, toast, showToast, hideToast,
     kindLabel: (k) => KINDS[k]?.label || k,
   };

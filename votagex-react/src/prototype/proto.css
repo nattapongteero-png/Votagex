@@ -1878,3 +1878,7 @@ button.pt-badge { border: none; font-family: var(--font); cursor: pointer; }
 .pt-month-sum { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .pt-month-sum > div { display: flex; flex-direction: column; gap: 2px; }
 .pt-month-sum b { font-size: 18px; font-variant-numeric: tabular-nums; }
+
+/* a saved place with dates (an event): its dates stand out; ended ones fade */
+.pt-place-note.dated { color: #7C3AED; font-weight: 600; }
+.pt-place-card.ended { opacity: 0.55; }

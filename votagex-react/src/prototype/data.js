@@ -149,14 +149,22 @@ export const PLACE_CATS = {
   move: { label: 'เดินทาง', color: '#0284C7', bg: '#E5F4FC' },
   event: { label: 'งาน', color: '#7C3AED', bg: '#F1EBFE' },
 };
-// events people keep from a post (concerts, markets, pop-ups): no API carries these, so they come from links
+// A saved place may have dates: an event people keep from a post (concert, market, pop-up), which no API
+// carries. It is the same kind of thing as any place I want to go, with startDate/endDate/time, its kind,
+// and the venue it's at (name is the event's own). Shared with a group, it has groupId.
 export const EVENT_KINDS = {
   concert: { label: 'คอนเสิร์ต', icon: 'music' },
   market: { label: 'ตลาดนัด', icon: 'shop' },
   popup: { label: 'งานขายของ', icon: 'gift' },
   other: { label: 'อื่นๆ', icon: 'event' },
 };
-export const eventOn = (ev, d) => d >= ev.startDate && d <= (ev.endDate || ev.startDate);
+export const eventOn = (ev, d) => Boolean(ev.startDate) && d >= ev.startDate && d <= (ev.endDate || ev.startDate);
+export const eventEnded = (ev, today) => Boolean(ev.startDate) && (ev.endDate || ev.startDate) < today;
+// an event saved before events were places: { title, place: { name, area, … }, … }
+export const eventToPlace = ({ title, place, ...ev }) => ({
+  ...ev, name: title, venue: place.name, area: place.area, prov: place.prov, country: place.country || 'TH',
+  lat: place.lat, lng: place.lng, cat: 'event', status: 'want', savedAt: ev.savedAt || ev.startDate,
+});
 export const eventRange = (ev) => (ev.endDate && ev.endDate !== ev.startDate ? `${thaiShort(ev.startDate)} – ${thaiShort(ev.endDate)}` : thaiShort(ev.startDate));
 export const EXPENSE_CATS = {
   food: { label: 'อาหาร', color: '#EA580C' },
@@ -551,7 +559,7 @@ export function seedData() {
     { id: 'pay2', planId: 'tonight', from: 'u2', to: 'u1', amount: 240, status: 'sent', date: TODAY, slip: null },
   ];
 
-  return withSeedGroups({ v: 1, seededOn: TODAY, simMode: 'normal', plans, places, expenses, payments, memories, ...seedPiggy(), ...seedEvents() });
+  return withSeedGroups({ v: 1, seededOn: TODAY, simMode: 'normal', plans, places: [...seedEvents(), ...places], expenses, payments, memories, ...seedPiggy() });
 }
 
 // sample events around today: one on now, a weekend market, a concert, a pop-up next week
@@ -564,7 +572,7 @@ export function seedEvents() {
     { id: 'ev3', title: 'Indie Night คอนเสิร์ตลานกลางแจ้ง', kind: 'concert', startDate: rel(sat), endDate: rel(sat), time: '19:00', place: at('Samyan Mitrtown', 'ปทุมวัน · กรุงเทพฯ', 13.7344, 100.5283), source: { type: 'instagram', author: '@indienight.bkk', url: 'https://www.instagram.com/' }, note: 'บัตรหน้างาน 350', by: 'u1', groupId: 'g-uni' },
     { id: 'ev4', title: 'Handmade Market', kind: 'popup', startDate: rel(sat + 6), endDate: rel(sat + 8), time: '11:00', place: at('สยามดิสคัฟเวอรี่', 'ปทุมวัน · กรุงเทพฯ', 13.7466, 100.5309), source: { type: 'tiktok', author: '@craft.bkk', url: 'https://www.tiktok.com/@craft.bkk' }, note: '', by: 'u3' },
   ];
-  return { events };
+  return events.map(eventToPlace);
 }
 
 export function seedPiggy() {
@@ -596,7 +604,7 @@ export function shiftData(data, n) {
     ...data,
     seededOn: s(data.seededOn),
     plans: data.plans.map((p) => ({ ...p, startDate: s(p.startDate), endDate: s(p.endDate), stops: p.stops.map((st) => ({ ...st, date: s(st.date) })) })),
-    places: data.places.map((p) => ({ ...p, savedAt: s(p.savedAt) })),
+    places: data.places.map((p) => ({ ...p, savedAt: s(p.savedAt), startDate: s(p.startDate), endDate: s(p.endDate) })),
     expenses: data.expenses.map((e) => ({ ...e, date: s(e.date) })),
     payments: data.payments?.map((x) => ({ ...x, date: s(x.date) })),
     memories: data.memories.map((m) => ({ ...m, date: s(m.date) })),

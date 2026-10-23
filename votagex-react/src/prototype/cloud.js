@@ -243,17 +243,37 @@ export const watchSettings = (uid, onChange) => onSnapshot(settingsRef(uid), (s)
 // a value of null or undefined clears the setting
 export const saveSettings = (uid, fields) => setDoc(settingsRef(uid), Object.fromEntries(Object.entries(fields).map(([k, v]) => [k, v ?? deleteField()])), { merge: true });
 
-export const watchPlaces = (uid, onChange) => onSnapshot(collection(db, 'users', uid, 'places'), (s) => {
-  onChange(s.docs.map((d) => ({ id: d.id, ...d.data() })).sort((a, b) => (b.savedAt || '').localeCompare(a.savedAt || '')));
-}, () => onChange([]));
+// Saved places (events are places with dates): mine, and those shared with each of my groups, newest first
+const placesCol = (uid, groupId) => (groupId ? collection(db, 'groups', groupId, 'places') : collection(db, 'users', uid, 'places'));
+export function watchPlaces(uid, groupIds, onChange) {
+  const lists = new Map();
+  const emit = () => onChange([...lists.values()].flat().sort((a, b) => (b.savedAt || '').localeCompare(a.savedAt || '')));
+  const watchRoot = (groupId) => onSnapshot(placesCol(uid, groupId), (snap) => {
+    lists.set(groupId || 'me', snap.docs.map((d) => ({ id: d.id, ...d.data(), groupId: groupId || null })));
+    emit();
+  }, () => { lists.set(groupId || 'me', []); emit(); });
+  const offs = [watchRoot(null), ...groupIds.map(watchRoot)];
+  return () => offs.forEach((off) => off());
+}
+const placeFields = (place) => {
+  const f = { ...place };
+  delete f.id; delete f.groupId;
+  return f;
+};
 export function addPlace(uid, place) {
-  const ref = doc(collection(db, 'users', uid, 'places'));
-  const fields = { ...place };
-  delete fields.id;
-  setDoc(ref, fields);
+  const ref = doc(placesCol(uid, place.groupId));
+  setDoc(ref, { ...placeFields(place), by: uid });
   return ref.id;
 }
-export const deletePlace = (uid, id) => deleteDoc(doc(db, 'users', uid, 'places', id));
+export const updatePlace = (uid, place, fields) => updateDoc(doc(placesCol(uid, place.groupId), place.id), fields);
+export const deletePlace = (uid, place) => deleteDoc(doc(placesCol(uid, place.groupId), place.id));
+// share with a group, or take it back to just me: the place moves there, keeping its id
+export function movePlace(uid, place, groupId) {
+  const batch = writeBatch(db);
+  batch.set(doc(placesCol(uid, groupId), place.id), placeFields(place));
+  batch.delete(doc(placesCol(uid, place.groupId), place.id));
+  return batch.commit();
+}
 
 // My PromptPay goes into each of my groups (only people there can read it, to make the QR that pays me back)
 export function savePromptPay(uid, groupIds, promptpay) {

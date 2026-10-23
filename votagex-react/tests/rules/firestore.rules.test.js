@@ -139,6 +139,16 @@ describe('group trips', () => {
     await assertFails(updateDoc(x1('ton'), { status: 'received', amount: 1 }));
     await assertSucceeds(updateDoc(x1('ton'), { status: 'received' }));
   });
+  it('a place shared with the group: everyone in it sees it, only whoever shared it changes it', async () => {
+    const place = { name: 'Indie Night', venue: 'Samyan Mitrtown', lat: 13.73, lng: 100.52, cat: 'event', startDate: '2026-11-07', by: 'fai' };
+    await assertSucceeds(setDoc(doc(as('fai'), 'groups/g1/places/pl1'), place));
+    await assertFails(setDoc(doc(as('fai'), 'groups/g1/places/pl2'), { ...place, by: 'ton' })); // as ton
+    await assertFails(setDoc(doc(as('bew'), 'groups/g1/places/pl3'), { ...place, by: 'bew' })); // not in the group
+    await assertSucceeds(getDoc(doc(as('ton'), 'groups/g1/places/pl1')));
+    await assertFails(updateDoc(doc(as('ton'), 'groups/g1/places/pl1'), { note: 'แก้' }));
+    await assertFails(deleteDoc(doc(as('ton'), 'groups/g1/places/pl1')));
+    await assertSucceeds(deleteDoc(doc(as('fai'), 'groups/g1/places/pl1')));
+  });
   it('my PromptPay: people in the group read it, only I write it', async () => {
     await seed((db) => setDoc(doc(db, 'groups/g1/members/ton'), { promptpay: '0812345678' }));
     await assertSucceeds(getDoc(doc(as('fai'), 'groups/g1/members/ton')));

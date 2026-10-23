@@ -99,11 +99,12 @@ service cloud.firestore {
         allow write: if isMember(gid) && me() == uid;
       }
 
-      // งานที่แชร์ให้กลุ่ม
-      match /events/{eid} {
+      // ที่อยากไปที่แชร์ให้กลุ่ม (งานที่มีวันจัดก็เป็นที่อยากไปแบบหนึ่ง): ทุกคนในกลุ่มเห็น แก้หรือลบได้เฉพาะคนแชร์
+      match /places/{id} {
         allow read: if isMember(gid);
-        allow create: if isMember(gid) && request.resource.data.sharedBy == me() && str(request.resource.data.title, 100);
-        allow update, delete: if isMember(gid) && resource.data.sharedBy == me();
+        allow create: if isMember(gid) && request.resource.data.by == me() && str(request.resource.data.name, 120);
+        allow update: if isMember(gid) && resource.data.by == me() && request.resource.data.by == me();
+        allow delete: if isMember(gid) && resource.data.by == me();
       }
 
       // ทริปของกลุ่ม: ทุกคนในกลุ่มเห็นและแก้ได้ ลบได้เฉพาะคนสร้างทริปหรือคนสร้างกลุ่ม
