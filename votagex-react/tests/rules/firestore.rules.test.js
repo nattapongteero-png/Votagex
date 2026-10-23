@@ -19,6 +19,7 @@ const group = { name: 'แก๊งมหาลัย', icon: 'users', color: '#
 const plan = { name: 'โอซาก้า', kind: 'abroad', startDate: '2026-11-15', endDate: '2026-11-20', memberIds: ['ton', 'fai'], currency: 'JPY', budget: 45000, createdBy: 'ton', groupId: 'g1' };
 const stop = { name: 'โดทงโบริ', date: '2026-11-16', time: '18:00', lat: 34.669, lng: 135.5016, cat: 'food', checkIns: {} };
 const expense = { title: 'ทาโกะยากิ', amount: 600, currency: 'JPY', toTHB: 0.22, cat: 'food', date: '2026-11-16', paidBy: 'ton', splitIds: ['ton', 'fai'], createdBy: 'ton' };
+const payment = { from: 'fai', to: 'ton', amount: 66, status: 'sent', date: '2026-11-17', slip: true, by: 'fai' };
 
 beforeAll(async () => {
   env = await initializeTestEnvironment({
@@ -34,6 +35,8 @@ beforeEach(async () => {
     await setDoc(doc(db, 'groups/g1/plans/p1'), plan);
     await setDoc(doc(db, 'groups/g1/plans/p1/stops/s1'), stop);
     await setDoc(doc(db, 'groups/g1/plans/p1/expenses/e1'), expense);
+    await setDoc(doc(db, 'groups/g1/plans/p1/payments/x1'), payment);
+    await setDoc(doc(db, 'groups/g1/plans/p1/slips/x1'), { from: 'fai', to: 'ton', image: 'data:image/jpeg;base64,AAAA' });
     await setDoc(doc(db, 'invites/OK123'), { groupId: 'g1', createdBy: 'ton', expiresAt: Timestamp.fromMillis(Date.now() + DAY) });
     await setDoc(doc(db, 'invites/OLD99'), { groupId: 'g1', createdBy: 'ton', expiresAt: Timestamp.fromMillis(Date.now() - DAY) });
     await setDoc(doc(db, 'users/fai'), { name: 'ฝ้าย' });
@@ -124,6 +127,31 @@ describe('group trips', () => {
   it('only the trip or group creator deletes a trip', async () => {
     await assertFails(deleteDoc(doc(as('fai'), 'groups/g1/plans/p1')));
     await assertSucceeds(deleteDoc(doc(as('ton'), 'groups/g1/plans/p1')));
+  });
+  it('paying back: the sender says "sent", only the receiver confirms; cash is recorded by the receiver', async () => {
+    const col = (u) => collection(as(u), 'groups/g1/plans/p1/payments');
+    await assertSucceeds(setDoc(doc(col('fai'), 'x2'), { ...payment, slip: false }));
+    await assertFails(setDoc(doc(col('fai'), 'x3'), { ...payment, from: 'ton', to: 'fai', slip: false })); // saying ton sent it
+    await assertFails(setDoc(doc(col('fai'), 'x4'), { ...payment, to: 'bew', slip: false })); // not on the trip
+    await assertSucceeds(setDoc(doc(col('ton'), 'x5'), { ...payment, status: 'received', slip: false, by: 'ton' })); // cash
+    const x1 = (u) => doc(as(u), 'groups/g1/plans/p1/payments/x1');
+    await assertFails(updateDoc(x1('fai'), { status: 'received' })); // the sender can't confirm it
+    await assertFails(updateDoc(x1('ton'), { status: 'received', amount: 1 }));
+    await assertSucceeds(updateDoc(x1('ton'), { status: 'received' }));
+  });
+  it('a slip is seen only by the two people', async () => {
+    await seed((db) => updateDoc(doc(db, 'groups/g1'), { memberIds: ['ton', 'fai', 'prae'] }));
+    await assertSucceeds(getDoc(doc(as('ton'), 'groups/g1/plans/p1/slips/x1')));
+    await assertSucceeds(getDoc(doc(as('fai'), 'groups/g1/plans/p1/slips/x1')));
+    await assertFails(getDoc(doc(as('prae'), 'groups/g1/plans/p1/slips/x1')));
+    await assertFails(setDoc(doc(as('ton'), 'groups/g1/plans/p1/slips/x9'), { from: 'fai', to: 'ton', image: 'data:' })); // as fai
+    await assertFails(deleteDoc(doc(as('prae'), 'groups/g1/plans/p1/slips/x1')));
+  });
+  it("whoever may delete the trip may clear out what's in it", async () => {
+    await seed((db) => setDoc(doc(db, 'groups/g1/plans/p1/expenses/e9'), { ...expense, paidBy: 'fai', createdBy: 'fai' }));
+    await assertSucceeds(deleteDoc(doc(as('ton'), 'groups/g1/plans/p1/expenses/e9')));
+    await assertSucceeds(deleteDoc(doc(as('ton'), 'groups/g1/plans/p1/slips/x1')));
+    await assertSucceeds(deleteDoc(doc(as('ton'), 'groups/g1/plans/p1/payments/x1')));
   });
 });
 

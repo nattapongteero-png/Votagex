@@ -315,14 +315,19 @@ export function planStatus(plan, today) {
   return 'ongoing';
 }
 
-// Who owes whom, in THB. Greedy match of largest debtor with largest creditor.
-export function settleUp(expenses, members) {
+// Who still owes whom, in THB, after the transfers the receiver has confirmed.
+// Greedy match of largest debtor with largest creditor.
+export function settleUp(expenses, members, payments = []) {
   const net = Object.fromEntries(members.map((m) => [m, 0]));
   for (const e of expenses) {
     const thb = toTHB(e);
     net[e.paidBy] = (net[e.paidBy] || 0) + thb;
     e.split.forEach((u) => { net[u] = (net[u] || 0) - thb / e.split.length; });
   }
+  payments.filter((x) => x.status === 'received').forEach((x) => {
+    net[x.from] = (net[x.from] || 0) + x.amount;
+    net[x.to] = (net[x.to] || 0) - x.amount;
+  });
   const debt = [], cred = [];
   Object.entries(net).forEach(([u, v]) => { if (v < -1) debt.push([u, -v]); else if (v > 1) cred.push([u, v]); });
   debt.sort((a, b) => b[1] - a[1]);
@@ -337,6 +342,44 @@ export function settleUp(expenses, members) {
     if (cred[j][1] < 1) j++;
   }
   return out;
+}
+
+// The month's going-out money: outings only (a trip saves up in its own piggy), counted as cash from my
+// pocket, each outing in its own month. What I paid, less what friends paid me back (once I confirm it),
+// plus what I sent them; that is my share, plus what friends still owe me, less what I still owe them.
+// byCat: my share by category. rows: each outing with its cash, what's owed to me and what I owe.
+export function monthMoney(monthKey, plans, expenses, payments) {
+  const byCat = {};
+  const rows = plans.filter((p) => p.kind === 'outing' && p.startDate?.startsWith(monthKey)).map((p) => {
+    const exp = expenses.filter((e) => e.planId === p.id);
+    const pays = payments.filter((x) => x.planId === p.id);
+    exp.forEach((e) => { const v = myShare(e); if (v) byCat[e.cat] = (byCat[e.cat] || 0) + v; });
+    const share = exp.reduce((sum, e) => sum + myShare(e), 0);
+    const paid = exp.filter((e) => e.paidBy === ME).reduce((sum, e) => sum + toTHB(e), 0);
+    const back = pays.filter((x) => x.to === ME && x.status === 'received').reduce((sum, x) => sum + x.amount, 0);
+    const sent = pays.filter((x) => x.from === ME).reduce((sum, x) => sum + x.amount, 0);
+    const cash = paid - back + sent;
+    return { plan: p, cash, owed: Math.max(0, cash - share), owe: Math.max(0, share - cash) };
+  });
+  const sum = (k) => Math.round(rows.reduce((t, r) => t + r[k], 0));
+  return { spent: sum('cash'), owed: sum('owed'), owe: sum('owe'), byCat, rows: rows.filter((r) => r.cash || r.owe) };
+}
+
+// A photo shrunk to a JPEG data URL (memories, transfer slips)
+export function compressImage(file, max = 900) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const k = Math.min(1, max / Math.max(img.width, img.height));
+      const cv = document.createElement('canvas');
+      cv.width = Math.round(img.width * k); cv.height = Math.round(img.height * k);
+      cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+      URL.revokeObjectURL(img.src);
+      resolve(cv.toDataURL('image/jpeg', 0.72));
+    };
+    img.onerror = reject;
+    img.src = URL.createObjectURL(file);
+  });
 }
 
 /* ---------- seed ---------- */
@@ -397,7 +440,6 @@ export function seedData() {
       destination: { name: 'เชียงใหม่', lat: 18.7883, lng: 98.9853 },
       startDate: cnxStart, endDate: c(3), members: ALL, budget: 8000,
       cover: { img: '/assets/photo1.jpg' },
-      settled: ['u4>u1'],
       stops: [
         { id: 'cm1', date: c(0), time: '10:30', name: 'สนามบินเชียงใหม่', area: 'เชียงใหม่', prov: 'เชียงใหม่', lat: 18.7668, lng: 98.9649, cat: 'move', note: '', checkIns: done(ALL, '10:35') },
         { id: 'cm2', date: c(0), time: '14:00', name: 'ย่านนิมมาน', area: 'สุเทพ · เชียงใหม่', prov: 'เชียงใหม่', lat: 18.7964, lng: 98.968, cat: 'cafe', note: '', checkIns: done(ALL, '14:20', true) },
@@ -471,6 +513,8 @@ export function seedData() {
   });
   const expenses = [
     ex('e1', 'tonight', TODAY, 'ค่า MRT', 42, 'move', 'u1', ['u1']),
+    ex('e19', 'tonight', TODAY, 'ซี่โครงหมูภูเขาไฟ', 480, 'food', 'u1', ['u1', 'u2']),
+    ex('e20', 'iconsiam', rel(-5), 'เรือข้ามฟาก', 60, 'move', 'u1', ['u1']),
     ex('e2', 'osaka', rel(-40), 'ตั๋วเครื่องบิน BKK–KIX ×3', 38700, 'move', 'u1', ['u1', 'u2', 'u3']),
     ex('e3', 'osaka', rel(-35), 'ที่พัก 5 คืน', 96000, 'stay', 'u2', ['u1', 'u2', 'u3'], 'JPY'),
     ex('e4', 'osaka', rel(-10), 'ตั๋ว USJ + Express Pass ×3', 45600, 'ticket', 'u3', ['u1', 'u2', 'u3'], 'JPY'),
@@ -500,7 +544,14 @@ export function seedData() {
     { id: 'm7', planId: 'iconsiam', date: rel(-5), stopId: 'ic1', photos: [], text: 'ลมริมน้ำเย็นสบาย นั่งดูเรือจนเย็น', mood: 'moodSmile', by: 'u1' },
   ];
 
-  return withSeedGroups({ v: 1, seededOn: TODAY, simMode: 'normal', plans, places, expenses, memories, ...seedPiggy(), ...seedEvents() });
+  // paid back: บิว (u4) settled up the Chiang Mai trip; ฝ้าย says she sent her half of tonight's dinner
+  const cnxBack = settleUp(expenses.filter((e) => e.planId === 'cnx'), ALL).find((t) => t.from === 'u4' && t.to === 'u1');
+  const payments = [
+    { id: 'pay1', planId: 'cnx', from: 'u4', to: 'u1', amount: cnxBack.amount, status: 'received', date: c(3), slip: null },
+    { id: 'pay2', planId: 'tonight', from: 'u2', to: 'u1', amount: 240, status: 'sent', date: TODAY, slip: null },
+  ];
+
+  return withSeedGroups({ v: 1, seededOn: TODAY, simMode: 'normal', plans, places, expenses, payments, memories, ...seedPiggy(), ...seedEvents() });
 }
 
 // sample events around today: one on now, a weekend market, a concert, a pop-up next week
@@ -547,6 +598,7 @@ export function shiftData(data, n) {
     plans: data.plans.map((p) => ({ ...p, startDate: s(p.startDate), endDate: s(p.endDate), stops: p.stops.map((st) => ({ ...st, date: s(st.date) })) })),
     places: data.places.map((p) => ({ ...p, savedAt: s(p.savedAt) })),
     expenses: data.expenses.map((e) => ({ ...e, date: s(e.date) })),
+    payments: data.payments?.map((x) => ({ ...x, date: s(x.date) })),
     memories: data.memories.map((m) => ({ ...m, date: s(m.date) })),
     piggyLog: (data.piggyLog || []).map((e) => ({ ...e, date: s(e.date) })),
     events: (data.events || []).map((e) => ({ ...e, startDate: s(e.startDate), endDate: s(e.endDate) })),

@@ -1,14 +1,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ProtoCtx } from './useProto';
-import { TODAY, ME, PEOPLE, addPeople, addDays, diffDays, seedData, seedPiggy, seedEvents, withSeedGroups, shiftData, planStatus, splitByShare, jarCats, JAR_TEMPLATES, KINDS } from './data';
+import {
+  TODAY, ME, PEOPLE, addPeople, addDays, diffDays, seedData, seedPiggy, seedEvents, withSeedGroups, shiftData, planStatus,
+  splitByShare, jarCats, settleUp, fmtMoney, JAR_TEMPLATES, KINDS,
+} from './data';
 
 import * as cloud from './cloud';
 
-// The app's data. Demo: sample data in memory + localStorage. Signed in: groups (and who's in them) live in
-// Firestore; the rest moves there piece by piece (docs/ROADMAP.md, phase 3) and until then starts empty and
-// is kept on this device, per account.
+// The app's data. Demo: sample data in memory + localStorage. Signed in: groups, trips with their stops,
+// expenses and transfers live in Firestore; the rest moves there piece by piece (docs/ROADMAP.md, phase 3)
+// and until then starts empty and is kept on this device, per account.
 const KEY = 'votagex.proto.v1';
-const emptyData = () => ({ v: 1, seededOn: TODAY, simMode: 'normal', plans: [], places: [], expenses: [], memories: [], jars: [], piggyLog: [], events: [], groups: [], settings: {} });
+const emptyData = () => ({ v: 1, seededOn: TODAY, simMode: 'normal', plans: [], places: [], expenses: [], payments: [], memories: [], jars: [], piggyLog: [], events: [], groups: [], settings: {} });
 
 // data saved while moods and piggies still used emoji
 const OLD_MOODS = { '😍': 'moodLove', '😊': 'moodHappy', '🙂': 'moodSmile', '😐': 'moodMeh', '😮‍💨': 'moodTired' };
@@ -17,6 +20,16 @@ const toIcons = (d) => ({
   ...d,
   memories: d.memories?.map((m) => (OLD_MOODS[m.mood] ? { ...m, mood: OLD_MOODS[m.mood] } : m)),
   jars: d.jars?.map(({ emoji, ...j }) => (emoji ? { ...j, icon: j.icon || OLD_JARS[emoji] || 'piggy' } : j)),
+});
+
+// saved before transfers were kept: each "โอนแล้ว" mark becomes a confirmed transfer of what was owed
+const withPayments = (d) => (d.payments ? d : {
+  ...d,
+  payments: d.plans.flatMap((p) => (p.settled || []).map((key) => {
+    const [from, to] = key.split('>');
+    const t = settleUp(d.expenses.filter((e) => e.planId === p.id), p.members).find((x) => x.from === from && x.to === to);
+    return t && { id: `pay-${p.id}-${from}-${to}`, planId: p.id, from, to, amount: t.amount, status: 'received', date: p.endDate || TODAY, slip: null };
+  }).filter(Boolean)),
 });
 
 function load(key, signedIn) {
@@ -28,7 +41,7 @@ function load(key, signedIn) {
         const data = toIcons(shiftData(d, diffDays(d.seededOn, TODAY)));
         const withJars = data.jars?.every((j) => j.cats) ? data : { ...data, ...seedPiggy() }; // saved before piggies had categories
         const withEvents = withJars.events ? withJars : { ...withJars, ...seedEvents() }; // saved before events
-        return withEvents.groups ? withEvents : withSeedGroups(withEvents); // saved before groups
+        return withPayments(withEvents.groups ? withEvents : withSeedGroups(withEvents)); // groups: saved before groups
       }
     }
   } catch { /* storage unavailable: fall back to seed */ }
@@ -49,10 +62,8 @@ export function ProtoProvider({ children, user = null, exit }) {
   const [sheet, setSheet] = useState(null);
   const [toast, setToast] = useState(null);
   const toastTimer = useRef(null);
-  // deleted, waiting out the undo toast: plan ids, "planId/stopId", expense and memory ids
+  // deleted, waiting out the undo toast: plan ids, "planId/stopId", expense, transfer and memory ids
   const [hidden, setHidden] = useState([]);
-  const dataRef = useRef(data);
-  useEffect(() => { dataRef.current = data; }, [data]);
 
   useEffect(() => {
     try { localStorage.setItem(key, JSON.stringify(data)); } catch { /* quota or private mode */ }
@@ -82,9 +93,20 @@ export function ProtoProvider({ children, user = null, exit }) {
     const gone = (p, s) => hidden.includes(`${p.id}/${s.id}`);
     return all.filter((p) => !hidden.includes(p.id)).map((p) => (p.stops.some((s) => gone(p, s)) ? { ...p, stops: p.stops.filter((s) => !gone(p, s)) } : p));
   }, [user, cloudPlans, pendingPlans, data.plans, hidden]);
+  // expenses and transfers, flat (signed in, each plan brings its own)
+  const expenses = useMemo(() => {
+    const all = user ? plans.flatMap((p) => p.expenses || []) : data.expenses;
+    return hidden.length ? all.filter((e) => !hidden.includes(e.id)) : all;
+  }, [user, plans, data.expenses, hidden]);
+  const payments = useMemo(() => {
+    const all = user ? plans.flatMap((p) => p.payments || []) : data.payments || [];
+    return hidden.length ? all.filter((x) => !hidden.includes(x.id)) : all;
+  }, [user, plans, data.payments, hidden]);
   const plansRef = useRef(plans);
-  useEffect(() => { plansRef.current = plans; }, [plans]);
+  const moneyRef = useRef({ expenses, payments });
+  useEffect(() => { plansRef.current = plans; moneyRef.current = { expenses, payments }; }, [plans, expenses, payments]);
   const findPlan = (id) => plansRef.current.find((p) => p.id === id);
+  const findPay = (id) => moneyRef.current.payments.find((x) => x.id === id);
 
   // names and photos of the people in my groups
   const memberKey = [...new Set(myGroups.flatMap((g) => g.memberIds))].sort().join(',');
@@ -245,18 +267,57 @@ export function ProtoProvider({ children, user = null, exit }) {
       }
       updatePlan(planId, (p) => ({ ...p, checklist: p.checklist.map((c) => (c.id === itemId ? { ...c, done: !c.done } : c)) }));
     },
-    markSettled: (planId, key) => {
-      if (user) { const plan = findPlan(planId); cloud.updatePlanFields(user.uid, plan, { settled: [...(plan.settled || []), key] }); return; }
-      updatePlan(planId, (p) => ({ ...p, settled: [...(p.settled || []), key] }));
+
+    // a plan made a moment ago (quick add) may not be back from Firestore yet; it's one of mine
+    addExpense: (e) => {
+      if (user) { cloud.addExpense(user.uid, findPlan(e.planId) || { id: e.planId, groupId: null }, e); return; }
+      setData((d) => ({ ...d, expenses: [{ ...e, id: uid('e') }, ...d.expenses] }));
     },
-    unsettle: (planId, key) => {
-      const settled = (findPlan(planId).settled || []).filter((k) => k !== key);
-      if (user) { cloud.updatePlanFields(user.uid, findPlan(planId), { settled }); return; }
-      updatePlan(planId, (p) => ({ ...p, settled }));
+    updateExpense: (id, fields) => {
+      if (user) { const e = moneyRef.current.expenses.find((x) => x.id === id); cloud.updateExpense(user.uid, findPlan(e.planId), id, fields); return; }
+      setData((d) => ({ ...d, expenses: d.expenses.map((e) => (e.id === id ? { ...e, ...fields } : e)) }));
     },
-    addExpense: (e) => setData((d) => ({ ...d, expenses: [{ ...e, id: uid('e') }, ...d.expenses] })),
-    updateExpense: (id, fields) => setData((d) => ({ ...d, expenses: d.expenses.map((e) => (e.id === id ? { ...e, ...fields } : e)) })),
-    removeExpense: (id) => removeLater(id, `ลบ “${dataRef.current.expenses.find((e) => e.id === id)?.title}” แล้ว`, () => setData((d) => ({ ...d, expenses: d.expenses.filter((e) => e.id !== id) }))),
+    removeExpense: (id) => {
+      const e = moneyRef.current.expenses.find((x) => x.id === id);
+      removeLater(id, `ลบ “${e?.title}” แล้ว`, () => {
+        if (user) cloud.deleteExpense(user.uid, findPlan(e.planId), id);
+        else setData((d) => ({ ...d, expenses: d.expenses.filter((x) => x.id !== id) }));
+      });
+    },
+
+    // Paying back. I sent it (with a slip, if I have one) and the friend confirms; or I got it (cash) and say so.
+    sendPayment: (planId, { to, amount, slip = null }) => {
+      const pay = { from: ME, to, amount, status: 'sent', date: TODAY };
+      if (user) { cloud.addPayment(user.uid, findPlan(planId), { ...pay, slip }); return; }
+      setData((d) => ({ ...d, payments: [...d.payments, { ...pay, id: uid('pay'), planId, slip }] }));
+    },
+    receivePayment: (planId, { from, amount }) => {
+      const pay = { from, to: ME, amount, status: 'received', date: TODAY };
+      const plan = findPlan(planId);
+      const id = user ? cloud.addPayment(user.uid, plan, pay) : uid('pay');
+      if (!user) setData((d) => ({ ...d, payments: [...d.payments, { ...pay, id, planId, slip: null }] }));
+      showToast(`ได้รับ ${fmtMoney(amount)} แล้ว`, {
+        label: 'เลิกทำ',
+        onClick: () => (user ? cloud.deletePayment(user.uid, plan, { id }) : setData((d) => ({ ...d, payments: d.payments.filter((x) => x.id !== id) }))),
+      });
+    },
+    // the receiver says the money arrived
+    confirmPayment: (payId) => {
+      const pay = findPay(payId);
+      if (user) { cloud.confirmPayment(user.uid, findPlan(pay.planId), payId); return; }
+      setData((d) => ({ ...d, payments: d.payments.map((x) => (x.id === payId ? { ...x, status: 'received' } : x)) }));
+    },
+    removePayment: (payId) => {
+      const pay = findPay(payId);
+      removeLater(payId, 'ลบรายการโอนแล้ว', () => {
+        if (user) cloud.deletePayment(user.uid, findPlan(pay.planId), pay);
+        else setData((d) => ({ ...d, payments: d.payments.filter((x) => x.id !== payId) }));
+      });
+    },
+    loadSlip: (payId) => {
+      const pay = findPay(payId);
+      return user ? cloud.readSlip(user.uid, findPlan(pay.planId), payId) : Promise.resolve(pay?.slip || null);
+    },
     addMemory: (m) => setData((d) => ({ ...d, memories: [{ ...m, id: uid('m') }, ...d.memories] })),
     removeMemory: (id) => removeLater(id, 'ลบความทรงจำแล้ว', () => setData((d) => ({ ...d, memories: d.memories.filter((m) => m.id !== id) }))),
 
@@ -274,7 +335,7 @@ export function ProtoProvider({ children, user = null, exit }) {
       setData((d) => ({ ...d, jars: [...d.jars, { id, name, goal, icon: icon || 'piggy', planId: planId || null, cats: { ...(JAR_TEMPLATES[kind] || JAR_TEMPLATES.trip) } }] }));
       return id;
     },
-  }), [updatePlan, user, removeLater]);
+  }), [updatePlan, user, removeLater, showToast]);
 
   // The plan that quick-add attaches to: the ongoing plan today, else a same-day outing created on demand
   const activePlan = useMemo(() => {
@@ -292,8 +353,7 @@ export function ProtoProvider({ children, user = null, exit }) {
   }, [activePlan, actions, today]);
 
   const value = {
-    ...data, plans, today, activePlan, ensureActivePlan, actions,
-    expenses: hidden.length ? data.expenses.filter((e) => !hidden.includes(e.id)) : data.expenses,
+    ...data, plans, expenses, payments, today, activePlan, ensureActivePlan, actions,
     memories: hidden.length ? data.memories.filter((m) => !hidden.includes(m.id)) : data.memories,
     groups: user ? myGroups : data.groups,
     loading,

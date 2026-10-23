@@ -105,21 +105,32 @@ export async function readInvite(code) {
 }
 export const joinGroup = (uid, invite) => updateDoc(doc(db, 'groups', invite.groupId), { memberIds: arrayUnion(uid), joinCode: invite.code });
 
-/* ---------- trips and their stops ---------- */
+/* ---------- trips, their stops, expenses and transfers ---------- */
 // A group's trip lives under the group (everyone in it plans together); a trip of my own under me.
-// In the app a plan looks like the demo's: { id, ...fields, members, stops: [...] }.
+// In the app a plan looks like the demo's: { id, ...fields, members, stops: [...] }, and carries its
+// expenses (split = splitIds in Firestore) and transfers, which the store lays out flat as the demo has them.
 const plansPath = (uid, groupId) => (groupId ? `groups/${groupId}/plans` : `users/${uid}/plans`);
 const planRef = (uid, plan) => doc(db, plansPath(uid, plan.groupId), plan.id);
 
+// what each of a plan's lists holds, in the app's shape
+const CHILDREN = {
+  stops: (x) => ({ id: x.id, ...x.data() }),
+  expenses: (x, planId) => ({ id: x.id, ...x.data(), split: x.data().splitIds, planId }),
+  payments: (x, planId) => ({ id: x.id, ...x.data(), planId }),
+};
+
 // Every trip I can see: mine, and every trip of each of my groups (whether I go or not), each with its stops,
-// live. onChange gets the whole list whenever anything changes, and whether every place has answered yet
-// (until then a trip that isn't there may only not have loaded). Returns a function that stops listening.
+// expenses and transfers, live. onChange gets the whole list whenever anything changes, and whether every
+// place has answered yet (until then a trip that isn't there may only not have loaded).
+// Returns a function that stops listening.
 export function watchPlans(uid, groupIds, onChange) {
-  const plans = new Map(); // key "root/id" → plan without stops
-  const stops = new Map(); // same key → stops
-  const stopSubs = new Map();
+  const plans = new Map(); // key "root/id" → plan without its lists
+  const lists = new Map(); // "root/id|stops" → docs
+  const subs = new Map(); // same key → stop listening
   const heard = new Set(); // roots that have answered at least once
-  const emit = () => onChange([...plans.entries()].map(([k, p]) => ({ ...p, stops: stops.get(k) || [] })), heard.size > groupIds.length);
+  const emit = () => onChange([...plans.entries()].map(([k, p]) => ({
+    ...p, ...Object.fromEntries(Object.keys(CHILDREN).map((name) => [name, lists.get(`${k}|${name}`) || []])),
+  })), heard.size > groupIds.length);
   const watchRoot = (groupId) => onSnapshot(collection(db, plansPath(uid, groupId)), (snap) => {
     const root = groupId || 'me';
     heard.add(root);
@@ -128,20 +139,23 @@ export function watchPlans(uid, groupIds, onChange) {
       const k = `${root}/${d.id}`;
       seen.add(k);
       plans.set(k, { id: d.id, ...d.data(), groupId: groupId || null, members: d.data().memberIds });
-      if (!stopSubs.has(k)) {
-        stopSubs.set(k, onSnapshot(collection(d.ref, 'stops'), (ss) => {
-          stops.set(k, ss.docs.map((x) => ({ id: x.id, ...x.data() })));
+      Object.entries(CHILDREN).forEach(([name, read]) => {
+        const key = `${k}|${name}`;
+        if (subs.has(key)) return;
+        subs.set(key, onSnapshot(collection(d.ref, name), (ss) => {
+          lists.set(key, ss.docs.map((x) => read(x, d.id)));
           emit();
-        }, (e) => { console.warn('stops listener:', e.code); stopSubs.delete(k); })); // dropped: the next snapshot listens again
-      }
+        }, (e) => { console.warn(`${name} listener:`, e.code); subs.delete(key); })); // dropped: the next snapshot listens again
+      });
     });
     [...plans.keys()].filter((k) => k.startsWith(`${root}/`) && !seen.has(k)).forEach((k) => {
-      plans.delete(k); stops.delete(k); stopSubs.get(k)?.(); stopSubs.delete(k);
+      plans.delete(k);
+      Object.keys(CHILDREN).forEach((name) => { const key = `${k}|${name}`; lists.delete(key); subs.get(key)?.(); subs.delete(key); });
     });
     emit();
   }, (e) => { console.warn('plans listener:', e.code); heard.add(groupId || 'me'); emit(); });
   const roots = [watchRoot(null), ...groupIds.map(watchRoot)];
-  return () => { roots.forEach((u) => u()); stopSubs.forEach((u) => u()); };
+  return () => { roots.forEach((u) => u()); subs.forEach((u) => u()); };
 }
 
 // a new trip (and its first stops); the id is known at once, the write finishes in the background
@@ -162,11 +176,17 @@ export function editPlan(uid, plan, fields, stopDates = {}) {
   Object.entries(stopDates).forEach(([id, date]) => batch.update(doc(planRef(uid, plan), 'stops', id), { date }));
   return batch.commit();
 }
-// the trip and its stops (its expenses and memories are still kept on each device)
+// the trip with its stops, expenses, transfers and slips (its memories are still kept on each device)
 export function deletePlan(uid, plan) {
+  const ref = planRef(uid, plan);
   const batch = writeBatch(db);
-  plan.stops.forEach((s) => batch.delete(doc(planRef(uid, plan), 'stops', s.id)));
-  batch.delete(planRef(uid, plan));
+  plan.stops.forEach((s) => batch.delete(doc(ref, 'stops', s.id)));
+  (plan.expenses || []).forEach((e) => batch.delete(doc(ref, 'expenses', e.id)));
+  (plan.payments || []).forEach((x) => {
+    batch.delete(doc(ref, 'payments', x.id));
+    if (x.slip) batch.delete(doc(ref, 'slips', x.id));
+  });
+  batch.delete(ref);
   return batch.commit();
 }
 // a new stop; its id is known at once (to open it right after)
@@ -179,3 +199,40 @@ export const updateStop = (uid, plan, stopId, fields) => updateDoc(doc(planRef(u
 export const deleteStop = (uid, plan, stopId) => deleteDoc(doc(planRef(uid, plan), 'stops', stopId));
 // my own check-in only (the rules refuse anyone else's): set it, or take it back with null
 export const setCheckIn = (uid, plan, stopId, value) => updateDoc(doc(planRef(uid, plan), 'stops', stopId), { [`checkIns.${uid}`]: value ?? deleteField() });
+
+/* ---------- expenses ---------- */
+const expenseFields = ({ split, ...e }) => {
+  const f = { ...e, splitIds: split };
+  delete f.id; delete f.planId;
+  return f;
+};
+export function addExpense(uid, plan, e) {
+  const ref = doc(collection(planRef(uid, plan), 'expenses'));
+  setDoc(ref, { ...expenseFields(e), createdBy: uid });
+  return ref.id;
+}
+export const updateExpense = (uid, plan, id, e) => updateDoc(doc(planRef(uid, plan), 'expenses', id), expenseFields(e));
+export const deleteExpense = (uid, plan, id) => deleteDoc(doc(planRef(uid, plan), 'expenses', id));
+
+/* ---------- paying friends back ---------- */
+// "โอนแล้ว" from the one who sent it (the other one confirms), or "ได้รับแล้ว" by the one who got it (cash).
+// A slip goes in its own doc that only those two can read.
+export function addPayment(uid, plan, { slip, ...pay }) {
+  const ref = doc(collection(planRef(uid, plan), 'payments'));
+  const batch = writeBatch(db);
+  batch.set(ref, { ...pay, slip: Boolean(slip), by: uid, createdAt: serverTimestamp() });
+  if (slip) batch.set(doc(planRef(uid, plan), 'slips', ref.id), { from: pay.from, to: pay.to, image: slip });
+  batch.commit();
+  return ref.id;
+}
+export const confirmPayment = (uid, plan, id) => updateDoc(doc(planRef(uid, plan), 'payments', id), { status: 'received' });
+export function deletePayment(uid, plan, pay) {
+  const batch = writeBatch(db);
+  batch.delete(doc(planRef(uid, plan), 'payments', pay.id));
+  if (pay.slip) batch.delete(doc(planRef(uid, plan), 'slips', pay.id));
+  return batch.commit();
+}
+export async function readSlip(uid, plan, id) {
+  const snap = await getDoc(doc(planRef(uid, plan), 'slips', id)).catch(() => null);
+  return snap?.data()?.image || null;
+}

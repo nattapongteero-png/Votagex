@@ -141,7 +141,7 @@ function MapTab({ plan, days }) {
 
 /* ---------- รายจ่าย ---------- */
 function MoneyTab({ plan }) {
-  const { expenses, jars, piggyLog, plans, today, openSheet, actions, showToast } = useProto();
+  const { expenses, payments, jars, piggyLog, plans, today, openSheet, actions } = useProto();
   const outing = plan.kind === 'outing'; // a day out spends, it doesn't save up
   const jarOf = !outing && jars.find((j) => j.planId === plan.id);
   const jar = jarOf && { ...jarOf, ...jarStats(jarOf, piggyLog, plans, expenses) };
@@ -150,8 +150,11 @@ function MoneyTab({ plan }) {
   const total = list.reduce((s, e) => s + toTHB(e), 0);
   const mine = list.reduce((s, e) => s + myShare(e), 0);
   const byCat = Object.entries(list.reduce((m, e) => ({ ...m, [e.cat]: (m[e.cat] || 0) + toTHB(e) }), {})).sort((a, b) => b[1] - a[1]);
-  const transfers = plan.members.length > 1 ? settleUp(list, plan.members) : [];
-  const settled = new Set(plan.settled || []);
+  const pays = payments.filter((x) => x.planId === plan.id);
+  const transfers = plan.members.length > 1 ? settleUp(list, plan.members, pays) : [];
+  const waiting = (t) => pays.find((x) => x.status === 'sent' && x.from === t.from && x.to === t.to);
+  // signed in, only whoever wrote an expense down or paid it may change it (as the rules allow)
+  const canEdit = (e) => !e.createdBy || e.createdBy === ME || e.paidBy === ME;
   const groups = list.reduce((m, e) => { (m[e.date] = m[e.date] || []).push(e); return m; }, {});
 
   return (
@@ -198,29 +201,45 @@ function MoneyTab({ plan }) {
       )}
 
 
+      {/* who still owes whom: the one who owes pays (QR, slip), the one owed confirms it or says cash came */}
       {transfers.length > 0 && (
         <div className="hp-tile pt-settle">
           <SectionTitle title="ใครต้องโอนใคร" />
           {transfers.map((t) => {
-            const key = `${t.from}>${t.to}`;
-            const isDone = settled.has(key);
+            const sent = waiting(t);
             return (
-              <div key={key} className={`pt-settle-row${isDone ? ' done' : ''}`}>
+              <div key={`${t.from}>${t.to}`} className="pt-settle-row">
                 <Avatar id={t.from} size={32} />
                 <Icon name="next" size={14} />
                 <Avatar id={t.to} size={32} />
                 <span className="pt-grow"><span className="pt-strong">{PEOPLE[t.from].name} → {PEOPLE[t.to].name}</span><span className="pt-muted sm">{fmtMoney(t.amount)}</span></span>
-                {isDone ? (
-                  <button className="pt-badge ok" onClick={() => {
-                    actions.unsettle(plan.id, key);
-                    showToast('ยกเลิก “โอนแล้ว”', { label: 'เลิกทำ', onClick: () => actions.markSettled(plan.id, key) });
-                  }}>โอนแล้ว</button>
-                ) : (
-                  <button className="pt-pill-btn sm" onClick={() => openSheet('settle', { planId: plan.id, ...t })}><Icon name="qr" size={14} /> QR พร้อมเพย์</button>
+                {sent ? (
+                  t.to === ME
+                    ? <button className="pt-pill-btn sm" onClick={() => openSheet('payment', { payId: sent.id })}>{sent.slip ? 'ดูสลิป' : 'ยืนยันรับเงิน'}</button>
+                    : <span className="pt-badge">รอยืนยัน</span>
+                ) : t.from === ME ? (
+                  <button className="pt-pill-btn sm" onClick={() => openSheet('settle', { planId: plan.id, to: t.to, amount: t.amount })}><Icon name="qr" size={14} /> โอนคืน</button>
+                ) : t.to === ME && (
+                  <button className="pt-pill-btn sm light" onClick={() => actions.receivePayment(plan.id, { from: t.from, amount: t.amount })}>ได้เงินแล้ว</button>
                 )}
               </div>
             );
           })}
+        </div>
+      )}
+
+      {pays.length > 0 && (
+        <div className="hp-tile pt-settle">
+          <SectionTitle title="การโอนคืน" />
+          {pays.map((x) => (
+            <button key={x.id} className="pt-settle-row" disabled={x.from !== ME && x.to !== ME} onClick={() => openSheet('payment', { payId: x.id })}>
+              <Avatar id={x.from} size={32} />
+              <Icon name="next" size={14} />
+              <Avatar id={x.to} size={32} />
+              <span className="pt-grow"><span className="pt-strong">{fmtMoney(x.amount)}</span><span className="pt-muted sm">{thaiShort(x.date)}{x.slip ? ' · มีสลิป' : ''}</span></span>
+              <span className={`pt-badge${x.status === 'received' ? ' ok' : ''}`}>{x.status === 'received' ? 'ได้รับแล้ว' : 'รอยืนยัน'}</span>
+            </button>
+          ))}
         </div>
       )}
 
@@ -230,7 +249,7 @@ function MoneyTab({ plan }) {
         <div key={date} className="pt-exp-group">
           <div className="pt-muted sm">{date ? `${thaiDay(date)} ${thaiShort(date)}` : 'ไม่ระบุวัน'}</div>
           {items.map((e) => (
-            <button key={e.id} className="pt-exp" onClick={() => openSheet('expense', { expenseId: e.id })}>
+            <button key={e.id} className="pt-exp" disabled={!canEdit(e)} onClick={() => openSheet('expense', { expenseId: e.id })}>
               <span className="pt-exp-dot" style={{ background: EXPENSE_CATS[e.cat].color }} />
               <span className="pt-grow">
                 <span className="pt-strong">{e.title}</span>

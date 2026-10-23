@@ -117,6 +117,8 @@ service cloud.firestore {
             && d.budget is number && d.budget >= 0;
         }
         function plan() { return get(/databases/$(database)/documents/groups/$(gid)/plans/$(pid)).data; }
+        // whoever may delete the trip may clear out what's in it
+        function clearsPlan() { return plan().createdBy == me() || groupDoc(gid).createdBy == me(); }
 
         allow read: if isMember(gid);
         allow create: if isMember(gid) && validPlan(request.resource.data) && request.resource.data.createdBy == me();
@@ -152,7 +154,33 @@ service cloud.firestore {
           allow create: if isMember(gid) && validExpense(request.resource.data) && request.resource.data.createdBy == me();
           allow update: if isMember(gid) && validExpense(request.resource.data) && !changed().hasAny(['createdBy'])
             && (resource.data.createdBy == me() || resource.data.paidBy == me());
-          allow delete: if isMember(gid) && (resource.data.createdBy == me() || resource.data.paidBy == me());
+          allow delete: if isMember(gid) && (resource.data.createdBy == me() || resource.data.paidBy == me() || clearsPlan());
+        }
+
+        // โอนคืน: คนโอนบอก "โอนแล้ว" (รอคนรับยืนยัน) หรือคนรับบันทึกว่าได้รับเอง (เงินสด);
+        // คนรับเท่านั้นที่เปลี่ยนเป็น "ได้รับแล้ว"; ลบได้เฉพาะคนโอนหรือคนรับ
+        match /payments/{pay} {
+          function validPayment(d) {
+            return d.from is string && d.to is string && d.from != d.to
+              && plan().memberIds.hasAll([d.from, d.to])
+              && d.amount is number && d.amount > 0 && d.amount < 10000000
+              && d.status in ['sent', 'received'] && date(d.date) && d.slip is bool;
+          }
+          allow read: if isMember(gid);
+          allow create: if isMember(gid) && validPayment(request.resource.data) && request.resource.data.by == me()
+            && ((request.resource.data.from == me() && request.resource.data.status == 'sent')
+              || (request.resource.data.to == me() && request.resource.data.status == 'received'));
+          allow update: if isMember(gid) && resource.data.to == me() && resource.data.status == 'sent'
+            && changed().hasOnly(['status']) && request.resource.data.status == 'received';
+          allow delete: if isMember(gid) && (me() in [resource.data.from, resource.data.to] || clearsPlan());
+        }
+
+        // สลิป: เห็นแค่คนโอนกับคนรับ
+        match /slips/{pay} {
+          allow read: if isMember(gid) && me() in [resource.data.from, resource.data.to];
+          allow create: if isMember(gid) && request.resource.data.from == me()
+            && request.resource.data.image is string && request.resource.data.image.size() < 400000;
+          allow delete: if isMember(gid) && (me() in [resource.data.from, resource.data.to] || clearsPlan());
         }
 
         // ความทรงจำ: ทุกคนในกลุ่มอ่านได้ แก้หรือลบได้เฉพาะของตัวเอง

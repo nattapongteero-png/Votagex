@@ -7,11 +7,12 @@ import MonthCalendar from '../MonthCalendar';
 import useSheetSnap from '../../hooks/useSheetSnap';
 import SpeechNotes from '../SpeechNotes';
 import WeatherCard from '../WeatherCard';
+import { MonthPiggyTile } from '../MonthMoney';
 import { pm25Level, useWeather, weatherKind } from '../weather';
 import HOLIDAYS from '../thHolidays.json';
 import {
-  ME, PEOPLE, EXPENSE_CATS, CURRENCIES, HOME, addDays, parseISO, diffDays, thaiShort, byTime, localHM,
-  stopState, keepThai, myShare, fmtMoney, distanceKm, fmtKm, directionsUrl, countryOf, planStatus, toTHB, jarStats,
+  ME, PEOPLE, CURRENCIES, HOME, addDays, parseISO, diffDays, thaiShort, byTime, localHM,
+  stopState, keepThai, fmtMoney, distanceKm, fmtKm, directionsUrl, countryOf, planStatus, toTHB, jarStats,
   EVENT_KINDS, KINDS, eventOn, eventRange,
 } from '../data';
 
@@ -157,8 +158,6 @@ export default function TodayPage() {
   const jar = upJar || jars[0];
   const piggy = jar && (jar === upJar ? upSaved : jarStats(jar, piggyLog, plans, expenses));
   const openPiggy = () => (jar ? openSheet('piggy', { jarId: jar.id }) : openSheet('newJar'));
-  const monthKey = today.slice(0, 7);
-  const monthSpend = expenses.filter((e) => e.date?.startsWith(monthKey)).reduce((s, e) => s + myShare(e), 0);
   const wantCount = places.filter((p) => p.status === 'want').length;
   const todaySpend = plan ? expenses.filter((e) => e.planId === plan.id && e.date === today) : [];
   const todaySpendLocal = todaySpend.reduce((s, e) => s + (e.currency === plan.currency ? e.amount : toTHB(e) / CURRENCIES[plan.currency].toTHB), 0);
@@ -233,11 +232,6 @@ export default function TodayPage() {
     const yearAgo = withPhoto.find((m) => Math.abs(diffDays(m.date, addDays(today, -365))) <= 3);
     return yearAgo ? { m: yearAgo, label: 'วันนี้เมื่อปีที่แล้ว' } : withPhoto[0] ? { m: withPhoto[0], label: 'ความทรงจำล่าสุด' } : null;
   }, [memories, today]);
-
-  // spending this month by category (my share)
-  const monthByCat = Object.entries(expenses.filter((e) => e.date?.startsWith(monthKey))
-    .reduce((m, e) => ({ ...m, [e.cat]: (m[e.cat] || 0) + myShare(e) }), {}))
-    .sort((a, b) => b[1] - a[1]);
 
   return (
     <div ref={pageRef} className={`homepage pt-today${collapsed ? ' header-collapsed' : ''}${atRest ? ' at-rest' : ''}`} style={sheet ? { '--hp-sheet-top': `${sheet.top}px`, '--fold-top': `${FOLD_TOP}px` } : undefined}>
@@ -489,21 +483,13 @@ export default function TodayPage() {
             </div>
           )}
 
-          {/* month spending (mine) */}
-          {!group && <div className="hp-section">
-            <SectionTitle title="ใช้จ่ายเดือนนี้" action="ดูทั้งหมด" onAction={() => navigate('/proto/me')} />
-            <div className="hp-tile pt-spend">
-              <div className="pt-spend-total">{fmtMoney(monthSpend)}</div>
-              <div className="pt-stack">
-                {monthByCat.map(([k, v]) => <span key={k} style={{ flex: v, background: EXPENSE_CATS[k].color }} />)}
-              </div>
-              <div className="pt-legend">
-                {monthByCat.slice(0, 4).map(([k, v]) => (
-                  <span key={k}><i style={{ background: EXPENSE_CATS[k].color }} />{EXPENSE_CATS[k].label} {fmtMoney(v)}</span>
-                ))}
-              </div>
+          {/* this month's going-out money: the piggy with what's left */}
+          {!group && (
+            <div className="hp-section">
+              <SectionTitle title="งบเที่ยวเดือนนี้" action="ดูทั้งหมด" onAction={() => openSheet('month')} />
+              <MonthPiggyTile />
             </div>
-          </div>}
+          )}
         </div>
       </div>
     </div>

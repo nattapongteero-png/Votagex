@@ -711,7 +711,10 @@ button.hp-chip { cursor: pointer; font-family: var(--font); }
 .pt-settle-row { display: flex; align-items: center; gap: 6px; padding: 8px 0; border-top: 1px solid var(--tw-sunken); }
 .pt-settle-row > .pt-icon { color: var(--tw-text-3); }
 .pt-settle-row .pt-grow { margin-left: 6px; }
-.pt-settle-row.done { opacity: 0.6; }
+button.pt-settle-row { width: 100%; background: none; border-left: none; border-right: none; border-bottom: none; font-family: var(--font); text-align: left; color: var(--tw-text); cursor: pointer; }
+button.pt-settle-row:disabled { cursor: default; }
+.pt-pill-btn.light { background: var(--tw-surface); color: var(--tw-text); border: 1px solid var(--tw-border); }
+button.pt-exp:disabled { cursor: default; }
 .pt-exp-group { display: flex; flex-direction: column; gap: 6px; }
 .pt-exp {
   display: flex;
@@ -1140,6 +1143,21 @@ button.pt-exp:active { background: var(--tw-sunken); }
 .pt-settle-amount { font-size: 34px; font-weight: 700; }
 .pt-qr { width: 220px; height: 220px; padding: 12px; border-radius: var(--tw-r-lg); background: #fff; border: 1px solid var(--tw-border); display: flex; align-items: center; justify-content: center; }
 .pt-qr img { width: 100%; height: 100%; }
+.pt-slip { width: 100%; border-radius: var(--tw-r-md); border: 1px solid var(--tw-border); }
+.pt-slip-add {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 52px;
+  border-radius: var(--tw-r-md);
+  border: 1.5px dashed var(--tw-border-strong);
+  color: var(--tw-text-2);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.pt-slip-add img { max-height: 220px; border-radius: 8px; margin: 8px 0; }
 .pt-warn { font-size: 12px; font-weight: 600; color: #92400E; background: #FEF3C7; border-radius: 10px; padding: 6px 10px; }
 
 .pt-collect-hero { display: flex; flex-direction: column; gap: 8px; padding: 4px 0 8px; }
@@ -1851,3 +1869,12 @@ button.pt-badge { border: none; font-family: var(--font); cursor: pointer; }
   cursor: pointer;
 }
 .pt-day-more:active { background: var(--tw-sunken); }
+
+/* this month's going-out money */
+.pt-month-tile { display: flex; flex-direction: column; gap: 10px; }
+.pt-month-tile .pt-piggy-stage { margin: 0 -16px -6px; }
+.pt-spend-total.over, .pt-month-sum b.over { color: var(--tw-danger); }
+.pt-month-owe { align-self: center; border: none; background: #FEF3C7; color: #92400E; font-family: var(--font); font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 999px; cursor: pointer; }
+.pt-month-sum { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.pt-month-sum > div { display: flex; flex-direction: column; gap: 2px; }
+.pt-month-sum b { font-size: 18px; font-variant-numeric: tabular-nums; }

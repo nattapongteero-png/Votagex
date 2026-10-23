@@ -10,8 +10,9 @@ import { PiggySheet, NewJarSheet } from './PiggySheet';
 import { SaveEventSheet, EventSheet } from './EventSheet';
 import { NewGroupSheet, GroupSheet } from './GroupSheet';
 import { PlanMenuSheet, EditPlanSheet, StopSheet } from './PlanSheets';
+import { MonthSheet } from './MonthMoney';
 import {
-  ME, PEOPLE, CURRENCIES, EXPENSE_CATS, MOODS, KINDS, DEMO_PROMPTPAY, PLACE_CATS, sendInvite,
+  ME, PEOPLE, CURRENCIES, EXPENSE_CATS, MOODS, KINDS, DEMO_PROMPTPAY, PLACE_CATS, sendInvite, compressImage,
   countryOf, fmtMoney, addDays, parseISO, thaiShort, thaiRange, planStatus, diffDays,
 } from './data';
 import { usePlaceSearch } from './placeSearch';
@@ -126,22 +127,6 @@ function AddExpenseSheet({ onClose, planId: fixedPlanId, expenseId }) {
 }
 
 /* ---------- Memory ---------- */
-function compressImage(file, max = 900) {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => {
-      const s = Math.min(1, max / Math.max(img.width, img.height));
-      const cv = document.createElement('canvas');
-      cv.width = Math.round(img.width * s); cv.height = Math.round(img.height * s);
-      cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
-      URL.revokeObjectURL(img.src);
-      resolve(cv.toDataURL('image/jpeg', 0.72));
-    };
-    img.onerror = reject;
-    img.src = URL.createObjectURL(file);
-  });
-}
-
 function AddMemorySheet({ onClose, planId: fixedPlanId }) {
   const { plans, activePlan, ensureActivePlan, actions, showToast, today } = useProto();
   const plan = plans.find((p) => p.id === fixedPlanId) || activePlan;
@@ -439,29 +424,75 @@ function AddToPlanSheet({ onClose, placeId }) {
   );
 }
 
-/* ---------- Settle up with a PromptPay QR ---------- */
-function SettleSheet({ onClose, planId, from, to, amount }) {
+/* ---------- Paying a friend back: PromptPay QR, a slip, "โอนแล้ว" ---------- */
+// The friend confirms it came (with the slip in front of them); until then it shows as waiting.
+function SettleSheet({ onClose, planId, to, amount }) {
   const { actions, showToast } = useProto();
   const [qr, setQr] = useState('');
+  const [slip, setSlip] = useState(null);
   useEffect(() => {
     QRCode.toDataURL(generatePayload(DEMO_PROMPTPAY, { amount }), { margin: 1, width: 520, color: { dark: '#111827' } }).then(setQr).catch(() => setQr(''));
   }, [amount]);
+  const onFile = async (e) => {
+    const file = e.target.files?.[0];
+    if (file) setSlip(await compressImage(file).catch(() => null));
+  };
   return (
-    <Sheet title="โอนคืน" onClose={onClose}
+    <Sheet title="โอนคืน" subtitle={`ให้${PEOPLE[to].name}`} onClose={onClose}
       footer={(close) => (
         <div className="pt-foot-row">
           <button className="pt-btn light" onClick={() => { navigator.share?.({ title: 'VOTAGEX', text: `โอน ${fmtMoney(amount)} ให้ ${PEOPLE[to].name}` }).catch(() => {}); }}>แชร์</button>
-          <button className="pt-btn" onClick={() => { actions.markSettled(planId, `${from}>${to}`); showToast('บันทึกว่าโอนแล้ว'); close(); }}>โอนแล้ว</button>
+          <button className="pt-btn" onClick={() => { actions.sendPayment(planId, { to, amount, slip }); showToast(`บันทึกแล้ว รอ${PEOPLE[to].name}ยืนยัน`); close(); }}>โอนแล้ว</button>
         </div>
       )}>
       <div className="pt-settle-hero">
         <div className="pt-settle-people">
-          <Avatar id={from} size={48} /><Icon name="next" size={20} /><Avatar id={to} size={48} />
+          <Avatar id={ME} size={48} /><Icon name="next" size={20} /><Avatar id={to} size={48} />
         </div>
         <div className="pt-settle-amount">{fmtMoney(amount)}</div>
         <div className="pt-qr">{qr ? <img src={qr} alt="PromptPay QR" /> : <span className="pt-muted">กำลังสร้าง QR…</span>}</div>
         <div className="pt-warn">QR ตัวอย่าง ห้ามสแกนจ่ายจริง</div>
       </div>
+      <label className="pt-slip-add">
+        {slip ? <img src={slip} alt="สลิป" /> : <><Icon name="camera" size={20} /> แนบสลิป</>}
+        <input type="file" accept="image/*" hidden onChange={onFile} />
+      </label>
+    </Sheet>
+  );
+}
+
+/* ---------- One transfer: the slip, confirm it came, delete it ---------- */
+function PaymentSheet({ onClose, payId }) {
+  const { payments, plans, actions, showToast } = useProto();
+  const pay = payments.find((x) => x.id === payId);
+  const [slip, setSlip] = useState(undefined); // undefined: still loading, null: couldn't
+  useEffect(() => {
+    if (pay?.slip) actions.loadSlip(payId).then(setSlip);
+  }, [payId, pay?.slip, actions]);
+  if (!pay) return null;
+  const plan = plans.find((p) => p.id === pay.planId);
+  const toConfirm = pay.status === 'sent' && pay.to === ME;
+
+  return (
+    <Sheet title={`${PEOPLE[pay.from]?.name} → ${PEOPLE[pay.to]?.name}`} subtitle={plan?.name} onClose={onClose}
+      footer={toConfirm ? (close) => <button className="pt-btn block" onClick={() => { actions.confirmPayment(pay.id); showToast(`ได้รับ ${fmtMoney(pay.amount)} แล้ว`); close(); }}>ได้รับแล้ว</button> : null}>
+      {(close) => (
+        <>
+          <div className="pt-settle-hero">
+            <div className="pt-settle-people">
+              <Avatar id={pay.from} size={48} /><Icon name="next" size={20} /><Avatar id={pay.to} size={48} />
+            </div>
+            <div className="pt-settle-amount">{fmtMoney(pay.amount)}</div>
+            <span className={`pt-badge${pay.status === 'received' ? ' ok' : ''}`}>{pay.status === 'received' ? 'ได้รับแล้ว' : 'รอยืนยัน'} · {thaiShort(pay.date)}</span>
+          </div>
+          {pay.slip
+            ? (slip ? <img className="pt-slip" src={slip} alt="สลิป" /> : <div className="pt-muted pad center">{slip === null ? 'เปิดสลิปไม่ได้' : 'กำลังโหลดสลิป…'}</div>)
+            : <div className="pt-muted pad center">ไม่ได้แนบสลิป</div>}
+          {(pay.from === ME || pay.to === ME) && (
+            <button className="pt-btn light block danger" onClick={() => { actions.removePayment(pay.id); close(); }}><Icon name="trash" size={16} /> ลบรายการนี้</button>
+          )}
+        </>
+      )}
     </Sheet>
   );
 }
@@ -498,6 +529,8 @@ const SHEETS = {
   addStop: AddStopSheet,
   addToPlan: AddToPlanSheet,
   settle: SettleSheet,
+  payment: PaymentSheet,
+  month: MonthSheet,
   provinces: ProvinceSheet,
   piggy: PiggySheet,
   newJar: NewJarSheet,

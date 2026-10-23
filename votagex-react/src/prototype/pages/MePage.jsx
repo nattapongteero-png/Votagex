@@ -125,6 +125,10 @@ export default function MePage() {
 
         <div className="me-panel">
           <div className="me-panel-title">ตั้งค่า</div>
+          <button className="me-row" onClick={() => openSheet('month')}>
+            <span className="me-row-icon"><Icon name="piggy" size={16} /></span><span className="pt-grow">งบเที่ยวต่อเดือน</span>
+            <span className="pt-muted">{settings.monthBudget ? fmtMoney(settings.monthBudget) : 'ยังไม่ตั้ง'}</span>
+          </button>
           <div className="me-row"><span className="me-row-icon"><Icon name="wallet" size={16} /></span><span className="pt-grow">สกุลเงินหลัก</span><span className="pt-muted">THB ฿</span></div>
           <div className="me-row">
             <span className="me-row-icon"><Icon name="qr" size={16} /></span><span className="pt-grow">พร้อมเพย์รับเงินคืน</span><span className="pt-muted">ยังไม่ตั้ง</span>
