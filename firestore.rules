@@ -1,30 +1,177 @@
 rules_version = '2';
+// โครงสร้างข้อมูลและเหตุผลของแต่ละกฎ: votagex-react/docs/DATA_MODEL.md
+// ทดสอบ: cd votagex-react && npm run test:rules (รันบน emulator ในเครื่อง ไม่แตะระบบจริง)
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function me() { return request.auth.uid; }
+    function changed() { return request.resource.data.diff(resource.data).affectedKeys(); }
+    function groupDoc(gid) { return get(/databases/$(database)/documents/groups/$(gid)).data; }
+    function isMember(gid) { return signedIn() && me() in groupDoc(gid).memberIds; }
+    function str(v, max) { return v is string && v.size() > 0 && v.size() <= max; }
+    function date(v) { return v == null || (v is string && v.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')); }
+    function ids(v, max) { return v is list && v.size() > 0 && v.size() <= max; }
+    // รายชื่อเพิ่มเฉพาะตัวเอง 1 คน (เข้าร่วม) / หายเฉพาะตัวเอง 1 คน (ออก)
+    function addsOnlyMe(before, after) { return after.hasAll(before) && after.size() == before.size() + 1 && me() in after && !(me() in before); }
+    function removesOnlyMe(before, after) { return before.hasAll(after) && after.size() == before.size() - 1 && me() in before && !(me() in after); }
+
+    // ---------- แอปเดิม (เลิกใช้หลังย้ายเสร็จ) ----------
+    // ปิดช่องโหว่เดิม: ใครก็อ่านได้ / ทริปที่ไม่มี ownerUid ใครก็แก้หรือลบได้ / ใครก็แก้รายชื่อสมาชิกได้
     match /trips/{tripId} {
-      // อ่านได้ทุกคน (ข้อมูลทริปเป็น public)
-      allow read: if true;
+      allow read: if signedIn();
+      allow create: if signedIn() && request.resource.data.ownerUid == me();
+      allow update: if signedIn() && (
+        resource.data.ownerUid == me()
+        || me() in resource.data.get('memberUids', [])
+        // เข้าร่วมทริป: แตะได้แค่รายชื่อ และเพิ่มได้แค่ตัวเอง
+        || (changed().hasOnly(['members', 'memberUids'])
+            && addsOnlyMe(resource.data.get('memberUids', []), request.resource.data.memberUids))
+      );
+      allow delete: if signedIn() && resource.data.ownerUid == me();
+    }
 
-      // สร้าง trip ต้อง login + ownerUid ตรงกับตัวเอง
-      allow create: if request.auth != null
-                    && request.resource.data.ownerUid == request.auth.uid;
+    // ---------- ผู้ใช้ ----------
+    match /users/{uid} {
+      // โปรไฟล์ (ชื่อ รูป) เพื่อนเห็นได้
+      allow read: if signedIn();
+      allow create, update: if me() == uid && str(request.resource.data.name, 60);
+      allow delete: if me() == uid;
+      // ของส่วนตัวทั้งหมด (ตั้งค่า สถานที่ งาน ทริปคนเดียว กระปุก) เจ้าของคนเดียว
+      match /{sub=**} {
+        allow read, write: if signedIn() && me() == uid;
+      }
+    }
 
-      // แก้ไข: เจ้าของ หรือ สมาชิก หรือ trip เก่า หรือ การเข้าร่วมทริป
-      allow update: if request.auth != null
-                    && (
-                      resource.data.ownerUid == request.auth.uid
-                      || (resource.data.keys().hasAny(['memberUids'])
-                          && request.auth.uid in resource.data.memberUids)
-                      || !resource.data.keys().hasAny(['ownerUid'])
-                      || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members', 'memberUids'])
-                    );
+    // ---------- ลิงก์ชวนเข้ากลุ่ม ----------
+    // อ่านได้ทีละอันเมื่อรู้รหัส (ห้ามไล่ดูทั้งหมด), สร้างได้เฉพาะสมาชิกกลุ่ม, อายุไม่เกิน 30 วัน
+    match /invites/{code} {
+      allow get: if signedIn();
+      allow list: if false;
+      allow create: if isMember(request.resource.data.groupId)
+        && request.resource.data.createdBy == me()
+        && request.resource.data.expiresAt is timestamp
+        && request.resource.data.expiresAt <= request.time + duration.value(30, 'd');
+      allow delete: if signedIn() && resource.data.createdBy == me();
+    }
 
-      // ลบได้เฉพาะเจ้าของ หรือ trip เก่า
-      allow delete: if request.auth != null
-                    && (
-                      resource.data.ownerUid == request.auth.uid
-                      || !resource.data.keys().hasAny(['ownerUid'])
-                    );
+    // ---------- กลุ่ม ----------
+    match /groups/{gid} {
+      function validGroup(d) {
+        return str(d.name, 40) && str(d.icon, 20) && str(d.color, 9) && ids(d.memberIds, 50);
+      }
+      function invite(code) { return get(/databases/$(database)/documents/invites/$(code)).data; }
+      function validInvite(code) {
+        return code is string && exists(/databases/$(database)/documents/invites/$(code))
+          && invite(code).groupId == gid && invite(code).expiresAt > request.time;
+      }
+
+      // ตรวจจาก resource เอง (ไม่ใช้ get) เพื่อให้ query "กลุ่มของฉัน" ทำงานได้
+      allow read: if signedIn() && me() in resource.data.memberIds;
+      // สร้างกลุ่ม: เริ่มด้วยตัวเองคนเดียว คนอื่นเข้าผ่านลิงก์ชวน
+      allow create: if signedIn() && validGroup(request.resource.data)
+        && request.resource.data.createdBy == me()
+        && request.resource.data.memberIds == [me()]
+        && request.resource.data.archived == false;
+      allow update: if signedIn() && validGroup(request.resource.data) && (
+        // สมาชิกแก้ชื่อ ไอคอน สี
+        (me() in resource.data.memberIds && changed().hasOnly(['name', 'icon', 'color']))
+        // เข้าร่วมด้วยลิงก์ชวน
+        || (changed().hasOnly(['memberIds', 'joinCode'])
+            && addsOnlyMe(resource.data.memberIds, request.resource.data.memberIds)
+            && validInvite(request.resource.data.joinCode))
+        // ออกจากกลุ่มเอง (คนสร้างออกไม่ได้ ต้องเก็บกลุ่มแทน)
+        || (changed().hasOnly(['memberIds'])
+            && removesOnlyMe(resource.data.memberIds, request.resource.data.memberIds)
+            && resource.data.createdBy != me())
+        // คนสร้าง: เอาคนออก หรือเก็บกลุ่ม (ทริปยังอยู่ สมาชิกยังเปิดดูได้)
+        || (resource.data.createdBy == me()
+            && changed().hasOnly(['memberIds', 'archived'])
+            && resource.data.memberIds.hasAll(request.resource.data.memberIds)
+            && me() in request.resource.data.memberIds)
+      );
+      // ไม่ลบจริง ใช้ archived แทน (ลบเอกสารกลุ่มไม่ได้ลบข้อมูลข้างใน)
+      allow delete: if false;
+
+      // ข้อมูลของฉันในกลุ่มนี้ เช่น พร้อมเพย์สำหรับให้เพื่อนโอนคืน
+      match /members/{uid} {
+        allow read: if isMember(gid);
+        allow write: if isMember(gid) && me() == uid;
+      }
+
+      // งานที่แชร์ให้กลุ่ม
+      match /events/{eid} {
+        allow read: if isMember(gid);
+        allow create: if isMember(gid) && request.resource.data.sharedBy == me() && str(request.resource.data.title, 100);
+        allow update, delete: if isMember(gid) && resource.data.sharedBy == me();
+      }
+
+      // ทริปของกลุ่ม: ทุกคนในกลุ่มเห็นและแก้ได้ ลบได้เฉพาะคนสร้างทริปหรือคนสร้างกลุ่ม
+      match /plans/{pid} {
+        function validPlan(d) {
+          return str(d.name, 80)
+            && d.kind in ['outing', 'trip', 'abroad', 'idea']
+            && date(d.startDate) && date(d.endDate)
+            && ids(d.memberIds, 50) && groupDoc(gid).memberIds.hasAll(d.memberIds)
+            && d.currency is string && d.currency.size() == 3
+            && d.budget is number && d.budget >= 0;
+        }
+        function plan() { return get(/databases/$(database)/documents/groups/$(gid)/plans/$(pid)).data; }
+
+        allow read: if isMember(gid);
+        allow create: if isMember(gid) && validPlan(request.resource.data) && request.resource.data.createdBy == me();
+        allow update: if isMember(gid) && validPlan(request.resource.data) && !changed().hasAny(['createdBy']);
+        allow delete: if isMember(gid) && (resource.data.createdBy == me() || groupDoc(gid).createdBy == me());
+
+        // จุดแวะ: ใครในกลุ่มก็แก้ได้ แต่เช็คอินได้เฉพาะของตัวเอง
+        match /stops/{sid} {
+          function validStop(d) {
+            return str(d.name, 120) && date(d.date) && d.lat is number && d.lng is number && d.checkIns is map;
+          }
+          allow read: if isMember(gid);
+          allow create: if isMember(gid) && validStop(request.resource.data) && request.resource.data.checkIns.size() == 0;
+          allow update: if isMember(gid) && validStop(request.resource.data) && (
+            !changed().hasAny(['checkIns'])
+            || request.resource.data.checkIns.diff(resource.data.checkIns).affectedKeys().hasOnly([me()])
+          );
+          allow delete: if isMember(gid);
+        }
+
+        // รายจ่าย: คนจ่ายและคนหารต้องเป็นคนที่ไปทริปนี้; แก้หรือลบได้เฉพาะคนจด หรือคนจ่าย
+        match /expenses/{eid} {
+          function validExpense(d) {
+            return str(d.title, 80)
+              && d.amount is number && d.amount > 0 && d.amount < 100000000
+              && d.currency is string && d.currency.size() == 3
+              && d.toTHB is number && d.toTHB > 0
+              && str(d.cat, 20) && date(d.date)
+              && ids(d.splitIds, 50)
+              && plan().memberIds.hasAll(d.splitIds) && d.paidBy in plan().memberIds;
+          }
+          allow read: if isMember(gid);
+          allow create: if isMember(gid) && validExpense(request.resource.data) && request.resource.data.createdBy == me();
+          allow update: if isMember(gid) && validExpense(request.resource.data) && !changed().hasAny(['createdBy'])
+            && (resource.data.createdBy == me() || resource.data.paidBy == me());
+          allow delete: if isMember(gid) && (resource.data.createdBy == me() || resource.data.paidBy == me());
+        }
+
+        // ความทรงจำ: ทุกคนในกลุ่มอ่านได้ แก้หรือลบได้เฉพาะของตัวเอง
+        match /memories/{mid} {
+          allow read: if isMember(gid);
+          allow create: if isMember(gid) && request.resource.data.by == me();
+          allow update, delete: if isMember(gid) && resource.data.by == me();
+        }
+      }
+    }
+
+    // ---------- query ข้ามกลุ่ม (collection group) ----------
+    // "ปฏิทินของฉัน": ทุกทริปที่ฉันไป ไม่ว่าอยู่กลุ่มไหน
+    match /{path=**}/plans/{pid} {
+      allow read: if signedIn() && me() in resource.data.memberIds;
+    }
+    // "ใช้จ่ายเดือนนี้": ทุกรายจ่ายที่ฉันมีส่วนหาร
+    match /{path=**}/expenses/{eid} {
+      allow read: if signedIn() && me() in resource.data.splitIds;
     }
   }
 }
