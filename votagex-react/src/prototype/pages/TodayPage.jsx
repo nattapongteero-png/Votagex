@@ -360,7 +360,7 @@ export default function TodayPage() {
             <div className="hp-tile pt-day-card">
               {dayHead}
               {/* a group's page: whose calendar this is, and its info, even on a day without plans */}
-              {group && <PlanHead group={group} invite={selected === today ? 'วันนี้ยังว่าง ไปไหนกันดี?' : 'วันนั้นยังว่าง ชวนกันไปไหนดี?'} onOpen={() => openSheet('group', { groupId: group.id })} onGroup={() => openSheet('group', { groupId: group.id })} />}
+              {group && <PlanHead group={group} invite={selected === today ? 'วันนี้ยังว่าง ไปไหนกันดี?' : 'วันนี้ยังว่าง ชวนกันไปไหนดี?'} onOpen={() => openSheet('group', { groupId: group.id })} onGroup={() => openSheet('group', { groupId: group.id })} />}
               <div className="hp-plan-actions">
                 <button className="hp-add-btn" onClick={() => openSheet('createPlan', { date: selected })}><Icon name="plus" size={18} stroke={2.2} /> {selected === today ? 'สร้างแผนวันนี้' : 'สร้างแผน'}</button>
                 {canShuffle && <button className="pt-btn light" onClick={() => openSheet('shuffle', { date: selected })}><Icon name="shuffle" size={16} /> สุ่มให้</button>}
