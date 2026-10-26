@@ -2071,19 +2071,12 @@ button.pt-pick-later { width: 100%; font: inherit; color: inherit; text-align: l
   /* fades in from the very top (no hard edge where a browser's own status bar ends) and out towards the cards */
   -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 calc(env(safe-area-inset-top, 0px) + 56px), #000 55%, transparent);
   mask-image: linear-gradient(180deg, transparent 0, #000 calc(env(safe-area-inset-top, 0px) + 56px), #000 55%, transparent); }
-.pt-sunwall-light { display: none; position: absolute; left: -10%; top: -6%; width: 95%; height: 92%;
-  clip-path: polygon(18% 0, 92% 6%, 74% 100%, 0 88%);
-  background: radial-gradient(80% 70% at 40% 35%, rgba(255, 244, 214, .95), rgba(255, 226, 170, .55) 60%, rgba(255, 220, 160, 0) 100%);
-  filter: blur(6px); mix-blend-mode: screen; animation: pt-sun-breathe 9s ease-in-out infinite alternate; }
-.pt-sunwall-bar { position: absolute; background: rgba(120, 90, 50, .16); filter: blur(5px); }
-.pt-sunwall-bar.v { left: 46%; top: 0; bottom: 0; width: 14px; transform: skewX(-12deg); }
-.pt-sunwall-bar.h { left: 0; right: 0; top: 48%; height: 12px; transform: skewY(4deg); }
-.pt-sunwall-leaves { position: absolute; inset: 0; width: 100%; height: 100%; color: #4A3A22; mix-blend-mode: multiply; transform-origin: 100% 0; }
-.pt-sunwall-leaves.far { opacity: .14; filter: blur(7px); animation: pt-leaf-sway 11s ease-in-out infinite alternate; }
-.pt-sunwall-leaves.near { opacity: .22; filter: blur(2.5px); animation: pt-leaf-sway 7s ease-in-out -3s infinite alternate-reverse; }
-@keyframes pt-leaf-sway { from { transform: rotate(-1.6deg) translate(-4px, 0); } to { transform: rotate(1.8deg) translate(5px, 3px); } }
-@keyframes pt-sun-breathe { from { opacity: .85; } to { opacity: 1; } }
-@media (prefers-reduced-motion: reduce) { .pt-sunwall-leaves, .pt-sunwall-light { animation: none; } }
+.pt-sunwall svg { display: block; }
+/* the leaves outside move in the breeze: a slow sway, the monstera on its own rhythm */
+.pt-sun-sway { transform-box: view-box; transform-origin: 100% 0; animation: pt-leaf-sway 9s ease-in-out infinite alternate; }
+.pt-sun-sway2 { transform-box: view-box; transform-origin: 0 0; animation: pt-leaf-sway 6.5s ease-in-out -2s infinite alternate-reverse; }
+@keyframes pt-leaf-sway { from { transform: rotate(-1.4deg); } to { transform: rotate(1.6deg) translate(3px, 2px); } }
+@media (prefers-reduced-motion: reduce) { .pt-sun-sway, .pt-sun-sway2 { animation: none; } }
 
 /* ===== Mood: Japanese travel-poster. Paper grain over everything, poster type for headings ===== */
 body::after { content: ''; position: fixed; inset: 0; z-index: 9998; pointer-events: none; opacity: .07; mix-blend-mode: multiply;
