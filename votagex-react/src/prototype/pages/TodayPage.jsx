@@ -368,11 +368,18 @@ export default function TodayPage() {
             return (
               <div className="pt-spine-wrap">
                 <span className="pt-muted sm">{recap.label}</span>
-                <button className="pt-spine" style={{ '--book': th.color }} aria-label={`เปิดไดอารี่ ${recap.plan.name}`} onClick={() => setRecapOpen(true)}>
-                  <Icon name={th.icon} size={18} className="pt-spine-icon" />
-                  <span className="pt-spine-title">{recap.plan.name}</span>
-                  <span className="pt-spine-date">{`${d.getDate()}.${d.getMonth() + 1}.${String(d.getFullYear() + 543).slice(2)}`}</span>
-                  <i className="pt-spine-band" />
+                <button className="pt-book" style={{ '--book': th.color }} aria-label={`เปิดไดอารี่ ${recap.plan.name}`} onClick={() => setRecapOpen(true)}>
+                  <span className="pt-book-shadow" />
+                  <span className="pt-book-3d">
+                    <span className="pt-book-top"><i className="pt-book-band" /></span>
+                    <span className="pt-book-end" />
+                    <span className="pt-spine">
+                      <Icon name={th.icon} size={18} className="pt-spine-icon" />
+                      <span className="pt-spine-title">{recap.plan.name}</span>
+                      <span className="pt-spine-date">{`${d.getDate()}.${d.getMonth() + 1}.${String(d.getFullYear() + 543).slice(2)}`}</span>
+                      <i className="pt-book-band" />
+                    </span>
+                  </span>
                 </button>
               </div>
             );
