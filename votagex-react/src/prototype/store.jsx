@@ -32,6 +32,14 @@ const withPayments = (d) => (d.payments ? d : {
   }).filter(Boolean)),
 });
 
+// sample plans added to the demo later, given to a device that already has demo data (once each, so a deleted one stays gone)
+const LATER_SAMPLES = ['lunch'];
+function withNewSamples(d) {
+  const given = d.samplesGiven || [];
+  const add = seedData().plans.filter((p) => LATER_SAMPLES.includes(p.id) && !given.includes(p.id) && !d.plans.some((x) => x.id === p.id));
+  return { ...d, plans: [...d.plans, ...add], samplesGiven: [...new Set([...given, ...LATER_SAMPLES])] };
+}
+
 function load(key, signedIn) {
   try {
     const raw = localStorage.getItem(key);
@@ -43,7 +51,8 @@ function load(key, signedIn) {
         // saved while events were kept apart from places: they become places with dates
         const { events, ...withEvents } = withJars;
         if (events) withEvents.places = [...events.map(eventToPlace), ...withEvents.places];
-        return withPayments(withEvents.groups ? withEvents : withSeedGroups(withEvents)); // groups: saved before groups
+        const grouped = withPayments(withEvents.groups ? withEvents : withSeedGroups(withEvents)); // groups: saved before groups
+        return signedIn ? grouped : withNewSamples(grouped);
       }
     }
   } catch { /* storage unavailable: fall back to seed */ }

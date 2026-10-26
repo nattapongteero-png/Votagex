@@ -20,6 +20,32 @@ import {
 
 const FOLD_TOP = 12; // folded calendar's distance from the top of the screen
 const TH_DOW = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'];
+// a plan's head in the day card: who (its group's tag, unless home already shows that group) over its name,
+// and the faces as tall as both; tap for the plan
+function PlanHead({ plan, group, hideGroup, onOpen }) {
+  const tag = group && !hideGroup;
+  return (
+    <button className="pt-day-who" onClick={onOpen}>
+      <span className="pt-day-who-text">
+        {tag && <span className="pt-group-chip sm" style={{ background: group.color }}><Icon name={group.icon} size={13} /> {group.name}</span>}
+        {!group && plan.members.length < 2 && <span className="pt-muted sm">ไปคนเดียว</span>}
+        <span className="pt-strong ellipsis">{plan.name}</span>
+      </span>
+      {plan.members.length > 1 && <Avatars ids={plan.members} size={tag ? 47 : 32} max={3} />}
+    </button>
+  );
+}
+
+// the day's stops on a small map, numbered in the day's order; tap for the plan
+function DayMap({ pins, order, onOpen }) {
+  return (
+    <button className="pt-day-map" aria-label="เปิดแผน" onClick={onOpen}>
+      <MapView points={pins.map((st) => ({ id: st.id, lat: st.lat, lng: st.lng, cat: st.cat, label: order.indexOf(st) + 1 }))}
+        route={pins.length > 1} interactive={false} padding={32} fitKey={pins.map((st) => st.id).join()} />
+    </button>
+  );
+}
+
 // a saved place with dates (an event) on the selected day, under the weather
 function EventTile({ ev, last, onOpen }) {
   const kind = EVENT_KINDS[ev.kind] || EVENT_KINDS.other;
@@ -133,15 +159,19 @@ export default function TodayPage() {
   const dayPlans = plans.filter((p) => p.startDate && selected >= p.startDate && selected <= (p.endDate || p.startDate));
   const plan = dayPlans.find((p) => p.kind !== 'outing') || dayPlans[0] || null;
   // the day's other plans (an event during a trip, two outings…), each its own row under the main one
-  const morePlans = dayPlans.filter((p) => p !== plan).map((p) => ({ p, first: p.stops.filter((s) => s.date === selected).sort(byOrder)[0] }));
   const stops = plan ? plan.stops.filter((s) => s.date === selected).sort(byOrder) : [];
-  const dayPins = stops.filter((s) => s.lat != null && !s.skip);
-  const planGroup = plan && groups.find((g) => g.id === plan.groupId);
+  // every plan of the day, in time order by its first stop, each with its own head and stops
+  const sections = dayPlans
+    .map((p) => ({ p, g: groups.find((x) => x.id === p.groupId), stops: p.stops.filter((s) => s.date === selected).sort(byOrder) }))
+    .sort((a, b) => (a.stops[0]?.time || '99').localeCompare(b.stops[0]?.time || '99'));
+  const multi = sections.length > 1;
+  const dayStops = sections.flatMap((x) => x.stops); // the whole day in order, for the one check-in button
+  const dayPins = dayStops.filter((s) => s.lat != null && !s.skip);
   const country = countryOf(plan?.country);
   const nowHM = localHM(country.utc);
   const live = plan && selected === today && planStatus(plan, today) === 'ongoing' && plan.kind !== 'outing';
   const nextStop = selected === today ? stops.find((s) => !s.checkIns?.[ME]) : null;
-  const nextCheck = nextCheckIndex(stops, today, nowHM);
+  const nextCheck = nextCheckIndex(dayStops, today, nowHM);
 
   // stage chips
   const upcoming = plans.filter((p) => planStatus(p, today) === 'upcoming' && p.kind !== 'outing').sort((a, b) => a.startDate.localeCompare(b.startDate))[0];
@@ -281,18 +311,6 @@ export default function TodayPage() {
 
           {/* the selected day's plan */}
           <div className="hp-tile pt-day-card">
-            {plan && (
-              /* who (the group's tag, unless home already shows that group) over the plan's name; the faces as tall as both */
-              <button className="pt-day-who" onClick={() => navigate(`/proto/plan/${plan.id}`)}>
-                <span className="pt-day-who-text">
-                  {planGroup
-                    ? planGroup.id !== group?.id && <span className="pt-group-chip sm" style={{ background: planGroup.color }}><Icon name={planGroup.icon} size={13} /> {planGroup.name}</span>
-                    : plan.members.length < 2 && <span className="pt-muted sm">ไปคนเดียว</span>}
-                  <span className="pt-strong ellipsis">{plan.name}</span>
-                </span>
-                {plan.members.length > 1 && <Avatars ids={plan.members} size={planGroup && planGroup.id !== group?.id ? 47 : 32} max={3} />}
-              </button>
-            )}
             {!wxSel && (
               <div className="pt-day-head">
                 <span className="pt-grow">
@@ -301,21 +319,32 @@ export default function TodayPage() {
                 </span>
               </div>
             )}
-              {/* the day's stops on a map, in order; tap for the plan */}
-              {plan && dayPins.length > 0 && (
-                <button className="pt-day-map" aria-label="เปิดแผน" onClick={() => navigate(`/proto/plan/${plan.id}`)}>
-                  <MapView points={dayPins.map((st) => ({ id: st.id, lat: st.lat, lng: st.lng, cat: st.cat, label: stops.indexOf(st) + 1 }))}
-                    route={dayPins.length > 1} interactive={false} padding={32} fitKey={`${plan.id}-${selected}-${dayPins.map((st) => st.id).join()}`} />
-                </button>
-              )}
-              {plan && stops.length > 0 && (
-                <div className="pt-lines">
-                  {stops.map((s, i) => (
-                    <StopRow key={s.id} stop={s} planId={plan.id} state={stopState(s, today, nowHM)}
-                      checkHere={selected === today && i === nextCheck} passed={passedStop(stops, i, today)} onOpen={() => openSheet('stop', { planId: plan.id, stopId: s.id })} />
-                  ))}
+            {/* the day's stops on a map, in order; tap for the plan (several plans: the map comes first) */}
+            {multi && dayPins.length > 0 && <DayMap pins={dayPins} order={dayStops} onOpen={() => navigate(`/proto/plan/${sections[0].p.id}`)} />}
+            {sections.map(({ p, g, stops: ss }) => (
+              <div key={p.id} className="pt-day-section">
+                <div className="pt-day-who-row">
+                  <PlanHead plan={p} group={g} hideGroup={g && g.id === group?.id} onOpen={() => navigate(`/proto/plan/${p.id}`)} />
+                  {multi && (
+                    <button className="pt-icon-btn" aria-label={`เพิ่มจุดแวะใน ${p.name}`} onClick={() => openSheet('addStop', { planId: p.id, date: selected })}>
+                      <Icon name="plus" size={17} stroke={2.2} />
+                    </button>
+                  )}
                 </div>
-              )}
+                {!multi && dayPins.length > 0 && <DayMap pins={dayPins} order={dayStops} onOpen={() => navigate(`/proto/plan/${p.id}`)} />}
+                {ss.length > 0 && (
+                  <div className="pt-lines">
+                    {ss.map((s) => {
+                      const i = dayStops.indexOf(s);
+                      return (
+                        <StopRow key={s.id} stop={s} planId={p.id} state={stopState(s, today, nowHM)}
+                          checkHere={selected === today && i === nextCheck} passed={passedStop(dayStops, i, today)} onOpen={() => openSheet('stop', { planId: p.id, stopId: s.id })} />
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            ))}
 
               {live && nextStop && (
                 <div className="pt-next-card">
@@ -328,24 +357,14 @@ export default function TodayPage() {
                 </div>
               )}
 
-              {morePlans.map(({ p, first }) => (
-                <button key={p.id} className="pt-day-more" onClick={() => navigate(`/proto/plan/${p.id}`)}>
-                  <CatIcon cat={first?.cat || p.cover?.icon} size={32} />
-                  <span className="pt-grow">
-                    <span className="pt-strong ellipsis">{p.name}</span>
-                    <span className="pt-muted sm">{first?.time ? `${first.time} · ` : ''}{KINDS[p.kind].label}</span>
-                  </span>
-                  <Avatars ids={p.members} size={20} max={3} />
-                </button>
-              ))}
-
-              <div className="hp-plan-actions">
+              {/* several plans: each head has its own + and opens its plan, so no shared buttons here */}
+              {(!multi || live) && <div className="hp-plan-actions">
                 {plan ? (
                   <>
                     <button className="hp-add-btn" onClick={() => openSheet(live ? 'expense' : 'addStop', live ? {} : { planId: plan.id, date: selected })}>
                       <Icon name={live ? 'wallet' : 'plus'} size={18} stroke={2.2} /> {live ? 'จดรายจ่าย' : 'เพิ่มจุดแวะ'}
                     </button>
-                    <button className="pt-btn light pt-open-plan" onClick={() => navigate(`/proto/plan/${plan.id}`)}>ดูแผน <Icon name="next" size={16} /></button>
+                    {!multi && <button className="pt-btn light pt-open-plan" onClick={() => navigate(`/proto/plan/${plan.id}`)}>ดูแผน <Icon name="next" size={16} /></button>}
                   </>
                 ) : (
                   <>
@@ -353,7 +372,7 @@ export default function TodayPage() {
                     {canShuffle && <button className="pt-btn light" onClick={() => openSheet('shuffle', { date: selected })}><Icon name="shuffle" size={16} /> สุ่มให้</button>}
                   </>
                 )}
-              </div>
+              </div>}
           </div>
 
           {/* the next trip, only once it's 3 days away or less (the speech note counts down before that) */}
