@@ -1898,3 +1898,21 @@ button.pt-badge { border: none; font-family: var(--font); cursor: pointer; }
 button.pt-pick-later { width: 100%; font: inherit; color: inherit; text-align: left; cursor: pointer; }
 .pt-pick-icon { width: 44px; height: 44px; background: var(--tw-sunken); color: var(--tw-text-2); }
 .pt-stepper-label { flex: 1; }
+
+/* ---- stop: time by taps ---- */
+.pt-time-big { font-size: 40px; font-weight: 700; line-height: 48px; font-variant-numeric: tabular-nums; letter-spacing: -.5px; }
+.pt-time-big small { font-size: 16px; font-weight: 600; margin-left: 6px; color: var(--tw-text-3); }
+.pt-hour-strip { display: flex; gap: 8px; overflow-x: auto; margin: 0 -20px; padding: 2px 20px; scrollbar-width: none; }
+.pt-hour-strip::-webkit-scrollbar { display: none; }
+.pt-hour {
+  flex: 0 0 48px; height: 48px; border-radius: 14px; border: 1px solid var(--tw-border); background: var(--tw-surface);
+  font-family: var(--font); font-size: 16px; font-weight: 600; color: var(--tw-text); cursor: pointer;
+}
+.pt-hour.active { background: var(--tw-btn-primary); border-color: transparent; color: #fff; }
+.pt-sheet-body > .pt-day-strip { margin: 0 -20px; padding: 2px 20px; }
+.pt-note-input { resize: none; font-family: var(--font); line-height: 1.5; }
+.pt-text-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px; align-self: center; margin-top: 8px;
+  min-height: 44px; padding: 0 16px; border: none; background: none; font-family: var(--font); font-size: 14px; font-weight: 600; color: var(--tw-text-2); cursor: pointer;
+}
+.pt-text-btn.danger { color: var(--tw-danger); }

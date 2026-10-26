@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useProto } from './useProto';
 import { Sheet, Avatar, Chip } from './ui';
 import Icon, { SourceBadge } from './icons';
-import { ME, PEOPLE, KINDS, addDays, diffDays, dayList, thaiShort, directionsUrl, sendInvite } from './data';
+import { ME, PEOPLE, KINDS, addDays, diffDays, dayList, parseISO, thaiShort, directionsUrl, sendInvite } from './data';
 
 const after = (close, fn) => { close(); setTimeout(fn, 320); };
 
@@ -124,7 +124,36 @@ export function EditPlanSheet({ onClose, planId }) {
   );
 }
 
-// One stop: its time, day and note; directions; delete (with an undo)
+
+const HOURS = Array.from({ length: 19 }, (_, i) => String(i + 6).padStart(2, '0')); // 06–24
+const MINUTES = ['00', '15', '30', '45'];
+
+// 24-hour time by taps: an hour strip and quarter hours; "ไม่ระบุ" clears it
+function TimePicker({ value, onChange }) {
+  const box = useRef(null);
+  const [h, m] = value ? value.split(':') : ['', '00'];
+  useEffect(() => {
+    const el = box.current?.querySelector('.active') || box.current?.querySelector('[data-h="09"]');
+    el?.scrollIntoView({ inline: 'center', block: 'nearest' });
+  }, []);
+  const set = (hh, mm) => onChange(`${hh}:${mm}`);
+  return (
+    <>
+      <div className="pt-time-big">{value || '--:--'}<small>{value ? 'น.' : ''}</small></div>
+      <div className="pt-hour-strip" ref={box}>
+        {HOURS.map((hh) => (
+          <button key={hh} data-h={hh} className={`pt-hour${h === hh ? ' active' : ''}`} onClick={() => set(hh, m || '00')}>{hh}</button>
+        ))}
+      </div>
+      <div className="pt-chip-row">
+        {MINUTES.map((mm) => <Chip key={mm} active={Boolean(value) && m === mm} onClick={() => set(h || '09', mm)}>:{mm}</Chip>)}
+        <Chip active={!value} onClick={() => onChange('')}>ไม่ระบุ</Chip>
+      </div>
+    </>
+  );
+}
+
+// A stop: when (time first, it's what's usually missing), which day, a note; directions and the clip it came from
 export function StopSheet({ onClose, planId, stopId }) {
   const { plans, places, actions } = useProto();
   const plan = plans.find((p) => p.id === planId);
@@ -136,31 +165,45 @@ export function StopSheet({ onClose, planId, stopId }) {
   const [note, setNote] = useState(stop?.note || '');
   if (!stop) return null;
   const days = dayList(plan.startDate, plan.endDate);
+  const clip = ['tiktok', 'instagram'].includes(source?.type) && source.url;
+  const changed = time !== (stop.time || '') || date !== (stop.date || null) || note.trim() !== (stop.note || '');
 
   return (
     <Sheet title={stop.name} subtitle={stop.area} onClose={onClose}
-      footer={(close) => <button className="pt-btn block" onClick={() => { actions.updateStop(plan.id, stop.id, { time, date, note: note.trim() }); close(); }}>บันทึก</button>}>
+      footer={(close) => (
+        <button className="pt-btn block" onClick={() => { if (changed) actions.updateStop(plan.id, stop.id, { time, date, note: note.trim() }); close(); }}>
+          {changed ? 'บันทึก' : 'เสร็จ'}
+        </button>
+      )}>
       {(close) => (
         <>
+          <div className="pt-row-actions">
+            <a className="pt-btn light sm" href={directionsUrl(stop)} target="_blank" rel="noreferrer"><Icon name="nav" size={16} /> นำทาง</a>
+            {clip && (
+              <a className="pt-btn light sm" href={source.url} target="_blank" rel="noreferrer"><SourceBadge type={source.type} size={20} /> {source.type === 'tiktok' ? 'ดูคลิป' : 'ดูโพสต์'}</a>
+            )}
+          </div>
+
           <div className="pt-label">เวลา</div>
-          <input type="time" className="pt-input" value={time} onChange={(e) => setTime(e.target.value)} />
+          <TimePicker value={time} onChange={setTime} />
+
           {days.length > 1 && (
             <>
               <div className="pt-label">วัน</div>
-              <div className="pt-chip-row wrap">
-                {days.map((d, i) => <Chip key={d} active={date === d} onClick={() => setDate(d)}>Day {i + 1} · {thaiShort(d)}</Chip>)}
+              <div className="pt-day-strip">
+                {days.map((d, i) => (
+                  <button key={d} className={`pt-day-pill${date === d ? ' active' : ''}`} onClick={() => setDate(d)}>
+                    <small>Day {i + 1}</small><b>{parseISO(d).getDate()}</b><small>{thaiShort(d).split(' ')[1]}</small>
+                  </button>
+                ))}
               </div>
             </>
           )}
+
           <div className="pt-label">โน้ต</div>
-          <input className="pt-input" value={note} placeholder="โน้ต" onChange={(e) => setNote(e.target.value)} />
-          <div className="pt-row-actions">
-            <a className="pt-btn light" href={directionsUrl(stop)} target="_blank" rel="noreferrer"><Icon name="nav" size={16} /> นำทาง</a>
-            {['tiktok', 'instagram'].includes(source?.type) && source.url && (
-              <a className="pt-btn light" href={source.url} target="_blank" rel="noreferrer"><SourceBadge type={source.type} size={20} /> {source.type === 'tiktok' ? 'ดูคลิป' : 'ดูโพสต์'}</a>
-            )}
-            <button className="pt-btn light danger" onClick={() => { actions.removeStop(plan.id, stop.id); close(); }}><Icon name="trash" size={16} /> ลบ</button>
-          </div>
+          <textarea className="pt-input pt-note-input" rows={2} value={note} placeholder="เช่น สั่งอะไร จองไว้ชื่อใคร" onChange={(e) => setNote(e.target.value)} />
+
+          <button className="pt-text-btn danger" onClick={() => { actions.removeStop(plan.id, stop.id); close(); }}><Icon name="trash" size={16} /> ลบจุดแวะนี้</button>
         </>
       )}
     </Sheet>
