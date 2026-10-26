@@ -10,7 +10,7 @@ import WeatherCard from '../WeatherCard';
 import { MonthPiggyTile } from '../MonthMoney';
 import StopRow from '../StopRow';
 import MapView from '../MapView';
-import StoryViewer from '../StoryViewer';
+import RecapViewer from '../RecapViewer';
 import { pm25Level, useWeather, weatherKind } from '../weather';
 import HOLIDAYS from '../thHolidays.json';
 import {
@@ -246,38 +246,28 @@ export default function TodayPage() {
   // something saved I haven't been to yet, for the shuffle on an empty day
   const canShuffle = selected >= today && shufflePool(places, allPlans, selected, group).length > 0;
 
-  // memories from this day in past years (±3 days), as stories on my circle and each group's; a scope's are the
-  // memories of its own plans (mine: every plan I'm on)
-  const stories = useMemo(() => {
-    const onThisDay = memories.filter((m) => m.photos?.length && m.date < today
-      && diffDays(m.date, today) >= 362 && [0, 1, 2, 3, 362, 363, 364].includes(diffDays(m.date, today) % 365));
-    const of = (inScope) => onThisDay.filter((m) => inScope(allPlans.find((p) => p.id === m.planId)))
-      .sort((a, b) => a.date.localeCompare(b.date))
-      .flatMap((m) => m.photos.map((photo) => ({ m, photo, plan: allPlans.find((p) => p.id === m.planId) })));
-    const out = { me: of((p) => p?.members.includes(ME)) };
-    for (const g of groups) out[g.id] = of((p) => p?.groupId === g.id);
-    return out;
-  }, [memories, allPlans, groups, today]);
-  const scopeId = group?.id || 'me';
-  const [story, setStory] = useState(null); // the scope whose stories are playing
-  const seen = (id) => settings.storySeen?.[id] === today;
-  const ringOf = (id) => (stories[id]?.length ? (seen(id) ? ' story seen' : ' story') : '');
-  // a ring not yet watched today: tap plays its stories and lands on that calendar; otherwise a tap just switches
-  const playStory = (id) => {
-    setStory(id);
-    if (!seen(id)) actions.setSetting('storySeen', { ...settings.storySeen, [id]: today });
-  };
-  const pickScope = (id) => {
-    if (stories[id]?.length && !seen(id)) playStory(id);
-    if (id !== scopeId) actions.setSetting('scope', id);
-  };
-
-  // this page's memory from about a year ago, else its latest one with a photo
-  const throwback = useMemo(() => {
-    const withPhoto = memories.filter((m) => m.photos?.length && m.date < today && plans.some((p) => p.id === m.planId));
-    const yearAgo = stories[scopeId][0]?.m;
-    return yearAgo ? { m: yearAgo, label: 'วันนี้เมื่อปีที่แล้ว' } : withPhoto[0] ? { m: withPhoto[0], label: 'ความทรงจำล่าสุด' } : null;
-  }, [memories, plans, stories, scopeId, today]);
+  // a trip to look back on: one from this day in a past year (±3 days), else the latest one with photos; only
+  // this page's own trips. Played back as a recap
+  const recap = useMemo(() => {
+    const past = plans.filter((p) => p.startDate && (p.endDate || p.startDate) < today);
+    const ago = (p) => {
+      const n = diffDays(p.startDate, today);
+      const off = n % 365;
+      return n >= 362 && (off <= 3 || off >= 362) ? Math.round(n / 365) : 0;
+    };
+    const onThisDay = past.filter(ago).sort((a, b) => b.startDate.localeCompare(a.startDate))[0];
+    const withPhotos = past.filter((p) => memories.some((m) => m.planId === p.id && m.photos?.length))
+      .sort((a, b) => (b.endDate || b.startDate).localeCompare(a.endDate || a.startDate))[0];
+    const p = onThisDay || withPhotos;
+    if (!p) return null;
+    const mems = memories.filter((m) => m.planId === p.id).sort((a, b) => a.date.localeCompare(b.date));
+    return {
+      plan: p, memories: mems, expenses: expenses.filter((e) => e.planId === p.id),
+      label: onThisDay ? (ago(p) === 1 ? 'วันนี้เมื่อปีที่แล้ว' : `วันนี้เมื่อ ${ago(p)} ปีก่อน`) : 'ทริปล่าสุด',
+      photos: mems.flatMap((m) => m.photos || []),
+    };
+  }, [plans, memories, expenses, today]);
+  const [recapOpen, setRecapOpen] = useState(false);
 
   // the day's title, when there's no weather card to say it
   const dayHead = !wxSel && (
@@ -337,7 +327,7 @@ export default function TodayPage() {
           <div className="pt-avatar-note">
             <SpeechNotes notes={notes} />
             {/* me: my own calendar (every trip I'm on); the groups sit beside me, same size */}
-            <button aria-pressed={!group} className={`pt-scope-btn${!group ? ' active' : ''}${ringOf('me')}`} onClick={() => pickScope('me')}>
+            <button aria-pressed={!group} className={`pt-scope-btn${!group ? ' active' : ''}`} onClick={() => actions.setSetting('scope', 'me')}>
               <span className="pt-group-badge pt-scope-me"><img src={PEOPLE[ME].avatar} alt="" /></span><span>{PEOPLE[ME].name}</span>
             </button>
           </div>
@@ -347,7 +337,7 @@ export default function TodayPage() {
           </button>
           <div className="pt-scope">
             {groups.map((g) => (
-              <button key={g.id} aria-pressed={group?.id === g.id} className={`pt-scope-btn${group?.id === g.id ? ' active' : ''}${ringOf(g.id)}`} onClick={() => pickScope(g.id)}>
+              <button key={g.id} aria-pressed={group?.id === g.id} className={`pt-scope-btn${group?.id === g.id ? ' active' : ''}`} onClick={() => actions.setSetting('scope', g.id)}>
                 <span className="pt-group-badge" style={{ background: g.color }}><Icon name={g.icon} size={22} /></span><span>{g.name}</span>
               </button>
             ))}
@@ -371,6 +361,23 @@ export default function TodayPage() {
 
         {/* one block for the whole sheet, so a drag anywhere on it (gaps and handle too) moves it */}
         <div className="pt-home-sheet">
+          {/* a past trip to look back on, played back as a recap */}
+          {recap && (
+            <button className="hp-tile pt-rc-tile" onClick={() => setRecapOpen(true)}>
+              <span className="pt-rc-stack" aria-hidden="true">
+                {(recap.photos.length ? recap.photos : [recap.plan.cover?.img]).filter(Boolean).slice(0, 3).reverse().map((src, i) => (
+                  <i key={src + i} style={{ backgroundImage: `url(${src})` }} />
+                ))}
+              </span>
+              <span className="pt-grow">
+                <span className="pt-muted sm">{recap.label}</span>
+                <span className="pt-strong ellipsis">{recap.plan.name}</span>
+                <span className="pt-muted sm ellipsis">{thaiShort(recap.plan.startDate)} {parseISO(recap.plan.startDate).getFullYear() + 543}{recap.photos.length ? ` · ${recap.photos.length} รูป` : ''}</span>
+              </span>
+              <span className="pt-rc-play"><Icon name="play" size={18} /></span>
+            </button>
+          )}
+
           {/* the selected day's weather, its own card */}
           {wxSel && <WeatherCard wx={wxSel} place={selPlace || 'กรุงเทพฯ'} title={dayTitle} holiday={holiday} night={night} clock={selected === today} utc={countryOf(tripSel?.country).utc} />}
 
@@ -422,20 +429,6 @@ export default function TodayPage() {
             </div>
           )}
 
-          {/* throwback */}
-          {throwback && (
-            <div className="hp-section">
-              <SectionTitle title={throwback.label} />
-              <button className="pt-throwback" style={{ backgroundImage: `url(${throwback.m.photos[0]})` }}
-                onClick={() => (stories[scopeId].length ? playStory(scopeId) : navigate(`/proto/plan/${throwback.m.planId}?tab=memories`))}>
-                <span className="pt-throwback-text">
-                  <span className="pt-muted light sm">{thaiShort(throwback.m.date)} {parseISO(throwback.m.date).getFullYear() + 543} · {plans.find((p) => p.id === throwback.m.planId)?.name}</span>
-                  <span><Icon name={throwback.m.mood} size={16} className="pt-inline-icon" /> {throwback.m.text}</span>
-                </span>
-              </button>
-            </div>
-          )}
-
           {/* this month's going-out money: the piggy with what's left */}
           {!group && (
             <div className="hp-section">
@@ -445,7 +438,7 @@ export default function TodayPage() {
           )}
         </div>
       </div>
-      {story && <StoryViewer items={stories[story]} today={today} onClose={() => setStory(null)} />}
+      {recapOpen && recap && <RecapViewer {...recap} onClose={() => setRecapOpen(false)} />}
     </div>
   );
 }

@@ -33,9 +33,17 @@ const withPayments = (d) => (d.payments ? d : {
 });
 
 // sample plans added to the demo later, given to a device that already has demo data (once each, so a deleted one stays gone)
-const LATER_SAMPLES = ['lunch', 'g-fam'];
+// bangsaen-recap: the year-ago day out got more stops, photos and spends for its recap
+const LATER_SAMPLES = ['lunch', 'g-fam', 'bangsaen-recap'];
 function withNewSamples(d) {
   const given = d.samplesGiven || [];
+  if (!given.includes('bangsaen-recap') && d.plans.some((p) => p.id === 'bangsaen')) {
+    const seed = seedData();
+    const more = (list, from) => [...list, ...from.filter((x) => x.planId === 'bangsaen' && !list.some((y) => y.id === x.id))];
+    const stops = seed.plans.find((p) => p.id === 'bangsaen').stops;
+    d = { ...d, plans: d.plans.map((p) => (p.id === 'bangsaen' ? { ...p, stops: [...p.stops, ...stops.filter((x) => !p.stops.some((y) => y.id === x.id))] } : p)),
+      memories: more(d.memories, seed.memories), expenses: more(d.expenses, seed.expenses) };
+  }
   const fresh = (x, list) => LATER_SAMPLES.includes(x.id) && !given.includes(x.id) && !list.some((y) => y.id === x.id);
   const add = seedData().plans.filter((p) => fresh(p, d.plans));
   const addGroups = SEED_GROUPS.filter((g) => fresh(g, d.groups || [])).map((g) => ({ ...g }));

@@ -544,6 +544,9 @@ export function seedData() {
       cover: { img: '/assets/photo5.jpg' },
       stops: [
         { id: 'bs1', date: rel(-365), time: '10:00', name: 'หาดบางแสน', area: 'เมืองชลบุรี · ชลบุรี', prov: 'ชลบุรี', lat: 13.288, lng: 100.913, cat: 'sight', note: '', checkIns: done(['u1', 'u2'], '10:30', true) },
+        { id: 'bs2', date: rel(-365), time: '12:30', name: 'ร้านซีฟู้ดริมหาด', area: 'แสนสุข · ชลบุรี', prov: 'ชลบุรี', lat: 13.2795, lng: 100.9198, cat: 'food', note: '', checkIns: done(['u1', 'u2'], '12:40') },
+        { id: 'bs3', date: rel(-365), time: '16:00', name: 'เขาสามมุข', area: 'แสนสุข · ชลบุรี', prov: 'ชลบุรี', lat: 13.3013, lng: 100.9003, cat: 'sight', note: '', checkIns: done(['u1', 'u2'], '16:10') },
+        { id: 'bs4', date: rel(-365), time: '17:30', name: 'ตลาดหนองมน', area: 'แสนสุข · ชลบุรี', prov: 'ชลบุรี', lat: 13.2768, lng: 100.9413, cat: 'shop', note: '', checkIns: done(['u1', 'u2'], '17:45') },
       ],
     },
     {
@@ -599,6 +602,8 @@ export function seedData() {
     ex('e16', 'khaoyai', kyStart, 'ที่พัก 2 คืน', 3200, 'stay', 'u1', ['u1', 'u3']),
     ex('e17', 'khaoyai', kyStart, 'ค่าเข้าอุทยาน', 80, 'ticket', 'u3', ['u1', 'u3']),
     ex('e18', 'bangsaen', rel(-365), 'ซีฟู้ดริมหาด', 1240, 'food', 'u2', ['u1', 'u2']),
+    ex('e19', 'bangsaen', rel(-365), 'ค่าน้ำมัน + ทางด่วน', 480, 'move', 'u1', ['u1', 'u2']),
+    ex('e20', 'bangsaen', rel(-365), 'ขนมหนองมน', 320, 'shop', 'u2', ['u1', 'u2']),
   ];
 
   const memories = [
@@ -608,6 +613,8 @@ export function seedData() {
     { id: 'm4', planId: 'cnx', date: c(0), stopId: 'cm2', photos: [], text: 'ร้านกาแฟในซอย 9 น่านั่งมาก ต้องกลับมาอีก', mood: 'moodSmile', by: 'u4' },
     { id: 'm5', planId: 'khaoyai', date: addDays(kyStart, 1), stopId: null, photos: ['/assets/photo6.jpg'], text: 'แวะฟาร์มม้าระหว่างทาง ตัวใหญ่กว่าที่คิดเยอะ', mood: 'moodLove', by: 'u1' },
     { id: 'm6', planId: 'bangsaen', date: rel(-365), stopId: 'bs1', photos: ['/assets/photo5.jpg'], text: 'ทะเลหน้าฝนก็สวยดี ได้ซีฟู้ดอร่อยด้วย', mood: 'moodHappy', by: 'u1' },
+    { id: 'm8', planId: 'bangsaen', date: rel(-365), stopId: 'bs3', photos: ['/assets/photo3.jpg'], text: 'ขึ้นเขาสามมุขทันพระอาทิตย์ตกพอดี', mood: 'moodLove', by: 'u2' },
+    { id: 'm9', planId: 'bangsaen', date: rel(-365), stopId: 'bs4', photos: ['/assets/photo2.jpg'], text: 'ขนมหนองมนเต็มท้ายรถ', mood: 'moodSmile', by: 'u1' },
     { id: 'm7', planId: 'iconsiam', date: rel(-5), stopId: 'ic1', photos: [], text: 'ลมริมน้ำเย็นสบาย นั่งดูเรือจนเย็น', mood: 'moodSmile', by: 'u1' },
   ];
 
