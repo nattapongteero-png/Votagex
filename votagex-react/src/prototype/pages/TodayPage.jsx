@@ -11,12 +11,14 @@ import { MonthPiggyTile } from '../MonthMoney';
 import StopRow from '../StopRow';
 import MapView from '../MapView';
 import RecapViewer from '../RecapViewer';
+import MemoryDome from '../MemoryDome';
+import SunWall from '../SunWall';
 import { pm25Level, useWeather, weatherKind } from '../weather';
 import HOLIDAYS from '../thHolidays.json';
 import {
   ME, PEOPLE, CURRENCIES, HOME, addDays, parseISO, diffDays, thaiShort, byOrder, localHM,
   stopState, keepThai, fmtMoney, distanceKm, fmtKm, directionsUrl, countryOf, planStatus, toTHB, jarStats,
-  EVENT_KINDS, KINDS, eventOn, shufflePool, nextCheckIndex, passedStop, tripTheme,
+  EVENT_KINDS, KINDS, eventOn, shufflePool, nextCheckIndex, passedStop,
 } from '../data';
 
 const FOLD_TOP = 12; // folded calendar's distance from the top of the screen
@@ -246,37 +248,49 @@ export default function TodayPage() {
   // something saved I haven't been to yet, for the shuffle on an empty day
   const canShuffle = selected >= today && shufflePool(places, allPlans, selected, group).length > 0;
 
-  // a trip to look back on: one from this day in a past year (±3 days), else the latest one with photos; only
-  // this page's own trips. Played back as a recap
-  const recap = useMemo(() => {
-    const past = plans.filter((p) => p.startDate && (p.endDate || p.startDate) < today);
-    const ago = (p) => {
+  // past trips to look back on (this page's own, with photos), the one from this day in a past year (±3 days)
+  // first; each plays back as its diary
+  const looks = useMemo(() => {
+    const yearsAgo = (p) => {
       const n = diffDays(p.startDate, today);
       const off = n % 365;
       return n >= 362 && (off <= 3 || off >= 362) ? Math.round(n / 365) : 0;
     };
-    const onThisDay = past.filter(ago).sort((a, b) => b.startDate.localeCompare(a.startDate))[0];
-    const withPhotos = past.filter((p) => memories.some((m) => m.planId === p.id && m.photos?.length))
-      .sort((a, b) => (b.endDate || b.startDate).localeCompare(a.endDate || a.startDate))[0];
-    const p = onThisDay || withPhotos;
-    if (!p) return null;
-    const mems = memories.filter((m) => m.planId === p.id).sort((a, b) => a.date.localeCompare(b.date));
-    return {
-      plan: p, memories: mems, expenses: expenses.filter((e) => e.planId === p.id),
-      label: onThisDay ? (ago(p) === 1 ? 'วันนี้เมื่อปีที่แล้ว' : `วันนี้เมื่อ ${ago(p)} ปีก่อน`) : 'ทริปล่าสุด',
-      photos: mems.flatMap((m) => m.photos || []),
+    const agoText = (p) => {
+      const y = yearsAgo(p);
+      if (y) return y === 1 ? 'วันนี้เมื่อปีที่แล้ว' : `วันนี้เมื่อ ${y} ปีก่อน`;
+      const n = diffDays(p.startDate, today);
+      return n >= 365 ? `${Math.round(n / 365)} ปีที่แล้ว` : n >= 30 ? `${Math.round(n / 30)} เดือนที่แล้ว` : `${n} วันที่แล้ว`;
     };
+    return plans
+      .filter((p) => p.startDate && (p.endDate || p.startDate) < today && memories.some((m) => m.planId === p.id && m.photos?.length))
+      .sort((a, b) => (yearsAgo(b) ? 1 : 0) - (yearsAgo(a) ? 1 : 0) || (b.endDate || b.startDate).localeCompare(a.endDate || a.startDate))
+      .map((p) => {
+        const mems = memories.filter((m) => m.planId === p.id).sort((a, b) => a.date.localeCompare(b.date));
+        return { plan: p, memories: mems, expenses: expenses.filter((e) => e.planId === p.id), label: agoText(p), photos: mems.flatMap((m) => m.photos || []) };
+      });
   }, [plans, memories, expenses, today]);
-  const [recapOpen, setRecapOpen] = useState(false);
+  const domeItems = useMemo(() => looks.flatMap((l) => l.photos.map((src) => ({
+    src, key: l.plan.id, title: l.plan.name, sub: `${l.label} · ${thaiShort(l.plan.startDate)} ${parseISO(l.plan.startDate).getFullYear() + 543}`,
+  }))), [looks]);
+  const [recapOf, setRecapOf] = useState(null); // the trip whose diary is open
+  const recap = looks.find((l) => l.plan.id === recapOf);
 
   // the day's title, when there's no weather card to say it
+  const EN_DOW = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+  const EN_MON = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+  const sel = parseISO(selected);
+  // a station sign: the day's name big, and the days either side to step to, like the stations before and after
   const dayHead = !wxSel && (
-    <div className="pt-day-head">
-                <span className="pt-grow">
-                  <span className="pt-strong lg">{dayTitle}</span>
-                  <span className="pt-muted sm">{daySub}{selPlace ? ` · ${selPlace}` : ''}</span>
-                </span>
-              </div>
+    <div className="pt-station">
+      <span className="pt-station-name">{dayTitle}</span>
+      <span className="pt-station-en">{EN_DOW[sel.getDay()]} · {EN_MON[sel.getMonth()]} {sel.getDate()}</span>
+      <span className="pt-muted sm">{daySub}{selPlace ? ` · ${selPlace}` : ''}</span>
+      <span className="pt-station-band">
+        <button onClick={() => setSelected(addDays(selected, -1))}><Icon name="back" size={14} stroke={2.6} /> {thaiShort(addDays(selected, -1))}</button>
+        <button onClick={() => setSelected(addDays(selected, 1))}>{thaiShort(addDays(selected, 1))} <Icon name="next" size={14} stroke={2.6} /></button>
+      </span>
+    </div>
   );
   // one plan of the day, its own card: its head, its own map, its stops, then add a stop / open the plan
   // (the day's ongoing trip also gets its next stop, and noting a spend instead of adding a stop)
@@ -284,7 +298,7 @@ export default function TodayPage() {
     const pins = ss.filter((s) => s.lat != null && !s.skip);
     const isLive = live && p === plan;
     return (
-      <div key={p.id} className="hp-tile pt-day-card">
+      <div key={p.id} className="hp-tile pt-day-card" style={g ? { '--line': g.color } : undefined}>
         {!multi && dayHead}
         <PlanHead plan={p} group={g} onOpen={() => navigate(`/proto/plan/${p.id}`)} onGroup={() => openSheet('group', { groupId: g.id })} />
         {pins.length > 0 && <DayMap pins={pins} order={ss} onOpen={() => navigate(`/proto/plan/${p.id}`)} />}
@@ -321,6 +335,7 @@ export default function TodayPage() {
 
   return (
     <div ref={pageRef} className={`homepage pt-today${collapsed ? ' header-collapsed' : ''}${atRest ? ' at-rest' : ''}`} style={sheet ? { '--hp-sheet-top': `${sheet.top}px`, '--fold-top': `${FOLD_TOP}px` } : undefined}>
+      <SunWall />
       <div className="hp-header">
         <div className="hp-header-top pt-talk">
           {/* Instagram-style note floating above the avatar */}
@@ -361,29 +376,8 @@ export default function TodayPage() {
 
         {/* one block for the whole sheet, so a drag anywhere on it (gaps and handle too) moves it */}
         <div className="pt-home-sheet">
-          {/* a past trip to look back on: its diary's spine, lying on the sheet; tap to open it */}
-          {recap && (() => {
-            const th = tripTheme(recap.plan);
-            const d = parseISO(recap.plan.startDate);
-            return (
-              <div className="pt-spine-wrap">
-                <span className="pt-muted sm">{recap.label}</span>
-                <button className="pt-book" style={{ '--book': th.color }} aria-label={`เปิดไดอารี่ ${recap.plan.name}`} onClick={() => setRecapOpen(true)}>
-                  <span className="pt-book-shadow" />
-                  <span className="pt-book-3d">
-                    <span className="pt-book-top"><i className="pt-book-band" /></span>
-                    <span className="pt-book-end" />
-                    <span className="pt-spine">
-                      <Icon name={th.icon} size={18} className="pt-spine-icon" />
-                      <span className="pt-spine-title">{recap.plan.name}</span>
-                      <span className="pt-spine-date">{`${d.getDate()}.${d.getMonth() + 1}.${String(d.getFullYear() + 543).slice(2)}`}</span>
-                      <i className="pt-book-band" />
-                    </span>
-                  </span>
-                </button>
-              </div>
-            );
-          })()}
+          {/* past trips' photos on the inside of a dome: spin it, tap one for that trip's diary */}
+          {domeItems.length > 0 && <MemoryDome items={domeItems} onOpen={setRecapOf} />}
 
           {/* the selected day's weather, its own card */}
           {wxSel && <WeatherCard wx={wxSel} place={selPlace || 'กรุงเทพฯ'} title={dayTitle} holiday={holiday} night={night} clock={selected === today} utc={countryOf(tripSel?.country).utc} />}
@@ -445,7 +439,7 @@ export default function TodayPage() {
           )}
         </div>
       </div>
-      {recapOpen && recap && <RecapViewer {...recap} onClose={() => setRecapOpen(false)} />}
+      {recap && <RecapViewer {...recap} onClose={() => setRecapOf(null)} />}
     </div>
   );
 }

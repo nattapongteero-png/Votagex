@@ -14,31 +14,33 @@
   --radius: 999px;
   --radius-sm: 12px;
   --font: 'IBM Plex Sans Thai', sans-serif;
+  /* headings: travel-poster type, heavy and tight */
+  --font-display: 'Kanit', 'IBM Plex Sans Thai', sans-serif;
 
   /* surfaces */
-  --tw-canvas: #F9FAFB;
-  --tw-surface: #FFFFFF;
-  --tw-sunken: #F3F4F6;
-  --tw-overlay: rgba(15, 23, 42, 0.45);
+  --tw-canvas: #F4EFE6;
+  --tw-surface: #FFFDF8;
+  --tw-sunken: #EDE6D8;
+  --tw-overlay: rgba(27, 42, 74, 0.45);
   /* text */
-  --tw-text: #111827;
-  --tw-text-2: #4B5563;
-  --tw-text-3: #9CA3AF;
-  --tw-link: #0F766E;
+  --tw-text: #1B2A4A;
+  --tw-text-2: #4B5878;
+  --tw-text-3: #8E97AB;
+  --tw-link: #1E5E9E;
   /* brand */
-  --tw-brand: #0D9488;
-  --tw-brand-subtle: #F0FDFA;
-  --tw-brand-on-subtle: #0F766E;
-  --tw-accent: #E4A42A;
+  --tw-brand: #2B78C5;
+  --tw-brand-subtle: #E4EEF8;
+  --tw-brand-on-subtle: #1E5E9E;
+  --tw-accent: #E9B526;
   --tw-active: #15803D;
   /* borders */
-  --tw-border: #E5E7EB;
-  --tw-border-strong: #D1D5DB;
+  --tw-border: #E4DBCA;
+  --tw-border-strong: #D2C6AF;
   /* buttons: primary = dark capsule, secondary = white capsule */
-  --tw-btn-primary: #111827;
-  --tw-btn-primary-pressed: #1F2937;
+  --tw-btn-primary: #1B2A4A;
+  --tw-btn-primary-pressed: #24365C;
   /* status */
-  --tw-danger: #D63B3B;
+  --tw-danger: #DC4A2F;
   --tw-success: #237D44;
   /* radius */
   --tw-r-md: 12px;
