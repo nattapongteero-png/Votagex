@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ProtoCtx } from './useProto';
 import {
   TODAY, ME, PEOPLE, addPeople, addDays, diffDays, seedData, seedPiggy, withSeedGroups, shiftData, planStatus, eventToPlace,
-  splitByShare, jarCats, settleUp, fmtMoney, JAR_TEMPLATES, KINDS, DEMO_PROMPTPAY, nextOrder,
+  splitByShare, jarCats, settleUp, fmtMoney, JAR_TEMPLATES, KINDS, DEMO_PROMPTPAY, nextOrder, SEED_GROUPS,
 } from './data';
 
 import * as cloud from './cloud';
@@ -33,11 +33,13 @@ const withPayments = (d) => (d.payments ? d : {
 });
 
 // sample plans added to the demo later, given to a device that already has demo data (once each, so a deleted one stays gone)
-const LATER_SAMPLES = ['lunch'];
+const LATER_SAMPLES = ['lunch', 'g-fam'];
 function withNewSamples(d) {
   const given = d.samplesGiven || [];
-  const add = seedData().plans.filter((p) => LATER_SAMPLES.includes(p.id) && !given.includes(p.id) && !d.plans.some((x) => x.id === p.id));
-  return { ...d, plans: [...d.plans, ...add], samplesGiven: [...new Set([...given, ...LATER_SAMPLES])] };
+  const fresh = (x, list) => LATER_SAMPLES.includes(x.id) && !given.includes(x.id) && !list.some((y) => y.id === x.id);
+  const add = seedData().plans.filter((p) => fresh(p, d.plans));
+  const addGroups = SEED_GROUPS.filter((g) => fresh(g, d.groups || [])).map((g) => ({ ...g }));
+  return { ...d, plans: [...d.plans, ...add], groups: [...(d.groups || []), ...addGroups], samplesGiven: [...new Set([...given, ...LATER_SAMPLES])] };
 }
 
 function load(key, signedIn) {

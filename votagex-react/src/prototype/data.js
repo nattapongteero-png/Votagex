@@ -131,9 +131,11 @@ export async function sendInvite(link, name, showToast) {
 // and takes along all or some of its members; a trip with no group is just mine.
 export const GROUP_COLORS = ['#0EA5E9', '#F97316', '#7C3AED', '#16A34A', '#DB2777'];
 export const GROUP_ICONS = ['users', 'plane', 'beach', 'mountain', 'food', 'sparkle', 'gift'];
-const SEED_GROUPS = [
+export const SEED_GROUPS = [
   { id: 'g-uni', name: 'แก๊งมหาลัย', icon: 'users', color: '#0EA5E9', members: ['u1', 'u2', 'u3'], createdBy: 'u1' },
   { id: 'g-four', name: 'สายเที่ยวธรรมชาติ', icon: 'mountain', color: '#16A34A', members: ['u1', 'u2', 'u3', 'u4'], createdBy: 'u4' },
+  // no plans yet: how a group's page looks before its first trip
+  { id: 'g-fam', name: 'ครอบครัว', icon: 'gift', color: '#DB2777', members: ['u1', 'u2', 'u3', 'u4'], createdBy: 'u1' },
 ];
 const SEED_PLAN_GROUPS = { osaka: 'g-uni', tonight: 'g-uni', lunch: 'g-four', bangsaen: 'g-uni', cnx: 'g-four', khaoyai: 'g-four', krabi: 'g-four' };
 // sample groups, and the sample trips that belong to them (also for data saved before groups)
