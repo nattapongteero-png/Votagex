@@ -294,7 +294,7 @@ export default function TodayPage() {
     const pins = ss.filter((s) => s.lat != null && !s.skip);
     const isLive = live && p === plan;
     return (
-      <div key={p.id} className="hp-tile pt-day-card" style={g ? { '--line': g.color } : undefined}>
+      <div key={p.id} className="hp-tile pt-day-card">
         {!multi && dayHead}
         <PlanHead plan={p} group={g} onOpen={() => navigate(`/proto/plan/${p.id}`)} onGroup={() => openSheet('group', { groupId: g.id })} />
         {pins.length > 0 && <DayMap pins={pins} order={ss} onOpen={() => navigate(`/proto/plan/${p.id}`)} />}

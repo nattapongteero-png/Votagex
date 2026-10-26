@@ -1962,11 +1962,11 @@ button.pt-pick-later { width: 100%; font: inherit; color: inherit; text-align: l
 .pt-line-time.empty { font-size: 11px; font-weight: 500; color: var(--tw-text-3); }
 .pt-line-rail { position: relative; align-self: stretch; display: flex; align-items: center; justify-content: center; }
 /* the line joining the icons, from the first stop's icon to the last's */
-.pt-line-rail::before { content: ''; position: absolute; left: 50%; width: 6px; margin-left: -3px; top: -6px; bottom: -6px; border-radius: 3px; background: var(--line, var(--tw-text)); }
+.pt-line-rail::before { content: ''; position: absolute; left: 50%; width: 2px; margin-left: -1px; top: -6px; bottom: -6px; background: var(--tw-border); }
 .pt-line:first-child .pt-line-rail::before { top: 50%; }
 .pt-line:last-child .pt-line-rail::before { bottom: 50%; }
 .pt-line:only-child .pt-line-rail::before { display: none; }
-.pt-line-rail .pt-cat-icon { position: relative; border-radius: 50%; box-shadow: 0 0 0 3px var(--tw-surface), 0 0 0 6px var(--line, var(--tw-text)); }
+.pt-line-rail .pt-cat-icon { position: relative; border-radius: 50%; box-shadow: 0 0 0 3px var(--tw-surface); }
 .pt-line-tick {
   position: absolute; right: -3px; bottom: 9px; width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
   background: var(--tw-brand); color: #fff; box-shadow: 0 0 0 2px var(--tw-surface);
