@@ -1949,11 +1949,17 @@ button.pt-pick-later { width: 100%; font: inherit; color: inherit; text-align: l
 
 /* home's day card: a stop a line, the category icon on the rail, status or the check-in button on the right */
 .pt-lines { display: flex; flex-direction: column; }
-.pt-line {
-  position: relative; display: grid; grid-template-columns: 40px 34px minmax(0, 1fr) auto; align-items: center; gap: 10px;
-  min-height: 60px; padding: 6px 4px; margin: 0 -4px; border-radius: 14px; cursor: pointer;
+.pt-line { position: relative; display: grid; grid-template-columns: 40px minmax(0, 1fr); align-items: center; gap: 10px; min-height: 60px; }
+.pt-line-body {
+  position: relative; display: grid; grid-template-columns: 34px minmax(0, 1fr) auto auto; align-items: center; gap: 10px;
+  align-self: stretch; padding: 6px 4px; margin: 0 -4px; border-radius: 14px; cursor: pointer;
+  transition: transform .2s cubic-bezier(.22, 1, .36, 1);
 }
-.pt-line:active { background: var(--tw-sunken); }
+.pt-line-body:active { background: var(--tw-sunken); }
+.pt-line.dragging .pt-line-body { background: var(--tw-surface); box-shadow: 0 10px 24px rgba(17, 24, 39, .16); }
+.pt-line-note { font-size: 12px; color: var(--tw-text-3); }
+.pt-lines.full .pt-line { min-height: 64px; }
+.pt-lines.full .pt-drag { margin: 0 -6px 0 -4px; align-self: center; height: 40px; }
 .pt-line-time { font-size: 12px; font-weight: 600; color: var(--tw-text-2); font-variant-numeric: tabular-nums; }
 .pt-line-time.empty { font-size: 11px; font-weight: 500; color: var(--tw-text-3); }
 .pt-line-rail { position: relative; align-self: stretch; display: flex; align-items: center; justify-content: center; }
@@ -1968,9 +1974,9 @@ button.pt-pick-later { width: 100%; font: inherit; color: inherit; text-align: l
   background: var(--tw-brand); color: #fff; box-shadow: 0 0 0 2px var(--tw-surface);
 }
 .pt-line-end { display: flex; align-items: center; justify-content: flex-end; }
-.pt-line-done { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 700; color: var(--tw-success); }
+.pt-line-done { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; font-size: 12px; font-weight: 700; color: var(--tw-success); }
 .pt-line-done.late { color: var(--tw-accent); }
-.pt-line.skipped { opacity: .55; }
+.pt-line.skipped .pt-line-body { opacity: .55; }
 .pt-open-plan { flex-shrink: 0; gap: 2px; padding: 0 14px 0 18px; }
 
 /* plan's stop card, tighter: icon level with the name, the note as a plain line, smaller footer buttons */

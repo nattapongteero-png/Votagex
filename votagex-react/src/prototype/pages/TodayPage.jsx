@@ -298,7 +298,7 @@ export default function TodayPage() {
               {plan && stops.length > 0 && (
                 <div className="pt-lines">
                   {stops.map((s, i) => (
-                    <StopRow key={s.id} compact stop={s} index={i} planId={plan.id} state={stopState(s, today, nowHM)}
+                    <StopRow key={s.id} stop={s} planId={plan.id} state={stopState(s, today, nowHM)}
                       checkHere={selected === today && i === nextCheck} passed={passedStop(stops, i, today)} onOpen={() => openSheet('stop', { planId: plan.id, stopId: s.id })} />
                   ))}
                 </div>

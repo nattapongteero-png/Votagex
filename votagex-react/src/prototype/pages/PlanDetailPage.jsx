@@ -120,9 +120,9 @@ function PlanTab({ plan, day, setDay, days, status }) {
 
       {plan.kind !== 'idea' && days.length > 1 && <DayChips days={days} value={day} onChange={setDay} plan={plan} />}
 
-      <div className="pt-timeline">
+      <div className="pt-lines full">
         {stops.map((s, i) => (
-          <StopRow key={s.id} stop={s} index={i} planId={plan.id} state={stopState(s, today, nowHM)} checkHere={i === nextCheck} passed={passedStop(stops, i, today)}
+          <StopRow key={s.id} full stop={s} planId={plan.id} state={stopState(s, today, nowHM)} checkHere={i === nextCheck} passed={passedStop(stops, i, today)}
             onOpen={() => openSheet('stop', { planId: plan.id, stopId: s.id })}
             drag={{
               rowRef: (el) => { dnd.rows.current[i] = el; },
