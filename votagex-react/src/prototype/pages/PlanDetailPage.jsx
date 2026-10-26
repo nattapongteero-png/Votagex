@@ -357,6 +357,7 @@ export default function PlanDetailPage() {
     );
   }
   const c = countryOf(plan.country);
+  const mapStops = plan.stops.filter((st) => st.lat != null && !st.skip).sort(byOrder);
 
   return (
     <div className="pt-page">
@@ -366,11 +367,21 @@ export default function PlanDetailPage() {
         <button className="pt-round-btn" aria-label="ตัวเลือก" onClick={() => openSheet('planMenu', { planId: plan.id })}><Icon name="more" size={20} /></button>
       </div>
       <div className="pt-scroll">
-        <Cover cover={plan.cover} className={`pt-hero-cover${plan.kind === 'outing' ? ' short' : ''}`}>
-          <span className="pt-badge glass"><Flag code={c.code} /> {c.name}</span>
-          {status === 'ongoing' && <span className="pt-badge live right">กำลังเที่ยว</span>}
-          {status === 'upcoming' && <span className="pt-badge dark right">อีก {diffDays(today, plan.startDate)} วัน</span>}
-        </Cover>
+        {/* an outing's cover is its map: where it goes, in order */}
+        {plan.kind === 'outing' && mapStops.length > 0 ? (
+          <div className="pt-hero-cover pt-hero-map">
+            <MapView points={mapStops.map((st, i) => ({ id: st.id, lat: st.lat, lng: st.lng, cat: st.cat, label: i + 1 }))}
+              route={mapStops.length > 1} interactive={false} padding={40} fitKey={`${plan.id}-${mapStops.map((st) => st.id).join()}`} />
+            {status === 'ongoing' && <span className="pt-badge live right">กำลังเที่ยว</span>}
+            {status === 'upcoming' && <span className="pt-badge dark right">อีก {diffDays(today, plan.startDate)} วัน</span>}
+          </div>
+        ) : (
+          <Cover cover={plan.cover} className={`pt-hero-cover${plan.kind === 'outing' ? ' short' : ''}`}>
+            <span className="pt-badge glass"><Flag code={c.code} /> {c.name}</span>
+            {status === 'ongoing' && <span className="pt-badge live right">กำลังเที่ยว</span>}
+            {status === 'upcoming' && <span className="pt-badge dark right">อีก {diffDays(today, plan.startDate)} วัน</span>}
+          </Cover>
+        )}
         <div className="pt-hero-text">
           <div className="pt-title">{plan.name}</div>
           <div className="pt-muted">{thaiRange(plan.startDate, plan.endDate)}{days.length > 1 ? ` · ${days.length} วัน` : ''} · {plan.stops.length} จุดแวะ</div>
