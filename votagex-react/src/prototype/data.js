@@ -135,7 +135,7 @@ const SEED_GROUPS = [
   { id: 'g-uni', name: 'แก๊งมหาลัย', icon: 'users', color: '#0EA5E9', members: ['u1', 'u2', 'u3'], createdBy: 'u1' },
   { id: 'g-four', name: 'สายเที่ยวธรรมชาติ', icon: 'mountain', color: '#16A34A', members: ['u1', 'u2', 'u3', 'u4'], createdBy: 'u4' },
 ];
-const SEED_PLAN_GROUPS = { osaka: 'g-uni', tonight: 'g-uni', bangsaen: 'g-uni', cnx: 'g-four', khaoyai: 'g-four', krabi: 'g-four' };
+const SEED_PLAN_GROUPS = { osaka: 'g-uni', tonight: 'g-uni', lunch: 'g-four', bangsaen: 'g-uni', cnx: 'g-four', khaoyai: 'g-four', krabi: 'g-four' };
 // sample groups, and the sample trips that belong to them (also for data saved before groups)
 export const withSeedGroups = (d) => ({
   ...d,
@@ -456,6 +456,17 @@ export function seedData() {
       stops: [
         { id: 'tn1', date: TODAY, time: '17:30', name: 'Central Rama 9', area: 'ห้วยขวาง · กรุงเทพฯ', prov: 'กรุงเทพมหานคร', lat: 13.7586, lng: 100.5661, cat: 'shop', note: 'หาของขวัญวันเกิดบิว', checkIns: {} },
         { id: 'tn2', date: TODAY, time: '19:00', name: 'จ๊อดแฟร์ รัชดา', area: 'ดินแดง · กรุงเทพฯ', prov: 'กรุงเทพมหานคร', lat: 13.7682, lng: 100.5709, cat: 'food', note: 'ซี่โครงหมูภูเขาไฟ · รอฝ้ายที่ MRT', checkIns: {}, placeId: 'p9' },
+      ],
+    },
+    // a second outing the same day, with the other group (two groups on one day)
+    {
+      id: 'lunch', name: 'มื้อเที่ยงประตูน้ำ', kind: 'outing', country: 'TH', currency: 'THB',
+      destination: { name: 'ประตูน้ำ', lat: 13.7509, lng: 100.5417 },
+      startDate: TODAY, endDate: TODAY, members: ['u1', 'u3', 'u4'], budget: 300,
+      cover: { icon: 'food', tint: '#FFF1E6' },
+      stops: [
+        { id: 'lu1', date: TODAY, time: '12:00', name: 'ข้าวมันไก่ประตูน้ำ', area: 'ราชเทวี · กรุงเทพฯ', prov: 'กรุงเทพมหานคร', lat: 13.7509, lng: 100.5417, cat: 'food', note: 'ร้านเจ๊สีชมพู', checkIns: {} },
+        { id: 'lu2', date: TODAY, time: '13:30', name: 'Platinum Fashion Mall', area: 'ราชเทวี · กรุงเทพฯ', prov: 'กรุงเทพมหานคร', lat: 13.7502, lng: 100.5404, cat: 'shop', note: '', checkIns: {} },
       ],
     },
     {
