@@ -10,7 +10,7 @@ import WeatherCard from '../WeatherCard';
 import { MonthPiggyTile } from '../MonthMoney';
 import StopRow from '../StopRow';
 import MapView from '../MapView';
-import RecapViewer from '../RecapViewer';
+import Scrapbook from '../Scrapbook';
 import SunWall from '../SunWall';
 import { pm25Level, useWeather, weatherKind } from '../weather';
 import HOLIDAYS from '../thHolidays.json';
@@ -449,7 +449,7 @@ export default function TodayPage() {
           )}
         </div>
       </div>
-      {recap && <RecapViewer {...recap} onClose={() => setRecapOf(null)} />}
+      {recap && <Scrapbook {...recap} onClose={() => setRecapOf(null)} />}
     </div>
   );
 }
