@@ -1783,8 +1783,6 @@ button.pt-exp:active { background: var(--tw-sunken); }
 .pt-scope-btn .pt-group-badge { opacity: .6; transition: opacity .2s, box-shadow .2s; }
 .pt-scope-btn.active .pt-group-badge, .pt-scope-btn .pt-group-badge.add { opacity: 1; }
 .pt-scope-btn.active .pt-group-badge { box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--tw-text, #111827); }
-.pt-group-head { display: flex; align-items: center; gap: 12px; }
-.pt-group-head .pt-grow { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .pt-day-who { display: flex; align-items: center; gap: 8px; width: 100%; padding: 0 0 12px; border: none; background: none; font: inherit; text-align: left; cursor: pointer; min-width: 0; }
 .pt-group-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 .pt-group-chip { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; color: #fff; font-size: 12px; font-weight: 600; margin-right: 6px; }
@@ -2022,7 +2020,7 @@ button.pt-pick-later { width: 100%; font: inherit; color: inherit; text-align: l
 .pt-line-at.muted { font-weight: 500; color: var(--tw-text-3); }
 /* the day card's head: plan name, then its group chip and faces */
 .pt-day-who .pt-strong { font-size: 13px; }
-.pt-group-chip.sm { flex-shrink: 0; margin: 0; padding: 2px 9px; font-size: 11px; white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.pt-group-chip.sm { flex-shrink: 0; border: none; font-family: inherit; line-height: 18px; cursor: pointer; margin: 0; padding: 2px 9px; font-size: 11px; white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
 .pt-day-who-text { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
 .pt-day-who-text .pt-strong { max-width: 100%; }
 .pt-day-who .pt-avatars { flex-shrink: 0; }

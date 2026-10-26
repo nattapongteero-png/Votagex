@@ -20,19 +20,23 @@ import {
 
 const FOLD_TOP = 12; // folded calendar's distance from the top of the screen
 const TH_DOW = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'];
-// a plan's head in the day card: who (its group's tag, unless home already shows that group) over its name,
-// and the faces as tall as both; tap for the plan
-function PlanHead({ plan, group, hideGroup, onOpen }) {
-  const tag = group && !hideGroup;
+// a plan's head in the day card, the same on my page and a group's: its group's tag (tap: the group) over its
+// name, and the faces as tall as both; tap for the plan. No plan: the group alone, with everyone in it
+function PlanHead({ plan, group, onOpen, onGroup }) {
+  const ids = plan ? plan.members : group.members;
   return (
-    <button className="pt-day-who" onClick={onOpen}>
+    <div className="pt-day-who" role="button" tabIndex={0} onClick={onOpen}>
       <span className="pt-day-who-text">
-        {tag && <span className="pt-group-chip sm" style={{ background: group.color }}><Icon name={group.icon} size={13} /> {group.name}</span>}
-        {!group && plan.members.length < 2 && <span className="pt-muted sm">ไปคนเดียว</span>}
-        <span className="pt-strong ellipsis">{plan.name}</span>
+        {group && (
+          <button className="pt-group-chip sm" style={{ background: group.color }} onClick={(e) => { e.stopPropagation(); onGroup(); }}>
+            <Icon name={group.icon} size={13} /> {group.name}
+          </button>
+        )}
+        {!group && ids.length < 2 && <span className="pt-muted sm">ไปคนเดียว</span>}
+        {plan && <span className="pt-strong ellipsis">{plan.name}</span>}
       </span>
-      {plan.members.length > 1 && <Avatars ids={plan.members} size={tag ? 47 : 32} max={3} total />}
-    </button>
+      {ids.length > 1 && <Avatars ids={ids} size={group && plan ? 47 : 32} max={3} total />}
+    </div>
   );
 }
 
@@ -265,7 +269,7 @@ export default function TodayPage() {
     return (
       <div key={p.id} className="hp-tile pt-day-card">
         {!multi && dayHead}
-        <PlanHead plan={p} group={g} hideGroup={g && g.id === group?.id} onOpen={() => navigate(`/proto/plan/${p.id}`)} />
+        <PlanHead plan={p} group={g} onOpen={() => navigate(`/proto/plan/${p.id}`)} onGroup={() => openSheet('group', { groupId: g.id })} />
         {pins.length > 0 && <DayMap pins={pins} order={ss} onOpen={() => navigate(`/proto/plan/${p.id}`)} />}
         {ss.length > 0 && (
           <div className="pt-lines">
@@ -340,18 +344,6 @@ export default function TodayPage() {
 
         {/* one block for the whole sheet, so a drag anywhere on it (gaps and handle too) moves it */}
         <div className="pt-home-sheet">
-          {/* the group being looked at: who's in it, a new trip for it, its settings */}
-          {group && (
-            <div className="hp-tile pt-group-head">
-              <span className="pt-group-badge lg" style={{ background: group.color }}><Icon name={group.icon} size={24} /></span>
-              <div className="pt-grow">
-                <div className="pt-strong lg ellipsis">{group.name}</div>
-                <Avatars ids={group.members} size={22} />
-              </div>
-              <button className="pt-round-btn sm" aria-label="ข้อมูลกลุ่ม" onClick={() => openSheet('group', { groupId: group.id })}><Icon name="more" size={18} /></button>
-            </div>
-          )}
-
           {/* the selected day's weather, its own card */}
           {wxSel && <WeatherCard wx={wxSel} place={selPlace || 'กรุงเทพฯ'} title={dayTitle} holiday={holiday} night={night} clock={selected === today} utc={countryOf(tripSel?.country).utc} />}
 
@@ -367,6 +359,8 @@ export default function TodayPage() {
           ) : sections.length ? renderCard(sections[0]) : (
             <div className="hp-tile pt-day-card">
               {dayHead}
+              {/* a group's page: whose calendar this is, and its info, even on a day without plans */}
+              {group && <PlanHead group={group} onOpen={() => openSheet('group', { groupId: group.id })} onGroup={() => openSheet('group', { groupId: group.id })} />}
               <div className="hp-plan-actions">
                 <button className="hp-add-btn" onClick={() => openSheet('createPlan', { date: selected })}><Icon name="plus" size={18} stroke={2.2} /> {selected === today ? 'สร้างแผนวันนี้' : 'สร้างแผน'}</button>
                 {canShuffle && <button className="pt-btn light" onClick={() => openSheet('shuffle', { date: selected })}><Icon name="shuffle" size={16} /> สุ่มให้</button>}
