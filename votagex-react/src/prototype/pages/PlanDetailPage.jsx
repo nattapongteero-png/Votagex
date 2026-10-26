@@ -118,16 +118,17 @@ function PlanTab({ plan, day, setDay, days, status }) {
           const canCheck = s.date === today && (st === 'pending' || st === 'due');
           return (
             <div key={s.id} ref={(el) => { dnd.rows.current[i] = el; }} className={`pt-stop ${st}${dnd.from === i ? ' dragging' : ''}`}>
-              <div className="pt-stop-time">{s.time || '—'}</div>
+              <div className="pt-stop-time">
+                {s.time || '—'}
+                {canCheck && (
+                  <button className={`pt-stop-check${st === 'due' ? ' due' : ''}`} onClick={() => actions.toggleCheckIn(plan.id, s.id, st === 'due')}>
+                    <span><Icon name="check" size={16} stroke={2.6} /></span>เช็คอิน
+                  </button>
+                )}
+              </div>
               <div className="pt-stop-rail"><span className="pt-stop-dot">{i + 1}</span></div>
               {/* only the card moves; the time and the numbered rail stay with their slot */}
               <div className="pt-stop-card" role="button" tabIndex={0} style={dnd.style(i)} onClick={() => openSheet('stop', { planId: plan.id, stopId: s.id })}>
-                {canDrag && (
-                  <span className="pt-drag" aria-label="ลากเพื่อย้าย" onClick={(e) => e.stopPropagation()}
-                    onPointerDown={(e) => dnd.start(e, i)} onPointerMove={dnd.move} onPointerUp={dnd.end} onPointerCancel={dnd.end}>
-                    <Icon name="grip" size={18} />
-                  </span>
-                )}
                 <CatIcon cat={s.cat} size={40} />
                 <div className="pt-grow">
                   <div className="pt-strong">{s.name}</div>
@@ -138,12 +139,14 @@ function PlanTab({ plan, day, setDay, days, status }) {
                   )}
                 </div>
                 <div className="pt-stop-actions" onClick={(e) => e.stopPropagation()}>
-                  {canCheck ? (
-                    <button className="hp-step-checkin" onClick={() => actions.toggleCheckIn(plan.id, s.id, st === 'due')}>เช็คอิน</button>
-                  ) : (
-                    <a className="pt-round-btn sm" href={directionsUrl(s)} target="_blank" rel="noreferrer" aria-label="นำทาง"><Icon name="nav" size={16} /></a>
-                  )}
+                  <a className="pt-round-btn sm" href={directionsUrl(s)} target="_blank" rel="noreferrer" aria-label="นำทาง"><Icon name="nav" size={16} /></a>
                 </div>
+                {canDrag && (
+                  <span className="pt-drag" aria-label="ลากเพื่อย้าย" onClick={(e) => e.stopPropagation()}
+                    onPointerDown={(e) => dnd.start(e, i)} onPointerMove={dnd.move} onPointerUp={dnd.end} onPointerCancel={dnd.end}>
+                    <Icon name="grip" size={18} />
+                  </span>
+                )}
               </div>
             </div>
           );
