@@ -1940,3 +1940,13 @@ button.pt-pick-later { width: 100%; font: inherit; color: inherit; text-align: l
 }
 .pt-stop-checkin.due { background: var(--tw-danger); }
 .pt-stop-time.empty { font-size: 11px; font-weight: 500; color: var(--tw-text-3); }
+
+/* home's day card: the same stop rows, a line each */
+.pt-timeline.compact .pt-stop-card { margin-bottom: 2px; padding: 8px 6px; border: none; background: none; gap: 6px; }
+.pt-timeline.compact .pt-stop-card:active { background: var(--tw-sunken); }
+.pt-timeline.compact .pt-stop-top { gap: 10px; }
+.pt-timeline.compact .pt-stop-time { padding-top: 15px; }
+.pt-timeline.compact .pt-stop-dot { margin-top: 13px; }
+.pt-timeline.compact .pt-stop-foot { padding-top: 0; border-top: none; padding-left: 42px; }
+.pt-timeline.compact .pt-stop-checkin { margin-left: 0; }
+.pt-timeline.compact .pt-stop.compact:last-child .pt-stop-rail::before { bottom: calc(100% - 24px); }

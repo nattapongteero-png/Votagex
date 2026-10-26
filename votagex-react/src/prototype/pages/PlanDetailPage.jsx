@@ -3,12 +3,13 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useProto } from '../useProto';
 import Icon, { Flag } from '../icons';
 import PiggyStage from '../PiggyStage';
+import StopRow from '../StopRow';
 import MapView from '../MapView';
 import { fmtRate } from '../rates';
 import { Avatar, Avatars, CatIcon, Cover, Seg, Progress, SectionTitle, Empty } from '../ui';
 import {
   ME, PEOPLE, KINDS, EXPENSE_CATS, CURRENCIES, countryOf, thaiRange, thaiShort, thaiDay, dayList, diffDays,
-  planStatus, byOrder, localHM, stopState, fmtMoney, toTHB, myShare, settleUp, directionsUrl, jarStats,
+  planStatus, byOrder, localHM, stopState, nextCheckIndex, fmtMoney, toTHB, myShare, settleUp, directionsUrl, jarStats,
 } from '../data';
 
 const TABS = [
@@ -82,10 +83,7 @@ function PlanTab({ plan, day, setDay, days, status }) {
     actions.reorderStops(plan.id, list.map((s, i) => ({ id: s.id, order: i, time: stops[i].time || '' })));
   });
   const canDrag = status !== 'past' && stops.length > 1;
-  // the one stop to check in at: the first of today's not yet checked, after the last one I checked in at
-  const lastIn = stops.map((s) => Boolean(s.checkIns?.[ME])).lastIndexOf(true);
-  const canCheckAt = (s) => s.date === today && ['pending', 'due'].includes(stopState(s, today, nowHM));
-  const nextCheck = [...stops.keys()].find((i) => i > lastIn && canCheckAt(stops[i])) ?? stops.findIndex(canCheckAt);
+  const nextCheck = nextCheckIndex(stops, today, nowHM);
   const checklist = plan.checklist || [];
   const doneCount = checklist.filter((x) => x.done).length;
   const visibleChecklist = showAllChecklist ? checklist : checklist.filter((x) => !x.done).slice(0, 4);
@@ -116,49 +114,16 @@ function PlanTab({ plan, day, setDay, days, status }) {
       {plan.kind !== 'idea' && days.length > 1 && <DayChips days={days} value={day} onChange={setDay} plan={plan} />}
 
       <div className="pt-timeline">
-        {stops.map((s, i) => {
-          const st = stopState(s, today, nowHM);
-          const whoIn = Object.keys(s.checkIns || {});
-          const mine = Boolean(s.checkIns?.[ME]);
-          const checkHere = i === nextCheck;
-          return (
-            <div key={s.id} ref={(el) => { dnd.rows.current[i] = el; }} className={`pt-stop ${st}${dnd.from === i ? ' dragging' : ''}`}>
-              <div className={`pt-stop-time${s.time ? '' : ' empty'}`}>{s.time || 'ไม่ระบุ'}</div>
-              <div className="pt-stop-rail"><span className="pt-stop-dot">{mine ? <Icon name="check" size={12} stroke={3} /> : i + 1}</span></div>
-              {/* only the card moves; the time and the numbered rail stay with their slot */}
-              <div className="pt-stop-card" role="button" tabIndex={0} style={dnd.style(i)} onClick={() => openSheet('stop', { planId: plan.id, stopId: s.id })}>
-                <div className="pt-stop-top">
-                  <CatIcon cat={s.cat} size={40} />
-                  <div className="pt-grow">
-                    <div className="pt-strong">{s.name}</div>
-                    <div className="pt-muted sm">{s.area}</div>
-                    {s.note && <div className="pt-note">{s.note}</div>}
-                  </div>
-                  <a className="pt-round-btn sm" href={directionsUrl(s)} target="_blank" rel="noreferrer" aria-label="นำทาง" onClick={(e) => e.stopPropagation()}><Icon name="nav" size={16} /></a>
-                  {canDrag && (
-                    <span className="pt-drag" aria-label="ลากเพื่อย้าย" onClick={(e) => e.stopPropagation()}
-                      onPointerDown={(e) => dnd.start(e, i)} onPointerMove={dnd.move} onPointerUp={dnd.end} onPointerCancel={dnd.end}>
-                      <Icon name="grip" size={18} />
-                    </span>
-                  )}
-                </div>
-                {/* who's here, and for the next stop of today, the one check-in button */}
-                {(whoIn.length > 0 || checkHere) && (
-                  <div className="pt-stop-foot" onClick={(e) => e.stopPropagation()}>
-                    {whoIn.length > 0 && (
-                      <span className="pt-stop-who"><Avatars ids={whoIn} size={18} /> {st === 'late-done' ? 'มาสาย' : 'เช็คอินแล้ว'} {s.checkIns[whoIn[0]].at}</span>
-                    )}
-                    {checkHere && (
-                      <button className={`pt-stop-checkin${st === 'due' ? ' due' : ''}`} onClick={() => actions.toggleCheckIn(plan.id, s.id, st === 'due')}>
-                        <Icon name="check" size={16} stroke={2.6} /> {st === 'due' ? 'ถึงเวลาแล้ว · เช็คอิน' : 'เช็คอิน'}
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          );
-        })}
+        {stops.map((s, i) => (
+          <StopRow key={s.id} stop={s} index={i} planId={plan.id} state={stopState(s, today, nowHM)} checkHere={i === nextCheck}
+            onOpen={() => openSheet('stop', { planId: plan.id, stopId: s.id })}
+            drag={{
+              rowRef: (el) => { dnd.rows.current[i] = el; },
+              style: dnd.style(i),
+              dragging: dnd.from === i,
+              handle: canDrag ? { onPointerDown: (e) => dnd.start(e, i), onPointerMove: dnd.move, onPointerUp: dnd.end, onPointerCancel: dnd.end } : null,
+            }} />
+        ))}
         {!stops.length && <Empty>ยังไม่มีจุดแวะ</Empty>}
       </div>
       {status !== 'past' && (

@@ -333,6 +333,14 @@ export function stopState(stop, today, nowHM) {
   if (stop.date === today && stop.time && stop.time < nowHM) return 'due';
   return 'pending';
 }
+
+// the one stop to check in at: the first of today's not yet checked, after the last one I checked in at
+export function nextCheckIndex(stops, today, nowHM) {
+  const can = (s) => s.date === today && ['pending', 'due'].includes(stopState(s, today, nowHM));
+  const lastIn = stops.map((s) => Boolean(s.checkIns?.[ME])).lastIndexOf(true);
+  const i = stops.findIndex((s, j) => j > lastIn && can(s));
+  return i >= 0 ? i : stops.findIndex(can);
+}
 export const myShare = (e) => (e.split.includes(ME) ? toTHB(e) / e.split.length : 0);
 
 export function planStatus(plan, today) {

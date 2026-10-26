@@ -8,25 +8,17 @@ import useSheetSnap from '../../hooks/useSheetSnap';
 import SpeechNotes from '../SpeechNotes';
 import WeatherCard from '../WeatherCard';
 import { MonthPiggyTile } from '../MonthMoney';
+import StopRow from '../StopRow';
 import { pm25Level, useWeather, weatherKind } from '../weather';
 import HOLIDAYS from '../thHolidays.json';
 import {
   ME, PEOPLE, CURRENCIES, HOME, addDays, parseISO, diffDays, thaiShort, byOrder, localHM,
   stopState, keepThai, fmtMoney, distanceKm, fmtKm, directionsUrl, countryOf, planStatus, toTHB, jarStats,
-  EVENT_KINDS, KINDS, eventOn, shufflePool,
+  EVENT_KINDS, KINDS, eventOn, shufflePool, nextCheckIndex,
 } from '../data';
 
 const FOLD_TOP = 12; // folded calendar's distance from the top of the screen
 const TH_DOW = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'];
-const STATE_TEXT = { done: 'เช็คอินแล้ว', 'late-done': 'มาสาย', missed: 'พลาด', due: 'ถึงเวลาแล้ว', pending: '' };
-
-function StepIcon({ state }) {
-  if (state === 'done' || state === 'late-done') {
-    return <svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="7.2" fill="currentColor" /><path d="m4.8 8.2 2.1 2.1 4.3-4.4" fill="none" stroke="#fff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>;
-  }
-  return <svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.6" fill="none" stroke="currentColor" strokeWidth="1.4" strokeDasharray={state === 'missed' ? '2 2' : undefined} /></svg>;
-}
-
 // a saved place with dates (an event) on the selected day, under the weather
 function EventTile({ ev, last, onOpen }) {
   const kind = EVENT_KINDS[ev.kind] || EVENT_KINDS.other;
@@ -148,6 +140,7 @@ export default function TodayPage() {
   const nowHM = localHM(country.utc);
   const live = plan && selected === today && planStatus(plan, today) === 'ongoing' && plan.kind !== 'outing';
   const nextStop = selected === today ? stops.find((s) => !s.checkIns?.[ME]) : null;
+  const nextCheck = nextCheckIndex(stops, today, nowHM);
 
   // stage chips
   const upcoming = plans.filter((p) => planStatus(p, today) === 'upcoming' && p.kind !== 'outing').sort((a, b) => a.startDate.localeCompare(b.startDate))[0];
@@ -303,23 +296,11 @@ export default function TodayPage() {
               </div>
             )}
               {plan && stops.length > 0 && (
-                <div className="hp-steps">
-                  {stops.map((s) => {
-                    const st = stopState(s, today, nowHM);
-                    const canCheck = selected === today && (st === 'pending' || st === 'due');
-                    return (
-                      <div key={s.id} className={`hp-step ${st === 'done' ? 'done' : st === 'late-done' ? 'late' : st === 'missed' ? 'missed' : ''}${nextStop?.id === s.id && live ? ' pt-next' : ''}`}>
-                        <span className="hp-step-icon"><StepIcon state={st} /></span>
-                        <span className="hp-step-time">{s.time || '--:--'}</span>
-                        <span className="hp-step-name">{s.name}</span>
-                        {canCheck ? (
-                          <button className="hp-step-checkin" onClick={() => actions.toggleCheckIn(plan.id, s.id, st === 'due')}>เช็คอิน</button>
-                        ) : (
-                          <span className={`hp-step-status ${st === 'done' ? 'done' : st === 'late-done' ? 'late' : ''}`}>{STATE_TEXT[st]}</span>
-                        )}
-                      </div>
-                    );
-                  })}
+                <div className="pt-timeline compact">
+                  {stops.map((s, i) => (
+                    <StopRow key={s.id} compact stop={s} index={i} planId={plan.id} state={stopState(s, today, nowHM)}
+                      checkHere={selected === today && i === nextCheck} onOpen={() => openSheet('stop', { planId: plan.id, stopId: s.id })} />
+                  ))}
                 </div>
               )}
 
