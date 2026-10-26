@@ -37,9 +37,10 @@ function PlanHead({ plan, group, hideGroup, onOpen }) {
 }
 
 // the day's stops on a small map, numbered in the day's order; tap for the plan
-function DayMap({ pins, order, onOpen }) {
+// tile: standing on its own above the plans' cards (a day with several plans)
+function DayMap({ pins, order, onOpen, tile = false }) {
   return (
-    <button className="pt-day-map" aria-label="เปิดแผน" onClick={onOpen}>
+    <button className={`pt-day-map${tile ? ' tile' : ''}`} aria-label="เปิดแผน" onClick={onOpen}>
       <MapView points={pins.map((st) => ({ id: st.id, lat: st.lat, lng: st.lng, cat: st.cat, label: order.indexOf(st) + 1 }))}
         route={pins.length > 1} interactive={false} padding={32} fitKey={pins.map((st) => st.id).join()} />
     </button>
@@ -249,6 +250,41 @@ export default function TodayPage() {
     return yearAgo ? { m: yearAgo, label: 'วันนี้เมื่อปีที่แล้ว' } : withPhoto[0] ? { m: withPhoto[0], label: 'ความทรงจำล่าสุด' } : null;
   }, [memories, today]);
 
+  // the day's title, when there's no weather card to say it
+  const dayHead = !wxSel && (
+    <div className="pt-day-head">
+                <span className="pt-grow">
+                  <span className="pt-strong lg">{dayTitle}</span>
+                  <span className="pt-muted sm">{daySub}{selPlace ? ` · ${selPlace}` : ''}</span>
+                </span>
+              </div>
+  );
+  // one plan of the day: its head (with a + when there are several), its map when it's the only one, its stops
+  const renderSection = ({ p, g, stops: ss }) => (
+    <div key={p.id} className="pt-day-section">
+      <div className="pt-day-who-row">
+        <PlanHead plan={p} group={g} hideGroup={g && g.id === group?.id} onOpen={() => navigate(`/proto/plan/${p.id}`)} />
+        {multi && (
+          <button className="pt-icon-btn" aria-label={`เพิ่มจุดแวะใน ${p.name}`} onClick={() => openSheet('addStop', { planId: p.id, date: selected })}>
+            <Icon name="plus" size={17} stroke={2.2} />
+          </button>
+        )}
+      </div>
+      {!multi && dayPins.length > 0 && <DayMap pins={dayPins} order={dayStops} onOpen={() => navigate(`/proto/plan/${p.id}`)} />}
+      {ss.length > 0 && (
+        <div className="pt-lines">
+          {ss.map((s) => {
+            const i = dayStops.indexOf(s);
+            return (
+              <StopRow key={s.id} stop={s} planId={p.id} state={stopState(s, today, nowHM)}
+                checkHere={selected === today && i === nextCheck} passed={passedStop(dayStops, i, today)} onOpen={() => openSheet('stop', { planId: p.id, stopId: s.id })} />
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <div ref={pageRef} className={`homepage pt-today${collapsed ? ' header-collapsed' : ''}${atRest ? ' at-rest' : ''}`} style={sheet ? { '--hp-sheet-top': `${sheet.top}px`, '--fold-top': `${FOLD_TOP}px` } : undefined}>
       <div className="hp-header">
@@ -309,42 +345,17 @@ export default function TodayPage() {
           {/* events on the selected day */}
           {dayEvents.map((ev) => <EventTile key={ev.id} ev={ev} last={ev.endDate && ev.endDate !== ev.startDate && ev.endDate === selected} onOpen={() => openSheet('place', { placeId: ev.id })} />)}
 
-          {/* the selected day's plan */}
-          <div className="hp-tile pt-day-card">
-            {!wxSel && (
-              <div className="pt-day-head">
-                <span className="pt-grow">
-                  <span className="pt-strong lg">{dayTitle}</span>
-                  <span className="pt-muted sm">{daySub}{selPlace ? ` · ${selPlace}` : ''}</span>
-                </span>
-              </div>
-            )}
-            {/* the day's stops on a map, in order; tap for the plan (several plans: the map comes first) */}
-            {multi && dayPins.length > 0 && <DayMap pins={dayPins} order={dayStops} onOpen={() => navigate(`/proto/plan/${sections[0].p.id}`)} />}
-            {sections.map(({ p, g, stops: ss }) => (
-              <div key={p.id} className="pt-day-section">
-                <div className="pt-day-who-row">
-                  <PlanHead plan={p} group={g} hideGroup={g && g.id === group?.id} onOpen={() => navigate(`/proto/plan/${p.id}`)} />
-                  {multi && (
-                    <button className="pt-icon-btn" aria-label={`เพิ่มจุดแวะใน ${p.name}`} onClick={() => openSheet('addStop', { planId: p.id, date: selected })}>
-                      <Icon name="plus" size={17} stroke={2.2} />
-                    </button>
-                  )}
-                </div>
-                {!multi && dayPins.length > 0 && <DayMap pins={dayPins} order={dayStops} onOpen={() => navigate(`/proto/plan/${p.id}`)} />}
-                {ss.length > 0 && (
-                  <div className="pt-lines">
-                    {ss.map((s) => {
-                      const i = dayStops.indexOf(s);
-                      return (
-                        <StopRow key={s.id} stop={s} planId={p.id} state={stopState(s, today, nowHM)}
-                          checkHere={selected === today && i === nextCheck} passed={passedStop(dayStops, i, today)} onOpen={() => openSheet('stop', { planId: p.id, stopId: s.id })} />
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            ))}
+          {/* the selected day's plans. One: a card with its map. Several: the day's map first, then a card each */}
+          {multi && dayPins.length > 0 && <DayMap tile pins={dayPins} order={dayStops} onOpen={() => navigate(`/proto/plan/${sections[0].p.id}`)} />}
+          {multi && sections.map((sec, k) => (
+            <div key={sec.p.id} className="hp-tile pt-day-card">
+              {k === 0 && dayHead}
+              {renderSection(sec)}
+            </div>
+          ))}
+          {(!multi || live) && <div className="hp-tile pt-day-card">
+            {!multi && dayHead}
+            {!multi && sections.map(renderSection)}
 
               {live && nextStop && (
                 <div className="pt-next-card">
@@ -373,7 +384,7 @@ export default function TodayPage() {
                   </>
                 )}
               </div>}
-          </div>
+          </div>}
 
           {/* the next trip, only once it's 3 days away or less (the speech note counts down before that) */}
           {!live && upcoming && diffDays(today, upcoming.startDate) <= 3 && (

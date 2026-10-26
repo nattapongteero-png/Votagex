@@ -2028,7 +2028,9 @@ button.pt-pick-later { width: 100%; font: inherit; color: inherit; text-align: l
 .pt-day-who .pt-avatars { flex-shrink: 0; }
 /* a day with several plans: each its own section, in time order */
 .pt-day-section { display: flex; flex-direction: column; gap: 10px; }
-.pt-day-section + .pt-day-section { padding-top: 14px; border-top: 1px solid var(--tw-border); }
+.pt-day-map.tile { height: 168px; border-radius: var(--tw-r-xl); box-shadow: var(--tw-shadow-sm, 0 1px 3px rgba(15, 23, 42, .08)); }
 .pt-day-who-row { display: flex; align-items: center; gap: 8px; }
 .pt-day-who-row .pt-day-who { flex: 1; min-width: 0; padding-bottom: 0; }
 .pt-day-section .pt-lines { margin-top: -6px; }
+.pt-day-who-text .pt-strong { line-height: 25px; }
+.pt-line .pt-strong.ellipsis { line-height: 23px; }
