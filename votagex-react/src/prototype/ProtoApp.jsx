@@ -21,31 +21,22 @@ import './proto.css';
 const TABS = [
   { key: 'today', label: 'วันนี้', icon: 'today' },
   { key: 'plans', label: 'แผน', icon: 'plans' },
-  { key: 'add' },
   { key: 'map', label: 'แผนที่', icon: 'map' },
   { key: 'me', label: 'ฉัน', icon: 'user' },
 ];
 
-// Glass dock from the current app, with a quick-add button in the middle
+// Glass dock from the current app; each tab keeps its own slot, so nothing moves when switching
 function Dock() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const { openSheet } = useProto();
   const current = pathname.split('/')[2] || 'today';
   return (
     <div className="hp-tab-bar">
-      <nav className="hp-dock" role="tablist">
+      <nav className="hp-dock pt-dock" role="tablist">
         {TABS.map((t) => {
-          if (t.key === 'add') {
-            return (
-              <button key="add" className="pt-dock-add" aria-label="บันทึกด่วน" onClick={() => openSheet('quickAdd')}>
-                <Icon name="plus" size={22} stroke={2.4} />
-              </button>
-            );
-          }
           const active = current === t.key;
           return (
-            <button key={t.key} role="tab" aria-selected={active} aria-label={t.label} className={`hp-tab ${active ? 'active' : ''}`}
+            <button key={t.key} role="tab" aria-selected={active} className={`hp-tab ${active ? 'active' : ''}`}
               onClick={() => { if (!active) navigate(`/proto/${t.key}`); }}>
               <Icon name={t.icon} size={22} />
               <span className="hp-tab-label">{t.label}</span>

@@ -18,33 +18,6 @@ import {
 } from './data';
 import { usePlaceSearch } from './placeSearch';
 
-/* ---------- Quick add (center + in the dock) ---------- */
-function QuickAddSheet({ onClose }) {
-  const { openSheet } = useProto();
-  const go = (it, close) => { close(); setTimeout(() => openSheet(it.name, it.props), 320); };
-  const items = [
-    { name: 'expense', icon: 'wallet', label: 'จดรายจ่าย', tone: '#FFF1E6', color: '#EA580C' },
-    { name: 'memory', icon: 'camera', label: 'รูป / โน้ต', tone: '#ECEEFE', color: '#4F46E5' },
-    { name: 'savePlace', icon: 'bookmark', label: 'เก็บที่อยากไป', tone: '#E6F7F4', color: '#0D9488' },
-    { name: 'createPlan', props: { type: 'outing' }, icon: 'shop', label: 'นัดใหม่', tone: '#FDECF4', color: '#DB2777' },
-    { name: 'createPlan', props: { type: 'trip' }, icon: 'plane', label: 'ทริปใหม่', tone: '#E5F4FC', color: '#0284C7' },
-  ];
-  return (
-    <Sheet title="บันทึก" onClose={onClose}>
-      {(close) => (
-        <div className="pt-quick-grid">
-          {items.map((it) => (
-            <button key={it.label} className="pt-quick" onClick={() => go(it, close)}>
-              <span className="pt-quick-icon" style={{ background: it.tone, color: it.color }}><Icon name={it.icon} size={24} /></span>
-              <span className="pt-strong">{it.label}</span>
-            </button>
-          ))}
-        </div>
-      )}
-    </Sheet>
-  );
-}
-
 /* ---------- Expense ---------- */
 // expenseId: change (or delete) one already written down
 function AddExpenseSheet({ onClose, planId: fixedPlanId, expenseId }) {
@@ -549,7 +522,6 @@ function ProvinceSheet({ onClose }) {
 
 /* ---------- Switcher ---------- */
 const SHEETS = {
-  quickAdd: QuickAddSheet,
   savePlace: SavePlaceSheet,
   expense: AddExpenseSheet,
   memory: AddMemorySheet,
