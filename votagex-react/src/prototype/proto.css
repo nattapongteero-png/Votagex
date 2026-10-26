@@ -2035,3 +2035,4 @@ button.pt-pick-later { width: 100%; font: inherit; color: inherit; text-align: l
 .pt-day-map .maplibregl-ctrl-attrib.maplibregl-compact-show .maplibregl-ctrl-attrib-inner { display: none; }
 .pt-day-map .maplibregl-ctrl-attrib.maplibregl-compact-show { padding: 0; background: rgba(255, 255, 255, .8); }
 .pt-day-card > .pt-day-who { padding-bottom: 0; }
+.pt-day-invite { color: var(--tw-text-2); font-weight: 400; }
