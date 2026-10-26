@@ -36,7 +36,7 @@ function DayChips({ days, value, onChange, plan, withAll }) {
 }
 
 /* ---------- แผน ---------- */
-// Drag a stop by its handle to give the day a new order. The others slide out of its way while it moves.
+// Drag a stop's card by its handle to give the day a new order. The other cards slide out of its way while it moves.
 function useDragOrder(onDrop) {
   const [drag, setDrag] = useState(null); // { from, to, y0, dy, rects }
   const rows = useRef([]);
@@ -117,10 +117,11 @@ function PlanTab({ plan, day, setDay, days, status }) {
           const whoIn = Object.keys(s.checkIns || {});
           const canCheck = s.date === today && (st === 'pending' || st === 'due');
           return (
-            <div key={s.id} ref={(el) => { dnd.rows.current[i] = el; }} className={`pt-stop ${st}${dnd.from === i ? ' dragging' : ''}`} style={dnd.style(i)}>
+            <div key={s.id} ref={(el) => { dnd.rows.current[i] = el; }} className={`pt-stop ${st}${dnd.from === i ? ' dragging' : ''}`}>
               <div className="pt-stop-time">{s.time || '—'}</div>
               <div className="pt-stop-rail"><span className="pt-stop-dot">{i + 1}</span></div>
-              <div className="pt-stop-card" role="button" tabIndex={0} onClick={() => openSheet('stop', { planId: plan.id, stopId: s.id })}>
+              {/* only the card moves; the time and the numbered rail stay with their slot */}
+              <div className="pt-stop-card" role="button" tabIndex={0} style={dnd.style(i)} onClick={() => openSheet('stop', { planId: plan.id, stopId: s.id })}>
                 {canDrag && (
                   <span className="pt-drag" aria-label="ลากเพื่อย้าย" onClick={(e) => e.stopPropagation()}
                     onPointerDown={(e) => dnd.start(e, i)} onPointerMove={dnd.move} onPointerUp={dnd.end} onPointerCancel={dnd.end}>

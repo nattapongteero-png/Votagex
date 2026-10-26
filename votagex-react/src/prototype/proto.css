@@ -1920,7 +1920,7 @@ button.pt-pick-later { width: 100%; font: inherit; color: inherit; text-align: l
 .pt-hour:disabled, .pt-chip:disabled { opacity: .35; cursor: default; }
 
 /* ---- stops: drag to reorder ---- */
-.pt-timeline .pt-stop { transition: transform .2s cubic-bezier(.22, 1, .36, 1); position: relative; }
+.pt-timeline .pt-stop-card { transition: transform .2s cubic-bezier(.22, 1, .36, 1); position: relative; }
 .pt-stop.dragging .pt-stop-card { box-shadow: 0 12px 28px rgba(17, 24, 39, .18); background: var(--tw-surface); }
 .pt-drag {
   flex-shrink: 0; align-self: stretch; display: flex; align-items: center; justify-content: center;
