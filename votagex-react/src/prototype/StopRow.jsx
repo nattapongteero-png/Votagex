@@ -22,7 +22,6 @@ export default function StopRow({ stop: s, index, planId, state: st, checkHere, 
           <div className="pt-grow">
             <div className={`pt-strong${compact ? ' ellipsis' : ''}`}>{s.name}</div>
             <div className="pt-muted sm ellipsis">{s.area}</div>
-            {!compact && s.note && <div className="pt-note ellipsis">{s.note}</div>}
           </div>
           {drag?.handle && (
             <span className="pt-drag" aria-label="ลากเพื่อย้าย" onClick={(e) => e.stopPropagation()} {...drag.handle}>
@@ -30,6 +29,7 @@ export default function StopRow({ stop: s, index, planId, state: st, checkHere, 
             </span>
           )}
         </div>
+        {!compact && s.note && <div className="pt-note pt-stop-note ellipsis">{s.note}</div>}
         {/* the card always has its footer (check-in on the left, directions on the right), so cards line up */}
         {(!compact || whoIn.length > 0 || checkHere) && (
           <div className="pt-stop-foot" onClick={(e) => e.stopPropagation()}>
