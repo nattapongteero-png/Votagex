@@ -107,12 +107,12 @@ export default function TodayPage() {
     plans.forEach((p) => p.stops.forEach((s) => { if (s.date) m[s.date] = (m[s.date] || 0) + 1; }));
     return m;
   }, [plans]);
-  // on my calendar, which groups I'm out with each day (a dot in the group's colour, two at most)
+  // which groups I'm out with each day (a dot in the group's colour, two at most); on a group's calendar, its plans
   const groupsOn = useMemo(() => {
     const m = {};
-    if (group) return m;
     plans.forEach((p) => {
-      const g = groups.find((x) => x.id === p.groupId);
+      // a group's own calendar: its plans in its colour
+      const g = group || groups.find((x) => x.id === p.groupId);
       if (!g || !p.startDate) return;
       for (let d = p.startDate, i = 0; d <= (p.endDate || p.startDate) && i < 62; d = addDays(d, 1), i++) {
         const day = (m[d] ||= []);
@@ -166,7 +166,7 @@ export default function TodayPage() {
   const night = selected === today && (hour >= 19 || hour < 6);
   const dayTitle = selected === today ? `วันนี้ · ${thaiShort(selected)}` : `${TH_DOW[parseISO(selected).getDay()]} ${thaiShort(selected)}`;
   const holiday = HOLIDAYS[selected];
-  const daySub = [holiday, stops.length ? `${stops.length} จุดแวะ${plan ? ` · ${plan.name}` : ''}` : 'ยังไม่มีแผน'].filter(Boolean).join(' · ');
+  const daySub = [holiday, stops.length ? `${stops.length} จุดแวะ` : 'ยังไม่มีแผน'].filter(Boolean).join(' · ');
   // events on the selected day
   const dayEvents = events.filter((ev) => eventOn(ev, selected)).sort((a, b) => (a.time || '99').localeCompare(b.time || '99'));
   // the soonest event worth a note: on today, tomorrow, or ending within two days
