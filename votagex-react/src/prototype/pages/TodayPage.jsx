@@ -137,7 +137,6 @@ export default function TodayPage() {
   const stops = plan ? plan.stops.filter((s) => s.date === selected).sort(byOrder) : [];
   const dayPins = stops.filter((s) => s.lat != null && !s.skip);
   const planGroup = plan && groups.find((g) => g.id === plan.groupId);
-  const who = !plan ? '' : planGroup ? `ไปกับ${planGroup.name}` : plan.members.length > 1 ? `ไปกับ ${plan.members.filter((id) => id !== ME).map((id) => PEOPLE[id]?.name).join(', ')}` : 'ไปคนเดียว';
   const country = countryOf(plan?.country);
   const nowHM = localHM(country.utc);
   const live = plan && selected === today && planStatus(plan, today) === 'ongoing' && plan.kind !== 'outing';
@@ -283,10 +282,13 @@ export default function TodayPage() {
           {/* the selected day's plan */}
           <div className="hp-tile pt-day-card">
             {plan && (
+              /* the plan's name, and who: its group as the same chip the plan page uses, then the faces */
               <button className="pt-day-who" onClick={() => navigate(`/proto/plan/${plan.id}`)}>
-                {planGroup && <i className="pt-group-dot" style={{ background: planGroup.color }} />}
-                <Avatars ids={plan.members} size={22} />
-                <span className="pt-muted sm ellipsis">{who}</span>
+                <span className="pt-strong ellipsis pt-grow">{plan.name}</span>
+                {planGroup
+                  ? <span className="pt-group-chip sm" style={{ background: planGroup.color }}><Icon name={planGroup.icon} size={13} /> {planGroup.name}</span>
+                  : plan.members.length < 2 && <span className="pt-muted sm">ไปคนเดียว</span>}
+                {plan.members.length > 1 && <Avatars ids={plan.members} size={22} max={3} />}
               </button>
             )}
             {!wxSel && (

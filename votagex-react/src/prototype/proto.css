@@ -2020,3 +2020,7 @@ button.pt-pick-later { width: 100%; font: inherit; color: inherit; text-align: l
 .pt-line-at { display: inline-flex; align-items: center; gap: 2px; font-size: 11px; font-weight: 700; color: var(--tw-success); }
 .pt-line-at.late { color: var(--tw-accent); }
 .pt-line-at.muted { font-weight: 500; color: var(--tw-text-3); }
+/* the day card's head: plan name, then its group chip and faces */
+.pt-day-who .pt-strong { font-size: 15px; }
+.pt-group-chip.sm { flex-shrink: 0; margin: 0; padding: 2px 9px; font-size: 11px; white-space: nowrap; max-width: 46%; overflow: hidden; text-overflow: ellipsis; }
+.pt-day-who .pt-avatars { flex-shrink: 0; }
