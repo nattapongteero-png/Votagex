@@ -282,14 +282,15 @@ export default function TodayPage() {
           {/* the selected day's plan */}
           <div className="hp-tile pt-day-card">
             {plan && (
-              /* the plan's name, and who: its group as the same chip the plan page uses, then the faces */
+              /* who (the group's tag, unless home already shows that group) over the plan's name; the faces as tall as both */
               <button className="pt-day-who" onClick={() => navigate(`/proto/plan/${plan.id}`)}>
-                <span className="pt-strong ellipsis pt-grow">{plan.name}</span>
-                {/* looking at that group's calendar already: no need to say which group */}
-                {planGroup
-                  ? planGroup.id !== group?.id && <span className="pt-group-chip sm" style={{ background: planGroup.color }}><Icon name={planGroup.icon} size={13} /> {planGroup.name}</span>
-                  : plan.members.length < 2 && <span className="pt-muted sm">ไปคนเดียว</span>}
-                {plan.members.length > 1 && <Avatars ids={plan.members} size={22} max={3} />}
+                <span className="pt-day-who-text">
+                  {planGroup
+                    ? planGroup.id !== group?.id && <span className="pt-group-chip sm" style={{ background: planGroup.color }}><Icon name={planGroup.icon} size={13} /> {planGroup.name}</span>
+                    : plan.members.length < 2 && <span className="pt-muted sm">ไปคนเดียว</span>}
+                  <span className="pt-strong ellipsis">{plan.name}</span>
+                </span>
+                {plan.members.length > 1 && <Avatars ids={plan.members} size={planGroup && planGroup.id !== group?.id ? 47 : 32} max={3} />}
               </button>
             )}
             {!wxSel && (
