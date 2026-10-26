@@ -11,14 +11,13 @@ import { MonthPiggyTile } from '../MonthMoney';
 import StopRow from '../StopRow';
 import MapView from '../MapView';
 import RecapViewer from '../RecapViewer';
-import MemoryDome from '../MemoryDome';
 import SunWall from '../SunWall';
 import { pm25Level, useWeather, weatherKind } from '../weather';
 import HOLIDAYS from '../thHolidays.json';
 import {
   ME, PEOPLE, CURRENCIES, HOME, addDays, parseISO, diffDays, thaiShort, byOrder, localHM,
   stopState, keepThai, fmtMoney, distanceKm, fmtKm, directionsUrl, countryOf, planStatus, toTHB, jarStats,
-  EVENT_KINDS, KINDS, eventOn, shufflePool, nextCheckIndex, passedStop,
+  EVENT_KINDS, KINDS, eventOn, shufflePool, nextCheckIndex, passedStop, tripTheme,
 } from '../data';
 
 const FOLD_TOP = 12; // folded calendar's distance from the top of the screen
@@ -270,9 +269,6 @@ export default function TodayPage() {
         return { plan: p, memories: mems, expenses: expenses.filter((e) => e.planId === p.id), label: agoText(p), photos: mems.flatMap((m) => m.photos || []) };
       });
   }, [plans, memories, expenses, today]);
-  const domeItems = useMemo(() => looks.flatMap((l) => l.photos.map((src) => ({
-    src, key: l.plan.id, title: l.plan.name, sub: `${l.label} · ${thaiShort(l.plan.startDate)} ${parseISO(l.plan.startDate).getFullYear() + 543}`,
-  }))), [looks]);
   const [recapOf, setRecapOf] = useState(null); // the trip whose diary is open
   const recap = looks.find((l) => l.plan.id === recapOf);
 
@@ -376,8 +372,31 @@ export default function TodayPage() {
 
         {/* one block for the whole sheet, so a drag anywhere on it (gaps and handle too) moves it */}
         <div className="pt-home-sheet">
-          {/* past trips' photos on the inside of a dome: spin it, tap one for that trip's diary */}
-          {domeItems.length > 0 && <MemoryDome items={domeItems} onOpen={setRecapOf} />}
+          {/* the trip to look back on (this day in a past year, else the latest): its diary lying on its side in
+              3D, spine towards us; tap to open it */}
+          {looks[0] && (() => {
+            const l = looks[0];
+            const th = tripTheme(l.plan);
+            const d = parseISO(l.plan.startDate);
+            return (
+              <div className="pt-spine-wrap">
+                <span className="pt-muted sm">{l.label}</span>
+                <button className="pt-book" style={{ '--book': th.color }} aria-label={`เปิดไดอารี่ ${l.plan.name}`} onClick={() => setRecapOf(l.plan.id)}>
+                  <span className="pt-book-shadow" />
+                  <span className="pt-book-3d">
+                    <span className="pt-book-top"><i className="pt-book-band" /></span>
+                    <span className="pt-book-end" />
+                    <span className="pt-spine">
+                      <Icon name={th.icon} size={18} className="pt-spine-icon" />
+                      <span className="pt-spine-title">{l.plan.name}</span>
+                      <span className="pt-spine-date">{`${d.getDate()}.${d.getMonth() + 1}.${String(d.getFullYear() + 543).slice(2)}`}</span>
+                      <i className="pt-book-band" />
+                    </span>
+                  </span>
+                </button>
+              </div>
+            );
+          })()}
 
           {/* the selected day's weather, its own card */}
           {wxSel && <WeatherCard wx={wxSel} place={selPlace || 'กรุงเทพฯ'} title={dayTitle} holiday={holiday} night={night} clock={selected === today} utc={countryOf(tripSel?.country).utc} />}

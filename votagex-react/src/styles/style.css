@@ -18,9 +18,9 @@
   --font-display: 'Kanit', 'IBM Plex Sans Thai', sans-serif;
 
   /* surfaces */
-  --tw-canvas: #F4EFE6;
-  --tw-surface: #FFFDF8;
-  --tw-sunken: #EDE6D8;
+  --tw-canvas: #F9FAFB;
+  --tw-surface: #FFFFFF;
+  --tw-sunken: #F3F4F6;
   --tw-overlay: rgba(27, 42, 74, 0.45);
   /* text */
   --tw-text: #1B2A4A;
@@ -34,8 +34,8 @@
   --tw-accent: #E9B526;
   --tw-active: #15803D;
   /* borders */
-  --tw-border: #E4DBCA;
-  --tw-border-strong: #D2C6AF;
+  --tw-border: #E5E7EB;
+  --tw-border-strong: #D1D5DB;
   /* buttons: primary = dark capsule, secondary = white capsule */
   --tw-btn-primary: #1B2A4A;
   --tw-btn-primary-pressed: #24365C;
