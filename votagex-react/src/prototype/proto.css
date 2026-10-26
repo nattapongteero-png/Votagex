@@ -1953,3 +1953,14 @@ button.pt-pick-later { width: 100%; font: inherit; color: inherit; text-align: l
 .pt-timeline.compact .pt-stop-foot { padding-top: 0; border-top: none; padding-left: 42px; }
 .pt-timeline.compact .pt-stop-checkin { margin-left: 0; }
 .pt-timeline.compact .pt-stop.compact:last-child .pt-stop-rail::before { bottom: calc(100% - 24px); }
+
+/* plan's stop card, tighter: icon level with the name, the note as a plain line, smaller footer buttons */
+.pt-timeline:not(.compact) .pt-stop-card { padding: 10px 12px; gap: 8px; }
+.pt-timeline:not(.compact) .pt-stop-top { align-items: flex-start; }
+.pt-timeline:not(.compact) .pt-stop-top .pt-grow { min-height: 61px; }
+.pt-stop-top .pt-drag { align-self: center; }
+.pt-stop-top .pt-note { margin-top: 2px; padding: 0; background: none; border-radius: 0; color: var(--tw-text-3); }
+.pt-timeline:not(.compact) .pt-stop-foot { padding-top: 8px; min-height: 40px; box-sizing: content-box; }
+.pt-stop-checkin, .pt-stop-nav { min-height: 32px; height: 32px; padding: 0 12px; font-size: 13px; }
+.pt-timeline:not(.compact) .pt-stop-time { padding-top: 14px; }
+.pt-timeline:not(.compact) .pt-stop-dot { margin-top: 12px; }
