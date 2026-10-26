@@ -65,6 +65,9 @@
   box-sizing: border-box;
 }
 
+/* the page may draw up to the very top (viewport-fit=cover); the app itself starts under the status bar */
+#root { padding-top: env(safe-area-inset-top, 0px); }
+
 html, body {
   height: 100%;
   font-family: var(--font);
@@ -96,7 +99,7 @@ html, body {
   max-width: 430px;
   width: 100%;
   height: 100vh;
-  height: 100dvh;
+  height: calc(100dvh - env(safe-area-inset-top, 0px)); /* below the status bar (#root is padded) */
   margin: 0 auto;
   background: var(--bg);
   position: relative;

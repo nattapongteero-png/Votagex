@@ -1,18 +1,16 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { forwardRef, useEffect, useMemo, useRef, useState } from 'react';
+import HTMLFlipBook from 'react-pageflip';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import Icon from './icons';
 import { PEOPLE, EXPENSE_CATS, tripTheme, byOrder, diffDays, distanceKm, parseISO, thaiShort, toTHB } from './data';
 
-// A past trip as a digital scrapbook you leaf through yourself. The book lies open in the middle with the
-// rest of its pages fanned out in 3D on either side; swipe (or tap a side) to turn, and the page lifts off,
-// arcs over the spine and joins the fan on the other side. Closed, it shows its cloth cover. Each page is laid
-// out on a 360×520 card and scaled into the book: photos taped in with handwritten notes and arrows, the
-// route doodled beside a ticket of stops, the receipt and stickers, a last note.
+// A past trip as a digital scrapbook you leaf through yourself. The pages turn with react-pageflip (MIT): drag
+// a corner or swipe and the paper curls under your finger with its shadow, or tap a side. Closed, it shows
+// its cloth cover, centred. Each page is laid out on a 360×520 card and scaled into the book: photos taped in
+// with handwritten notes and arrows, the route doodled beside a ticket of stops, the receipt and stickers, a
+// last note.
 
-const PW = 176; // a page's width in the book
-const PH = 254;
-const S = PW / 360; // page content is drawn at 360 wide
 const DAYS = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
 const baht = (n) => `฿${Math.round(n).toLocaleString('en-US')}`;
 const year = (d) => parseISO(d).getFullYear() + 543;
@@ -42,7 +40,7 @@ function Cover({ d }) {
     <div className="sb-cover" style={{ '--book': d.theme.color }}>
       <span className="sb-cover-frame" />
       <span className="sb-cover-kicker">SCRAPBOOK</span>
-      <span className="sb-cover-title" style={{ fontSize: Math.min(24, 136 / ([...new Intl.Segmenter('th', { granularity: 'grapheme' }).segment(d.title)].length * 0.62)) }}>{d.title}</span>
+      <span className="sb-cover-title" style={{ fontSize: Math.min(24, 112 / ([...new Intl.Segmenter('th', { granularity: 'grapheme' }).segment(d.title)].length * 0.62)) }}>{d.title}</span>
       <span className="sb-cover-date">{d.dateCode}</span>
       <i className="sb-cover-band" />
     </div>
@@ -162,16 +160,13 @@ function End({ d }) {
 
 /* ---------------- the book ---------------- */
 
-// where a leaf sits for a given place in the book. rel = this leaf - leaves turned: 0 and up lie on the right
-// (0 is the open page), -1 and down on the left (-1 open); between -1 and 0 it's in the air over the spine,
-// standing up towards you halfway. Pages further from the open spread fan out behind it: turned further back,
-// shifted out so their edges show, and darker
-function leafPose(rel) {
-  if (rel >= 0) { const k = Math.min(rel, 7); return { a: 11 * k, x: 22 * k, z: -12 * k, dim: 0.07 * k }; }
-  if (rel <= -1) { const k = Math.min(-rel - 1, 7); return { a: -180 - 11 * k, x: -22 * k, z: -12 * k, dim: 0.07 * k }; }
-  const t = -rel;
-  return { a: -180 * t, x: 0, z: Math.sin(Math.PI * t) * 36, dim: Math.sin(Math.PI * t) * 0.3 };
-}
+// one page of the book: a hard cloth cover or soft paper, its contents scaled from the 360×520 layout
+const Page = forwardRef(({ face, scale }, ref) => (
+  <div ref={ref} className="sb-pg" data-density={face.cover ? 'hard' : 'soft'}>
+    {face.cover || <div className="sb-paper"><div className="sb-paper-in" style={{ transform: `scale(${scale})` }}>{face.el}</div></div>}
+  </div>
+));
+Page.displayName = 'Page';
 
 export default function Scrapbook({ plan, memories, expenses, label, onClose }) {
   const navigate = useNavigate();
@@ -209,32 +204,14 @@ export default function Scrapbook({ plan, memories, expenses, label, onClose }) 
     if (inside.length % 2 === 1) inside.push(null); // a blank page so the back cover lands on a back
     return [{ cover: <Cover d={d} /> }, ...inside.map((el) => ({ el })), { cover: <BackCover d={d} /> }];
   }, [d]);
-  const leaves = faces.length / 2;
 
-  const [pos, setPos] = useState(0); // leaves turned; fractional while turning
-  const posRef = useRef(0);
-  const drag = useRef(null);
-  const anim = useRef(0);
-  const [scale, setScale] = useState(1);
-  useEffect(() => { posRef.current = pos; }, [pos]);
-  useEffect(() => {
-    const fit = () => setScale(Math.min(Math.min(430, window.innerWidth) / 390, 1.25));
-    fit();
-    window.addEventListener('resize', fit);
-    return () => { window.removeEventListener('resize', fit); cancelAnimationFrame(anim.current); };
-  }, []);
-
-  const glide = (to) => {
-    cancelAnimationFrame(anim.current);
-    const from = posRef.current; const t0 = performance.now(); const dur = 260 + 340 * Math.min(1.5, Math.abs(to - from));
-    const step = (now) => {
-      const k = Math.min(1, (now - t0) / dur);
-      setPos(from + (to - from) * (1 - (1 - k) ** 3));
-      if (k < 1) anim.current = requestAnimationFrame(step);
-    };
-    anim.current = requestAnimationFrame(step);
-  };
-  const go = (by) => glide(Math.max(0, Math.min(leaves, Math.round(posRef.current) + by)));
+  // a page is half the screen's width, the book two of them side by side
+  const [pw] = useState(() => Math.floor((Math.min(430, window.innerWidth) - 28) / 2));
+  const ph = Math.round(pw * 1.44);
+  const book = useRef(null);
+  const [at, setAt] = useState(0); // the page index showing on the right (0: the cover)
+  const last = faces.length - 1;
+  const go = (by) => { const f = book.current?.pageFlip(); if (f) (by > 0 ? f.flipNext() : f.flipPrev()); };
   useEffect(() => {
     const onKey = (e) => {
       if (e.key === 'Escape') onClose();
@@ -245,34 +222,9 @@ export default function Scrapbook({ plan, memories, expenses, label, onClose }) 
     return () => window.removeEventListener('keydown', onKey);
   });
 
-  const down = (e) => {
-    cancelAnimationFrame(anim.current);
-    const r = e.currentTarget.getBoundingClientRect();
-    drag.current = { x: e.clientX, pos: posRef.current, moved: 0, mid: r.left + r.width / 2, last: e.clientX, v: 0 };
-    e.currentTarget.setPointerCapture?.(e.pointerId);
-  };
-  const move = (e) => {
-    const g = drag.current;
-    if (!g) return;
-    const dx = e.clientX - g.x;
-    g.moved = Math.max(g.moved, Math.abs(dx));
-    g.v = e.clientX - g.last; g.last = e.clientX;
-    if (g.moved > 6) setPos(Math.max(0, Math.min(leaves, g.pos - dx / (PW * scale * 1.1))));
-  };
-  const up = (e) => {
-    const g = drag.current;
-    drag.current = null;
-    if (!g) return;
-    if (g.moved <= 6) { go(e.clientX < g.mid ? -1 : 1); return; } // a tap: the left side turns back
-    const fling = g.v < -4 ? 0.5 : g.v > 4 ? -0.5 : 0;
-    glide(Math.max(0, Math.min(leaves, Math.round(posRef.current + fling))));
-  };
-
-  // closed at either end the book sits centred on its cover; open, the spine is in the middle
-  const shift = PW / 2 * (Math.max(0, pos - (leaves - 1)) - Math.max(0, 1 - pos));
-  const spread = Math.round(pos);
-  const pageNo = spread === 0 ? 'ปก' : spread === leaves ? 'ปกหลัง' : `${spread * 2 - 1}–${spread * 2}`;
-  const face = (f) => (f.cover || <div className="sb-paper"><div className="sb-paper-in" style={{ transform: `scale(${S})` }}>{f.el}</div></div>);
+  // shut, the book sits centred on its front or back cover; open, the spine is in the middle
+  const shift = at === 0 ? -pw / 2 : at >= last ? pw / 2 : 0;
+  const pageNo = at === 0 ? 'ปก' : at >= last ? 'ปกหลัง' : `${at}–${at + 1}`;
 
   return createPortal(
     <div className="sb" role="dialog" aria-label={`สมุดทริป ${plan.name}`}>
@@ -284,25 +236,19 @@ export default function Scrapbook({ plan, memories, expenses, label, onClose }) 
         </span>
         <span className="sb-icon ghost" />
       </header>
-      <div className="sb-stage" onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={() => { drag.current = null; go(0); }}>
-        <div className="sb-book" style={{ transform: `scale(${scale}) translateX(${shift}px) rotateX(14deg)` }}>
-          <i className="sb-floor" />
-          {Array.from({ length: leaves }, (_, i) => {
-            const p = leafPose(i - pos);
-            const shade = Math.min(0.5, p.dim);
-            return (
-              <div key={i} className="sb-leaf" style={{ transform: `translate3d(${p.x}px, 0, ${p.z}px) rotateY(${p.a}deg)`, }}>
-                <div className="sb-face">{face(faces[i * 2])}<i className="sb-shade" style={{ opacity: shade }} /></div>
-                <div className="sb-face back">{face(faces[i * 2 + 1])}<i className="sb-shade" style={{ opacity: shade }} /></div>
-              </div>
-            );
-          })}
+      <div className="sb-stage">
+        <div className="sb-book" style={{ transform: `translateX(${shift}px)` }}>
+          <HTMLFlipBook width={pw} height={ph} size="fixed" showCover usePortrait={false} drawShadow maxShadowOpacity={0.45}
+            flippingTime={700} mobileScrollSupport={false} showPageCorners className="sb-flip" ref={book}
+            onFlip={(e) => setAt(e.data)}>
+            {faces.map((f, i) => <Page key={i} face={f} scale={pw / 360} />)}
+          </HTMLFlipBook>
         </div>
       </div>
       <footer className="sb-foot">
-        <button className="sb-round" aria-label="หน้าก่อน" disabled={spread === 0} onClick={() => go(-1)}><Icon name="back" size={18} /></button>
+        <button className="sb-round" aria-label="หน้าก่อน" disabled={at === 0} onClick={() => go(-1)}><Icon name="back" size={18} /></button>
         <span className="sb-page-no">{pageNo}</span>
-        <button className="sb-round" aria-label="หน้าถัดไป" disabled={spread === leaves} onClick={() => go(1)}><Icon name="next" size={18} /></button>
+        <button className="sb-round" aria-label="หน้าถัดไป" disabled={at >= last} onClick={() => go(1)}><Icon name="next" size={18} /></button>
         <button className="sb-pill" onClick={() => { onClose(); navigate(`/proto/plan/${plan.id}`); }}>เปิดแผนทริป</button>
       </footer>
     </div>,

@@ -1,3 +1,5 @@
+import { createPortal } from 'react-dom';
+
 // Home's backdrop behind the profiles and the calendar: a warm wall in afternoon sun. A patch of light falls
 // through a window (its frame cuts it into panes) and a leafy branch outside throws soft shadows that sway.
 // Leaves are drawn once from a seeded list, so the wall looks the same every visit.
@@ -28,7 +30,7 @@ function Branch({ seed, x, y, scale, turn }) {
 }
 
 export default function SunWall() {
-  return (
+  return createPortal(
     <div className="pt-sunwall" aria-hidden="true">
       <div className="pt-sunwall-light">
         <i className="pt-sunwall-bar v" />
@@ -41,6 +43,7 @@ export default function SunWall() {
         <Branch seed={1} x={450} y={40} scale={1} turn={-6} />
         <Branch seed={3} x={200} y={-40} scale={0.7} turn={20} />
       </svg>
-    </div>
+    </div>,
+    document.body,
   );
 }

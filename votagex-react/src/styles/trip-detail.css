@@ -15,7 +15,7 @@
   max-width: 430px;
   width: 100%;
   height: 100vh;
-  height: 100dvh;
+  height: calc(100dvh - env(safe-area-inset-top, 0px)); /* below the status bar (#root is padded) */
   background: var(--tw-canvas);
   position: relative;
   overflow: hidden;
