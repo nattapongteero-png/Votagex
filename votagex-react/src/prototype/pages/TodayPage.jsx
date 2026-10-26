@@ -438,7 +438,7 @@ export default function TodayPage() {
           )}
         </div>
       </div>
-      {recapOpen && recap && <RecapViewer {...recap} today={today} onClose={() => setRecapOpen(false)} />}
+      {recapOpen && recap && <RecapViewer {...recap} onClose={() => setRecapOpen(false)} />}
     </div>
   );
 }

@@ -8,10 +8,11 @@ import { FPS, lengthOf, shotsFor } from './recapShots';
 import { PEOPLE, EXPENSE_CATS, byOrder, diffDays, distanceKm, parseISO, thaiShort, toTHB } from './data';
 
 const pad = (n) => String(n).padStart(2, '0');
+const DAYS = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
 
 // A past trip played back as a short film (RecapFilm). A bar per shot up top; tap the left third for the shot
 // before, elsewhere for the next; hold to pause. "ดูทริปนี้" opens the plan any time; at the end, the full recap.
-export default function RecapViewer({ plan, memories, expenses, label, today, onClose }) {
+export default function RecapViewer({ plan, memories, expenses, label, onClose }) {
   const navigate = useNavigate();
   const player = useRef(null);
   const [frame, setFrame] = useState(0);
@@ -21,7 +22,8 @@ export default function RecapViewer({ plan, memories, expenses, label, today, on
   const film = useMemo(() => {
     const stops = plan.stops.filter((s) => s.date && s.lat != null && !s.skip).sort((a, b) => a.date.localeCompare(b.date) || byOrder(a, b));
     const km = stops.reduce((t, s, i) => (i ? t + distanceKm(stops[i - 1], s) : 0), 0);
-    const photos = memories.filter((m) => m.photos?.length).flatMap((m) => m.photos.map((src) => ({ src, text: m.text, by: PEOPLE[m.by]?.name, avatar: PEOPLE[m.by]?.avatar })));
+    const photos = memories.filter((m) => m.photos?.length)
+      .flatMap((m) => m.photos.map((src) => ({ src, text: m.text, by: PEOPLE[m.by]?.name, date: `${thaiShort(m.date)} ${parseISO(m.date).getFullYear() + 543}` })));
     const total = expenses.reduce((t, e) => t + toTHB(e), 0);
     const cats = Object.entries(expenses.reduce((o, e) => ({ ...o, [e.cat]: (o[e.cat] || 0) + toTHB(e) }), {}))
       .sort((a, b) => b[1] - a[1]).map(([cat, amount]) => ({ label: EXPENSE_CATS[cat]?.label || cat, color: EXPENSE_CATS[cat]?.color || '#6B7280', amount }));
@@ -29,17 +31,17 @@ export default function RecapViewer({ plan, memories, expenses, label, today, on
     return {
       title: plan.name, label, kind: plan.kind,
       cover: plan.cover?.img || photos[0]?.src || null,
-      daysAgo: Math.max(1, diffDays(plan.startDate, today)),
+      ago: label,
+      dateLong: `วัน${DAYS[start.getDay()]}ที่ ${thaiShort(plan.startDate)} ${start.getFullYear() + 543}`,
       dateCode: `${pad(start.getDate())}.${pad(start.getMonth() + 1)}.${start.getFullYear() + 543}`,
       dateShort: thaiShort(plan.startDate),
-      from: 'บ้าน', to: plan.destination?.name || stops[0]?.prov || plan.name,
-      crew: plan.members.map((id) => ({ id, avatar: PEOPLE[id]?.avatar })).filter((c) => c.avatar),
+      crew: plan.members.map((id) => ({ id, name: PEOPLE[id]?.name, avatar: PEOPLE[id]?.avatar })).filter((c) => c.avatar),
       stops: stops.map((s) => ({ id: s.id, name: s.name, time: s.time, lat: s.lat, lng: s.lng })),
       photos,
       spend: { total, cats },
       stats: { days: plan.endDate ? diffDays(plan.startDate, plan.endDate) + 1 : 1, stops: stops.length, photos: photos.length, km },
     };
-  }, [plan, memories, expenses, label, today]);
+  }, [plan, memories, expenses, label]);
   const shots = useMemo(() => shotsFor(film), [film]);
   const total = lengthOf(shots);
   const W = 1080;
