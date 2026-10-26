@@ -1537,10 +1537,10 @@ button.pt-exp:active { background: var(--tw-sunken); }
 .hp-header-top.pt-talk { justify-content: flex-start; align-items: center; }
 
 /* ===== Today: Instagram-style note above the avatar ===== */
-.homepage.pt-today { --hp-stage-top: 200px; }
-.hp-header-top.pt-talk { padding-top: 58px; }
+.homepage.pt-today { --hp-stage-top: 206px; }
+.hp-header-top.pt-talk { padding-top: 64px; }
 .pt-avatar-note { position: relative; }
-.pt-avatar-note .pt-speech-wrap { position: absolute; left: -4px; bottom: 83px; z-index: 4; display: block; padding: 0; flex: none; }
+.pt-avatar-note .pt-speech-wrap { position: absolute; left: -4px; bottom: 89px; z-index: 4; display: block; padding: 0; flex: none; }
 .pt-avatar-note .pt-speech {
   display: block; min-width: 72px; max-width: 210px; min-height: 0; padding: 7px 13px; border-radius: 18px;
   font-size: 12px; font-weight: 500; line-height: 1.35; color: var(--tw-text-2); text-align: center;
