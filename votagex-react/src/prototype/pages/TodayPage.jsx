@@ -296,7 +296,7 @@ export default function TodayPage() {
               </div>
             )}
               {plan && stops.length > 0 && (
-                <div className="pt-timeline compact">
+                <div className="pt-lines">
                   {stops.map((s, i) => (
                     <StopRow key={s.id} compact stop={s} index={i} planId={plan.id} state={stopState(s, today, nowHM)}
                       checkHere={selected === today && i === nextCheck} passed={passedStop(stops, i, today)} onOpen={() => openSheet('stop', { planId: plan.id, stopId: s.id })} />
@@ -332,7 +332,7 @@ export default function TodayPage() {
                     <button className="hp-add-btn" onClick={() => openSheet(live ? 'expense' : 'addStop', live ? {} : { planId: plan.id, date: selected })}>
                       <Icon name={live ? 'wallet' : 'plus'} size={18} stroke={2.2} /> {live ? 'จดรายจ่าย' : 'เพิ่มจุดแวะ'}
                     </button>
-                    <button className="hp-section-arrow" aria-label="เปิดแผน" onClick={() => navigate(`/proto/plan/${plan.id}`)}><Icon name="next" size={18} /></button>
+                    <button className="pt-btn light pt-open-plan" onClick={() => navigate(`/proto/plan/${plan.id}`)}>ดูแผน <Icon name="next" size={16} /></button>
                   </>
                 ) : (
                   <>
