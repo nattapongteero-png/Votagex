@@ -10,6 +10,7 @@ import WeatherCard from '../WeatherCard';
 import { MonthPiggyTile } from '../MonthMoney';
 import StopRow from '../StopRow';
 import MapView from '../MapView';
+import StoryViewer from '../StoryViewer';
 import { pm25Level, useWeather, weatherKind } from '../weather';
 import HOLIDAYS from '../thHolidays.json';
 import {
@@ -245,12 +246,36 @@ export default function TodayPage() {
   // something saved I haven't been to yet, for the shuffle on an empty day
   const canShuffle = selected >= today && shufflePool(places, allPlans, selected, group).length > 0;
 
-  // memory from about a year ago, else the latest one with a photo
+  // memories from this day in past years (±3 days), as stories on my circle and each group's; a scope's are the
+  // memories of its own plans (mine: every plan I'm on)
+  const stories = useMemo(() => {
+    const onThisDay = memories.filter((m) => m.photos?.length && m.date < today
+      && diffDays(m.date, today) >= 362 && [0, 1, 2, 3, 362, 363, 364].includes(diffDays(m.date, today) % 365));
+    const of = (inScope) => onThisDay.filter((m) => inScope(allPlans.find((p) => p.id === m.planId)))
+      .sort((a, b) => a.date.localeCompare(b.date))
+      .flatMap((m) => m.photos.map((photo) => ({ m, photo, plan: allPlans.find((p) => p.id === m.planId) })));
+    const out = { me: of((p) => p?.members.includes(ME)) };
+    for (const g of groups) out[g.id] = of((p) => p?.groupId === g.id);
+    return out;
+  }, [memories, allPlans, groups, today]);
+  const scopeId = group?.id || 'me';
+  const [story, setStory] = useState(null); // the scope whose stories are playing
+  const seen = (id) => settings.storySeen?.[id] === today;
+  const ringOf = (id) => (stories[id]?.length ? (seen(id) ? ' story seen' : ' story') : '');
+  // first tap switches to that calendar; tapping the one already shown plays its stories
+  const pickScope = (id) => {
+    if (id === scopeId && stories[id]?.length) {
+      setStory(id);
+      if (!seen(id)) actions.setSetting('storySeen', { ...settings.storySeen, [id]: today });
+    } else actions.setSetting('scope', id);
+  };
+
+  // this page's memory from about a year ago, else its latest one with a photo
   const throwback = useMemo(() => {
-    const withPhoto = memories.filter((m) => m.photos?.length && m.date < today);
-    const yearAgo = withPhoto.find((m) => Math.abs(diffDays(m.date, addDays(today, -365))) <= 3);
+    const withPhoto = memories.filter((m) => m.photos?.length && m.date < today && plans.some((p) => p.id === m.planId));
+    const yearAgo = stories[scopeId][0]?.m;
     return yearAgo ? { m: yearAgo, label: 'วันนี้เมื่อปีที่แล้ว' } : withPhoto[0] ? { m: withPhoto[0], label: 'ความทรงจำล่าสุด' } : null;
-  }, [memories, today]);
+  }, [memories, plans, stories, scopeId, today]);
 
   // the day's title, when there's no weather card to say it
   const dayHead = !wxSel && (
@@ -310,7 +335,7 @@ export default function TodayPage() {
           <div className="pt-avatar-note">
             <SpeechNotes notes={notes} />
             {/* me: my own calendar (every trip I'm on); the groups sit beside me, same size */}
-            <button aria-pressed={!group} className={`pt-scope-btn${!group ? ' active' : ''}`} onClick={() => actions.setSetting('scope', 'me')}>
+            <button aria-pressed={!group} className={`pt-scope-btn${!group ? ' active' : ''}${ringOf('me')}`} onClick={() => pickScope('me')}>
               <span className="pt-group-badge pt-scope-me"><img src={PEOPLE[ME].avatar} alt="" /></span><span>{PEOPLE[ME].name}</span>
             </button>
           </div>
@@ -320,7 +345,7 @@ export default function TodayPage() {
           </button>
           <div className="pt-scope">
             {groups.map((g) => (
-              <button key={g.id} aria-pressed={group?.id === g.id} className={`pt-scope-btn${group?.id === g.id ? ' active' : ''}`} onClick={() => actions.setSetting('scope', g.id)}>
+              <button key={g.id} aria-pressed={group?.id === g.id} className={`pt-scope-btn${group?.id === g.id ? ' active' : ''}${ringOf(g.id)}`} onClick={() => pickScope(g.id)}>
                 <span className="pt-group-badge" style={{ background: g.color }}><Icon name={g.icon} size={22} /></span><span>{g.name}</span>
               </button>
             ))}
@@ -418,6 +443,7 @@ export default function TodayPage() {
           )}
         </div>
       </div>
+      {story && <StoryViewer items={stories[story]} today={today} onClose={() => setStory(null)} />}
     </div>
   );
 }
