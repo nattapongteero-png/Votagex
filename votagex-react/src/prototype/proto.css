@@ -1578,7 +1578,8 @@ button.pt-exp:active { background: var(--tw-sunken); }
 .homepage.pt-today.header-collapsed .hp-stage { opacity: 1; }
 .pt-snap-stop { position: absolute; top: 0; left: 0; height: 6px; padding: 0; margin: 0; pointer-events: none; }
 /* the greeting goes up with the calendar, as if scrolled away (so the calendar never slides over it), fading as it goes */
-.homepage.pt-today .hp-header {
+/* (the row only: the header also holds the sheet's stop marker, which must stay put) */
+.homepage.pt-today .hp-header-top.pt-talk {
   opacity: clamp(0, calc(1 - var(--sheet-p, 0) * 2.5), 1);
   transform: translateY(calc(var(--sheet-p, 0) * (var(--fold-top, 12px) - var(--hp-stage-top))));
 }
@@ -1964,3 +1965,5 @@ button.pt-pick-later { width: 100%; font: inherit; color: inherit; text-align: l
 .pt-stop-checkin, .pt-stop-nav { min-height: 32px; height: 32px; padding: 0 12px; font-size: 13px; }
 .pt-timeline:not(.compact) .pt-stop-time { padding-top: 14px; }
 .pt-timeline:not(.compact) .pt-stop-dot { margin-top: 12px; }
+/* the header's fade backdrop would sit over the folded calendar now that the header itself stays */
+.homepage.pt-today .hp-header { background: none; }
