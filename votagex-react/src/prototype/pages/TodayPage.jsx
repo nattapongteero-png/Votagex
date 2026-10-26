@@ -285,8 +285,9 @@ export default function TodayPage() {
               /* the plan's name, and who: its group as the same chip the plan page uses, then the faces */
               <button className="pt-day-who" onClick={() => navigate(`/proto/plan/${plan.id}`)}>
                 <span className="pt-strong ellipsis pt-grow">{plan.name}</span>
+                {/* looking at that group's calendar already: no need to say which group */}
                 {planGroup
-                  ? <span className="pt-group-chip sm" style={{ background: planGroup.color }}><Icon name={planGroup.icon} size={13} /> {planGroup.name}</span>
+                  ? planGroup.id !== group?.id && <span className="pt-group-chip sm" style={{ background: planGroup.color }}><Icon name={planGroup.icon} size={13} /> {planGroup.name}</span>
                   : plan.members.length < 2 && <span className="pt-muted sm">ไปคนเดียว</span>}
                 {plan.members.length > 1 && <Avatars ids={plan.members} size={22} max={3} />}
               </button>
