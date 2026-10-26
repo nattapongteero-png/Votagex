@@ -82,6 +82,10 @@ function PlanTab({ plan, day, setDay, days, status }) {
     actions.reorderStops(plan.id, list.map((s, i) => ({ id: s.id, order: i, time: stops[i].time || '' })));
   });
   const canDrag = status !== 'past' && stops.length > 1;
+  // the one stop to check in at: the first of today's not yet checked, after the last one I checked in at
+  const lastIn = stops.map((s) => Boolean(s.checkIns?.[ME])).lastIndexOf(true);
+  const canCheckAt = (s) => s.date === today && ['pending', 'due'].includes(stopState(s, today, nowHM));
+  const nextCheck = [...stops.keys()].find((i) => i > lastIn && canCheckAt(stops[i])) ?? stops.findIndex(canCheckAt);
   const checklist = plan.checklist || [];
   const doneCount = checklist.filter((x) => x.done).length;
   const visibleChecklist = showAllChecklist ? checklist : checklist.filter((x) => !x.done).slice(0, 4);
@@ -115,37 +119,41 @@ function PlanTab({ plan, day, setDay, days, status }) {
         {stops.map((s, i) => {
           const st = stopState(s, today, nowHM);
           const whoIn = Object.keys(s.checkIns || {});
-          const canCheck = s.date === today && (st === 'pending' || st === 'due');
+          const mine = Boolean(s.checkIns?.[ME]);
+          const checkHere = i === nextCheck;
           return (
             <div key={s.id} ref={(el) => { dnd.rows.current[i] = el; }} className={`pt-stop ${st}${dnd.from === i ? ' dragging' : ''}`}>
-              <div className="pt-stop-time">
-                {s.time || '—'}
-                {canCheck && (
-                  <button className={`pt-stop-check${st === 'due' ? ' due' : ''}`} onClick={() => actions.toggleCheckIn(plan.id, s.id, st === 'due')}>
-                    <span><Icon name="check" size={16} stroke={2.6} /></span>เช็คอิน
-                  </button>
-                )}
-              </div>
-              <div className="pt-stop-rail"><span className="pt-stop-dot">{i + 1}</span></div>
+              <div className={`pt-stop-time${s.time ? '' : ' empty'}`}>{s.time || 'ไม่ระบุ'}</div>
+              <div className="pt-stop-rail"><span className="pt-stop-dot">{mine ? <Icon name="check" size={12} stroke={3} /> : i + 1}</span></div>
               {/* only the card moves; the time and the numbered rail stay with their slot */}
               <div className="pt-stop-card" role="button" tabIndex={0} style={dnd.style(i)} onClick={() => openSheet('stop', { planId: plan.id, stopId: s.id })}>
-                <CatIcon cat={s.cat} size={40} />
-                <div className="pt-grow">
-                  <div className="pt-strong">{s.name}</div>
-                  <div className="pt-muted sm">{s.area}</div>
-                  {s.note && <div className="pt-note">{s.note}</div>}
-                  {whoIn.length > 0 && (
-                    <div className="pt-stop-who"><Avatars ids={whoIn} size={18} /> <span>{st === 'late-done' ? 'มาสาย' : 'เช็คอินแล้ว'} {s.checkIns[whoIn[0]].at}</span></div>
+                <div className="pt-stop-top">
+                  <CatIcon cat={s.cat} size={40} />
+                  <div className="pt-grow">
+                    <div className="pt-strong">{s.name}</div>
+                    <div className="pt-muted sm">{s.area}</div>
+                    {s.note && <div className="pt-note">{s.note}</div>}
+                  </div>
+                  <a className="pt-round-btn sm" href={directionsUrl(s)} target="_blank" rel="noreferrer" aria-label="นำทาง" onClick={(e) => e.stopPropagation()}><Icon name="nav" size={16} /></a>
+                  {canDrag && (
+                    <span className="pt-drag" aria-label="ลากเพื่อย้าย" onClick={(e) => e.stopPropagation()}
+                      onPointerDown={(e) => dnd.start(e, i)} onPointerMove={dnd.move} onPointerUp={dnd.end} onPointerCancel={dnd.end}>
+                      <Icon name="grip" size={18} />
+                    </span>
                   )}
                 </div>
-                <div className="pt-stop-actions" onClick={(e) => e.stopPropagation()}>
-                  <a className="pt-round-btn sm" href={directionsUrl(s)} target="_blank" rel="noreferrer" aria-label="นำทาง"><Icon name="nav" size={16} /></a>
-                </div>
-                {canDrag && (
-                  <span className="pt-drag" aria-label="ลากเพื่อย้าย" onClick={(e) => e.stopPropagation()}
-                    onPointerDown={(e) => dnd.start(e, i)} onPointerMove={dnd.move} onPointerUp={dnd.end} onPointerCancel={dnd.end}>
-                    <Icon name="grip" size={18} />
-                  </span>
+                {/* who's here, and for the next stop of today, the one check-in button */}
+                {(whoIn.length > 0 || checkHere) && (
+                  <div className="pt-stop-foot" onClick={(e) => e.stopPropagation()}>
+                    {whoIn.length > 0 && (
+                      <span className="pt-stop-who"><Avatars ids={whoIn} size={18} /> {st === 'late-done' ? 'มาสาย' : 'เช็คอินแล้ว'} {s.checkIns[whoIn[0]].at}</span>
+                    )}
+                    {checkHere && (
+                      <button className={`pt-stop-checkin${st === 'due' ? ' due' : ''}`} onClick={() => actions.toggleCheckIn(plan.id, s.id, st === 'due')}>
+                        <Icon name="check" size={16} stroke={2.6} /> {st === 'due' ? 'ถึงเวลาแล้ว · เช็คอิน' : 'เช็คอิน'}
+                      </button>
+                    )}
+                  </div>
                 )}
               </div>
             </div>

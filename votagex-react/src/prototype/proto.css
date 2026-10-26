@@ -1928,15 +1928,15 @@ button.pt-pick-later { width: 100%; font: inherit; color: inherit; text-align: l
 }
 .pt-stop.dragging .pt-drag { cursor: grabbing; }
 
-/* check in under the stop's time, while it's on */
-.pt-stop-time { display: flex; flex-direction: column; align-items: center; gap: 8px; }
-.pt-stop-check {
-  display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 0; border: none; background: none;
-  font-family: var(--font); font-size: 10px; font-weight: 700; color: var(--tw-brand); cursor: pointer;
+/* stop card: what and where on top; who's checked in and the check-in button underneath */
+.pt-timeline .pt-stop-card { flex-direction: column; align-items: stretch; gap: 10px; }
+.pt-stop-top { display: flex; gap: 10px; align-items: center; }
+.pt-stop-top .pt-grow { align-self: flex-start; }
+.pt-stop-foot { display: flex; align-items: center; gap: 8px; padding-top: 10px; border-top: 1px solid var(--tw-border); cursor: default; }
+.pt-stop-foot .pt-stop-who { flex: 1; margin: 0; }
+.pt-stop-checkin {
+  margin-left: auto; display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 14px; border: none; border-radius: 999px;
+  background: var(--tw-brand); color: #fff; font-family: var(--font); font-size: 13px; font-weight: 700; cursor: pointer;
 }
-.pt-stop-check span {
-  width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-  background: var(--tw-brand); color: #fff; box-shadow: 0 4px 12px rgba(13, 148, 136, .3);
-}
-.pt-stop-check.due { color: var(--tw-danger); }
-.pt-stop-check.due span { background: var(--tw-danger); box-shadow: 0 4px 12px rgba(220, 38, 38, .3); }
+.pt-stop-checkin.due { background: var(--tw-danger); }
+.pt-stop-time.empty { font-size: 11px; font-weight: 500; color: var(--tw-text-3); }
