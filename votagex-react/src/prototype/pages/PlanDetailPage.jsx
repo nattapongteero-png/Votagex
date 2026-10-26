@@ -38,7 +38,8 @@ function DayChips({ days, value, onChange, plan, withAll }) {
 
 /* ---------- แผน ---------- */
 // Drag a stop's card by its handle to give the day a new order. The other cards slide out of its way while it moves.
-function useDragOrder(onDrop) {
+// locked: rows that can't move (checked in), and nothing moves past them either
+function useDragOrder(onDrop, locked = []) {
   const [drag, setDrag] = useState(null); // { from, to, y0, dy, rects }
   const rows = useRef([]);
   const start = (e, i) => {
@@ -51,7 +52,10 @@ function useDragOrder(onDrop) {
     if (!d) return d;
     const dy = e.clientY - d.y0;
     const mid = d.rects[d.from].top + d.rects[d.from].height / 2 + dy;
-    return { ...d, dy, to: d.rects.filter((r, j) => j !== d.from && r.top + r.height / 2 < mid).length };
+    const to = d.rects.filter((r, j) => j !== d.from && r.top + r.height / 2 < mid).length;
+    const lo = locked.reduce((m, j) => (j < d.from ? Math.max(m, j + 1) : m), 0);
+    const hi = locked.reduce((m, j) => (j > d.from ? Math.min(m, j - 1) : m), d.rects.length - 1);
+    return { ...d, dy, to: Math.min(hi, Math.max(lo, to)) };
   });
   const end = () => {
     if (drag && drag.to !== drag.from) onDrop(drag.from, drag.to);
@@ -77,11 +81,14 @@ function PlanTab({ plan, day, setDay, days, status }) {
   const nowHM = localHM(c.utc);
   const stops = (plan.kind === 'idea' ? plan.stops : plan.stops.filter((s) => s.date === day)).slice().sort(byOrder);
   // the places change order; the times stay in their slots, so the day still runs early to late
+  // a stop someone has checked in at stays where it is
+  const checkedIn = (s) => Object.keys(s.checkIns || {}).length > 0;
+  const locked = stops.map((s, i) => (checkedIn(s) ? i : -1)).filter((i) => i >= 0);
   const dnd = useDragOrder((from, to) => {
     const list = stops.slice();
     list.splice(to, 0, list.splice(from, 1)[0]);
     actions.reorderStops(plan.id, list.map((s, i) => ({ id: s.id, order: i, time: stops[i].time || '' })));
-  });
+  }, locked);
   const canDrag = status !== 'past' && stops.length > 1;
   const nextCheck = nextCheckIndex(stops, today, nowHM);
   const checklist = plan.checklist || [];
@@ -121,7 +128,7 @@ function PlanTab({ plan, day, setDay, days, status }) {
               rowRef: (el) => { dnd.rows.current[i] = el; },
               style: dnd.style(i),
               dragging: dnd.from === i,
-              handle: canDrag ? { onPointerDown: (e) => dnd.start(e, i), onPointerMove: dnd.move, onPointerUp: dnd.end, onPointerCancel: dnd.end } : null,
+              handle: canDrag && !checkedIn(s) && stops.filter((x) => !checkedIn(x)).length > 1 ? { onPointerDown: (e) => dnd.start(e, i), onPointerMove: dnd.move, onPointerUp: dnd.end, onPointerCancel: dnd.end } : null,
             }} />
         ))}
         {!stops.length && <Empty>ยังไม่มีจุดแวะ</Empty>}
