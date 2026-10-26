@@ -31,16 +31,15 @@ function PlanHead({ plan, group, hideGroup, onOpen }) {
         {!group && plan.members.length < 2 && <span className="pt-muted sm">ไปคนเดียว</span>}
         <span className="pt-strong ellipsis">{plan.name}</span>
       </span>
-      {plan.members.length > 1 && <Avatars ids={plan.members} size={tag ? 47 : 32} max={3} />}
+      {plan.members.length > 1 && <Avatars ids={plan.members} size={tag ? 47 : 32} max={3} total />}
     </button>
   );
 }
 
 // the day's stops on a small map, numbered in the day's order; tap for the plan
-// tile: standing on its own above the plans' cards (a day with several plans)
-function DayMap({ pins, order, onOpen, tile = false }) {
+function DayMap({ pins, order, onOpen }) {
   return (
-    <button className={`pt-day-map${tile ? ' tile' : ''}`} aria-label="เปิดแผน" onClick={onOpen}>
+    <button className="pt-day-map" aria-label="เปิดแผน" onClick={onOpen}>
       <MapView points={pins.map((st) => ({ id: st.id, lat: st.lat, lng: st.lng, cat: st.cat, label: order.indexOf(st) + 1 }))}
         route={pins.length > 1} interactive={false} padding={32} fitKey={pins.map((st) => st.id).join()} />
     </button>
@@ -167,7 +166,6 @@ export default function TodayPage() {
     .sort((a, b) => (a.stops[0]?.time || '99').localeCompare(b.stops[0]?.time || '99'));
   const multi = sections.length > 1;
   const dayStops = sections.flatMap((x) => x.stops); // the whole day in order, for the one check-in button
-  const dayPins = dayStops.filter((s) => s.lat != null && !s.skip);
   const country = countryOf(plan?.country);
   const nowHM = localHM(country.utc);
   const live = plan && selected === today && planStatus(plan, today) === 'ongoing' && plan.kind !== 'outing';
@@ -259,31 +257,46 @@ export default function TodayPage() {
                 </span>
               </div>
   );
-  // one plan of the day: its head (with a + when there are several), its map when it's the only one, its stops
-  const renderSection = ({ p, g, stops: ss }) => (
-    <div key={p.id} className="pt-day-section">
-      <div className="pt-day-who-row">
+  // one plan of the day, its own card: its head, its own map, its stops, then add a stop / open the plan
+  // (the day's ongoing trip also gets its next stop, and noting a spend instead of adding a stop)
+  const renderCard = ({ p, g, stops: ss }) => {
+    const pins = ss.filter((s) => s.lat != null && !s.skip);
+    const isLive = live && p === plan;
+    return (
+      <div key={p.id} className="hp-tile pt-day-card">
+        {!multi && dayHead}
         <PlanHead plan={p} group={g} hideGroup={g && g.id === group?.id} onOpen={() => navigate(`/proto/plan/${p.id}`)} />
-        {multi && (
-          <button className="pt-icon-btn" aria-label={`เพิ่มจุดแวะใน ${p.name}`} onClick={() => openSheet('addStop', { planId: p.id, date: selected })}>
-            <Icon name="plus" size={17} stroke={2.2} />
-          </button>
+        {pins.length > 0 && <DayMap pins={pins} order={ss} onOpen={() => navigate(`/proto/plan/${p.id}`)} />}
+        {ss.length > 0 && (
+          <div className="pt-lines">
+            {ss.map((s) => {
+              const i = dayStops.indexOf(s);
+              return (
+                <StopRow key={s.id} stop={s} planId={p.id} state={stopState(s, today, nowHM)}
+                  checkHere={selected === today && i === nextCheck} passed={passedStop(dayStops, i, today)} onOpen={() => openSheet('stop', { planId: p.id, stopId: s.id })} />
+              );
+            })}
+          </div>
         )}
-      </div>
-      {!multi && dayPins.length > 0 && <DayMap pins={dayPins} order={dayStops} onOpen={() => navigate(`/proto/plan/${p.id}`)} />}
-      {ss.length > 0 && (
-        <div className="pt-lines">
-          {ss.map((s) => {
-            const i = dayStops.indexOf(s);
-            return (
-              <StopRow key={s.id} stop={s} planId={p.id} state={stopState(s, today, nowHM)}
-                checkHere={selected === today && i === nextCheck} passed={passedStop(dayStops, i, today)} onOpen={() => openSheet('stop', { planId: p.id, stopId: s.id })} />
-            );
-          })}
+        {isLive && nextStop && (
+          <div className="pt-next-card">
+            <CatIcon cat={nextStop.cat} size={40} />
+            <div className="pt-grow">
+              <div className="pt-muted sm">ถัดไป {nextStop.time}</div>
+              <div className="pt-strong ellipsis">{nextStop.name}</div>
+            </div>
+            <a className="pt-btn sm" href={directionsUrl(nextStop)} target="_blank" rel="noreferrer"><Icon name="nav" size={16} /> นำทาง</a>
+          </div>
+        )}
+        <div className="hp-plan-actions">
+          <button className="hp-add-btn" onClick={() => openSheet(isLive ? 'expense' : 'addStop', isLive ? {} : { planId: p.id, date: selected })}>
+            <Icon name={isLive ? 'wallet' : 'plus'} size={18} stroke={2.2} /> {isLive ? 'จดรายจ่าย' : 'เพิ่มจุดแวะ'}
+          </button>
+          <button className="pt-btn light pt-open-plan" onClick={() => navigate(`/proto/plan/${p.id}`)}>ดูแผน <Icon name="next" size={16} /></button>
         </div>
-      )}
-    </div>
-  );
+      </div>
+    );
+  };
 
   return (
     <div ref={pageRef} className={`homepage pt-today${collapsed ? ' header-collapsed' : ''}${atRest ? ' at-rest' : ''}`} style={sheet ? { '--hp-sheet-top': `${sheet.top}px`, '--fold-top': `${FOLD_TOP}px` } : undefined}>
@@ -345,46 +358,21 @@ export default function TodayPage() {
           {/* events on the selected day */}
           {dayEvents.map((ev) => <EventTile key={ev.id} ev={ev} last={ev.endDate && ev.endDate !== ev.startDate && ev.endDate === selected} onOpen={() => openSheet('place', { placeId: ev.id })} />)}
 
-          {/* the selected day's plans. One: a card with its map. Several: the day's map first, then a card each */}
-          {multi && dayPins.length > 0 && <DayMap tile pins={dayPins} order={dayStops} onOpen={() => navigate(`/proto/plan/${sections[0].p.id}`)} />}
-          {multi && sections.map((sec, k) => (
-            <div key={sec.p.id} className="hp-tile pt-day-card">
-              {k === 0 && dayHead}
-              {renderSection(sec)}
+          {/* the selected day's plans: a card each, side by side when there are several */}
+          {multi ? (
+            <>
+              {dayHead}
+              <div className="pt-day-row">{sections.map(renderCard)}</div>
+            </>
+          ) : sections.length ? renderCard(sections[0]) : (
+            <div className="hp-tile pt-day-card">
+              {dayHead}
+              <div className="hp-plan-actions">
+                <button className="hp-add-btn" onClick={() => openSheet('createPlan', { date: selected })}><Icon name="plus" size={18} stroke={2.2} /> {selected === today ? 'สร้างแผนวันนี้' : 'สร้างแผน'}</button>
+                {canShuffle && <button className="pt-btn light" onClick={() => openSheet('shuffle', { date: selected })}><Icon name="shuffle" size={16} /> สุ่มให้</button>}
+              </div>
             </div>
-          ))}
-          {(!multi || live) && <div className="hp-tile pt-day-card">
-            {!multi && dayHead}
-            {!multi && sections.map(renderSection)}
-
-              {live && nextStop && (
-                <div className="pt-next-card">
-                  <CatIcon cat={nextStop.cat} size={40} />
-                  <div className="pt-grow">
-                    <div className="pt-muted sm">ถัดไป {nextStop.time}</div>
-                    <div className="pt-strong ellipsis">{nextStop.name}</div>
-                  </div>
-                  <a className="pt-btn sm" href={directionsUrl(nextStop)} target="_blank" rel="noreferrer"><Icon name="nav" size={16} /> นำทาง</a>
-                </div>
-              )}
-
-              {/* several plans: each head has its own + and opens its plan, so no shared buttons here */}
-              {(!multi || live) && <div className="hp-plan-actions">
-                {plan ? (
-                  <>
-                    <button className="hp-add-btn" onClick={() => openSheet(live ? 'expense' : 'addStop', live ? {} : { planId: plan.id, date: selected })}>
-                      <Icon name={live ? 'wallet' : 'plus'} size={18} stroke={2.2} /> {live ? 'จดรายจ่าย' : 'เพิ่มจุดแวะ'}
-                    </button>
-                    {!multi && <button className="pt-btn light pt-open-plan" onClick={() => navigate(`/proto/plan/${plan.id}`)}>ดูแผน <Icon name="next" size={16} /></button>}
-                  </>
-                ) : (
-                  <>
-                    <button className="hp-add-btn" onClick={() => openSheet('createPlan', { date: selected })}><Icon name="plus" size={18} stroke={2.2} /> {selected === today ? 'สร้างแผนวันนี้' : 'สร้างแผน'}</button>
-                    {canShuffle && <button className="pt-btn light" onClick={() => openSheet('shuffle', { date: selected })}><Icon name="shuffle" size={16} /> สุ่มให้</button>}
-                  </>
-                )}
-              </div>}
-          </div>}
+          )}
 
           {/* the next trip, only once it's 3 days away or less (the speech note counts down before that) */}
           {!live && upcoming && diffDays(today, upcoming.startDate) <= 3 && (

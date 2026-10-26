@@ -33,11 +33,13 @@ export function Avatar({ id, size = 28 }) {
   );
 }
 
-export function Avatars({ ids, size = 26, max = 4 }) {
+// total: max counts the +n too (3 → two faces and +n once there are more than 3)
+export function Avatars({ ids, size = 26, max = 4, total = false }) {
+  const shown = total && ids.length > max ? max - 1 : max;
   return (
     <span className="pt-avatars">
-      {ids.slice(0, max).map((id) => <Avatar key={id} id={id} size={size} />)}
-      {ids.length > max && <span className="pt-avatar more" style={{ width: size, height: size }}>+{ids.length - max}</span>}
+      {ids.slice(0, shown).map((id) => <Avatar key={id} id={id} size={size} />)}
+      {ids.length > shown && <span className="pt-avatar more" style={{ width: size, height: size, fontSize: Math.max(10, Math.round(size * 0.3)) }}>+{ids.length - shown}</span>}
     </span>
   );
 }

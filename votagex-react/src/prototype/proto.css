@@ -2021,16 +2021,19 @@ button.pt-pick-later { width: 100%; font: inherit; color: inherit; text-align: l
 .pt-line-at.late { color: var(--tw-accent); }
 .pt-line-at.muted { font-weight: 500; color: var(--tw-text-3); }
 /* the day card's head: plan name, then its group chip and faces */
-.pt-day-who .pt-strong { font-size: 15px; }
+.pt-day-who .pt-strong { font-size: 13px; }
 .pt-group-chip.sm { flex-shrink: 0; margin: 0; padding: 2px 9px; font-size: 11px; white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
 .pt-day-who-text { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
 .pt-day-who-text .pt-strong { max-width: 100%; }
 .pt-day-who .pt-avatars { flex-shrink: 0; }
 /* a day with several plans: each its own section, in time order */
-.pt-day-section { display: flex; flex-direction: column; gap: 10px; }
-.pt-day-map.tile { height: 168px; border-radius: var(--tw-r-xl); box-shadow: var(--tw-shadow-sm, 0 1px 3px rgba(15, 23, 42, .08)); }
-.pt-day-who-row { display: flex; align-items: center; gap: 8px; }
-.pt-day-who-row .pt-day-who { flex: 1; min-width: 0; padding-bottom: 0; }
-.pt-day-section .pt-lines { margin-top: -6px; }
-.pt-day-who-text .pt-strong { line-height: 25px; }
+.pt-day-who-text .pt-strong { line-height: 22px; }
+/* several plans on a day: their cards side by side, swiped sideways; the next one peeks in */
+.pt-day-row { display: flex; gap: 10px; margin: 0 -20px; padding: 0 20px 2px; overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding: 0 20px; scrollbar-width: none; }
+.pt-day-row::-webkit-scrollbar { display: none; }
+.pt-day-row > .pt-day-card { flex: 0 0 86%; min-width: 0; scroll-snap-align: start; }
 .pt-line .pt-strong.ellipsis { line-height: 23px; }
+/* the card's map can't be tapped through, so its credit stays folded to the (i) */
+.pt-day-map .maplibregl-ctrl-attrib.maplibregl-compact-show .maplibregl-ctrl-attrib-inner { display: none; }
+.pt-day-map .maplibregl-ctrl-attrib.maplibregl-compact-show { padding: 0; background: rgba(255, 255, 255, .8); }
+.pt-day-card > .pt-day-who { padding-bottom: 0; }
