@@ -17,7 +17,8 @@ import {
   EVENT_KINDS, KINDS, eventOn, shufflePool, nextCheckIndex,
 } from '../data';
 
-const FOLD_TOP = 12; // folded calendar's distance from the top of the screen
+const FOLD_GAP = 8; // folded calendar's distance under the profile row, which stays
+const ROW_LIFT = 52; // how far the profile row moves up as the speech note fades (the note's room)
 const TH_DOW = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'];
 // a saved place with dates (an event) on the selected day, under the weather
 function EventTile({ ev, last, onOpen }) {
@@ -61,7 +62,10 @@ export default function TodayPage() {
       const top = Math.round(Math.min(bottom + 38, page.clientHeight - 126));
       // what's left of the calendar when folded (header bar, weekdays, one week)
       const away = [...stage.querySelectorAll('.pt-riso-stack > :first-child .pt-fold-away')].reduce((h, el) => h + el.offsetHeight, 0);
-      setSheet({ top, clip: Math.max(0, bottom - (top - 24)), folded: stage.offsetHeight - away });
+      // folded, the calendar rides up to just under the profile row
+      const row = page.querySelector('.pt-avatar-note');
+      const foldTop = row ? Math.round(row.getBoundingClientRect().bottom - page.getBoundingClientRect().top) - ROW_LIFT + FOLD_GAP : 12;
+      setSheet({ top, clip: Math.max(0, bottom - (top - 24)), folded: stage.offsetHeight - away, foldTop });
     };
     const ro = new ResizeObserver(fit);
     ro.observe(stage);
@@ -219,7 +223,7 @@ export default function TodayPage() {
   }, [memories, today]);
 
   return (
-    <div ref={pageRef} className={`homepage pt-today${collapsed ? ' header-collapsed' : ''}${atRest ? ' at-rest' : ''}`} style={sheet ? { '--hp-sheet-top': `${sheet.top}px`, '--fold-top': `${FOLD_TOP}px` } : undefined}>
+    <div ref={pageRef} className={`homepage pt-today${collapsed ? ' header-collapsed' : ''}${atRest ? ' at-rest' : ''}`} style={sheet ? { '--hp-sheet-top': `${sheet.top}px`, '--fold-top': `${sheet.foldTop}px`, '--row-lift': `${ROW_LIFT}px` } : undefined}>
       <div className="hp-header">
         <div className="hp-header-top pt-talk">
           {/* Instagram-style note floating above the avatar */}
@@ -243,7 +247,7 @@ export default function TodayPage() {
           </div>
         </div>
         {/* step 2 stop for the card sheet: it rises over the greeting up to here */}
-        <span className="hp-pill-row pt-snap-stop" aria-hidden="true" style={sheet ? { height: FOLD_TOP + sheet.folded } : undefined} />
+        <span className="hp-pill-row pt-snap-stop" aria-hidden="true" style={sheet ? { height: sheet.foldTop + sheet.folded } : undefined} />
       </div>
 
       <div className="hp-stage" ref={stageRef} style={sheet?.clip && atRest ? { clipPath: `inset(0 0 ${sheet.clip}px 0)` } : undefined}>
