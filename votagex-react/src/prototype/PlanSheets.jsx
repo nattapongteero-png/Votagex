@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useProto } from './useProto';
 import { Sheet, Avatar, Chip } from './ui';
 import Icon, { SourceBadge } from './icons';
-import { ME, PEOPLE, KINDS, addDays, diffDays, dayList, parseISO, thaiShort, byOrder, nextOrder, directionsUrl, sendInvite } from './data';
+import { ME, PEOPLE, KINDS, addDays, diffDays, dayList, parseISO, thaiShort, byOrder, nextOrder, stopState, passedStop, checkInFrom, countryOf, localHM, directionsUrl, sendInvite } from './data';
 
 const after = (close, fn) => { close(); setTimeout(fn, 320); };
 
@@ -166,7 +166,7 @@ function TimePicker({ value, onChange, min = '', max = '' }) {
 
 // A stop: when (time first, it's what's usually missing), which day, a note; directions and the clip it came from
 export function StopSheet({ onClose, planId, stopId }) {
-  const { plans, places, actions } = useProto();
+  const { plans, places, actions, today } = useProto();
   const plan = plans.find((p) => p.id === planId);
   const stop = plan?.stops.find((s) => s.id === stopId);
   // the clip it was saved from, to look at again once there
@@ -183,6 +183,11 @@ export function StopSheet({ onClose, planId, stopId }) {
   const max = sameDay.slice(at).map((s) => s.time).filter(Boolean).sort()[0] || '';
   const fits = !time || ((!min || time >= min) && (!max || time <= max));
   const clip = ['tiktok', 'instagram'].includes(source?.type) && source.url;
+  // checking in here: today only, from an hour before; late (or left behind earlier) it's still allowed
+  const st = stopState(stop, today, localHM(countryOf(plan.country).utc));
+  const mine = stop.checkIns?.[ME];
+  const dayStops = plan.stops.filter((s) => s.date === stop.date).sort(byOrder);
+  const passed = passedStop(dayStops, dayStops.findIndex((s) => s.id === stop.id), today);
   const changed = time !== (stop.time || '') || date !== (stop.date || null) || note.trim() !== (stop.note || '');
 
   return (
@@ -204,6 +209,23 @@ export function StopSheet({ onClose, planId, stopId }) {
             )}
           </div>
 
+          {stop.date === today && st !== 'skipped' && (
+            <div className="pt-stop-checkrow">
+              {mine ? (
+                <>
+                  <span className="pt-grow pt-strong pos"><Icon name="check" size={16} stroke={2.6} className="pt-inline-icon" /> เช็คอินแล้ว {mine.at}{mine.late ? ' · มาสาย' : ''}</span>
+                  <button className="pt-text-btn" onClick={() => actions.toggleCheckIn(plan.id, stop.id)}>ยกเลิก</button>
+                </>
+              ) : st === 'early' ? (
+                <span className="pt-muted">เช็คอินได้ตั้งแต่ {checkInFrom(stop.time)}</span>
+              ) : (
+                <button className={`pt-btn block${st === 'due' ? ' danger-fill' : ''}`} onClick={() => actions.toggleCheckIn(plan.id, stop.id, st === 'due')}>
+                  <Icon name="check" size={16} stroke={2.6} /> {passed ? 'เช็คอินย้อนหลัง' : st === 'due' ? 'เลยเวลาแล้ว · เช็คอิน' : 'เช็คอิน'}
+                </button>
+              )}
+            </div>
+          )}
+
           <div className="pt-label">เวลา</div>
           <TimePicker key={date} value={time} onChange={setTime} min={min} max={max} />
 
@@ -223,7 +245,14 @@ export function StopSheet({ onClose, planId, stopId }) {
           <div className="pt-label">โน้ต</div>
           <textarea className="pt-input pt-note-input" rows={2} value={note} placeholder="เช่น สั่งอะไร จองไว้ชื่อใคร" onChange={(e) => setNote(e.target.value)} />
 
-          <button className="pt-text-btn danger" onClick={() => { actions.removeStop(plan.id, stop.id); close(); }}><Icon name="trash" size={16} /> ลบจุดแวะนี้</button>
+          <div className="pt-text-row">
+            {!mine && (
+              <button className="pt-text-btn" onClick={() => { actions.updateStop(plan.id, stop.id, { skip: !stop.skip }); close(); }}>
+                <Icon name={stop.skip ? 'back' : 'close'} size={16} /> {stop.skip ? 'กลับไปจุดนี้' : 'ไม่ไปจุดนี้'}
+              </button>
+            )}
+            <button className="pt-text-btn danger" onClick={() => { actions.removeStop(plan.id, stop.id); close(); }}><Icon name="trash" size={16} /> ลบจุดแวะนี้</button>
+          </div>
         </>
       )}
     </Sheet>

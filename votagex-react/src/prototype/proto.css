@@ -1967,3 +1967,10 @@ button.pt-pick-later { width: 100%; font: inherit; color: inherit; text-align: l
 .pt-timeline:not(.compact) .pt-stop-dot { margin-top: 12px; }
 /* the header's fade backdrop would sit over the folded calendar now that the header itself stays */
 .homepage.pt-today .hp-header { background: none; }
+.pt-stop-when { font-size: 12px; font-weight: 600; color: var(--tw-text-3); }
+.pt-stop.skipped .pt-stop-card { opacity: .55; }
+.pt-stop.skipped .pt-stop-dot { border-style: dashed; }
+.pt-stop-checkrow { display: flex; align-items: center; gap: 8px; min-height: 44px; }
+.pt-btn.danger-fill { background: var(--tw-danger); }
+.pt-text-row { display: flex; justify-content: center; gap: 8px; margin-top: 8px; }
+.pt-text-row .pt-text-btn { margin-top: 0; }

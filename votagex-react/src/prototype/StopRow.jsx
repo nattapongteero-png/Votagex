@@ -1,13 +1,14 @@
 import { useProto } from './useProto';
 import { Avatars, CatIcon } from './ui';
 import Icon from './icons';
-import { ME, directionsUrl } from './data';
+import { ME, directionsUrl, checkInFrom } from './data';
 
 // One stop on a day, the same on home (compact: a line each, no note or directions) and in the plan (a card).
 // Time and the numbered rail on the left; the dot turns to a tick once I'm in. Under the stop: who's checked in,
 // and on the next stop only, the check-in button; in the plan, directions on the right.
 // drag (plan page): { rowRef, style, dragging, handle: pointer handlers or null }
-export default function StopRow({ stop: s, index, planId, state: st, checkHere, compact = false, onOpen, drag }) {
+// passed: left behind today (a later stop is checked in); checking in late is in the stop's sheet
+export default function StopRow({ stop: s, index, planId, state: st, checkHere, passed = false, compact = false, onOpen, drag }) {
   const { actions } = useProto();
   const whoIn = Object.keys(s.checkIns || {});
   const mine = Boolean(s.checkIns?.[ME]);
@@ -31,16 +32,19 @@ export default function StopRow({ stop: s, index, planId, state: st, checkHere, 
         </div>
         {!compact && s.note && <div className="pt-note pt-stop-note ellipsis">{s.note}</div>}
         {/* the card always has its footer (check-in on the left, directions on the right), so cards line up */}
-        {(!compact || whoIn.length > 0 || checkHere) && (
+        {(!compact || whoIn.length > 0 || checkHere || passed || st === 'skipped') && (
           <div className="pt-stop-foot" onClick={(e) => e.stopPropagation()}>
             {whoIn.length > 0 && (
               <span className="pt-stop-who"><Avatars ids={whoIn} size={18} /> {st === 'late-done' ? 'มาสาย' : 'เช็คอินแล้ว'} {s.checkIns[whoIn[0]].at}</span>
             )}
-            {checkHere && (
+            {checkHere && st === 'early' && <span className="pt-stop-when">เช็คอินได้ตั้งแต่ {checkInFrom(s.time)}</span>}
+            {checkHere && st !== 'early' && (
               <button className={`pt-stop-checkin${st === 'due' ? ' due' : ''}`} onClick={() => actions.toggleCheckIn(planId, s.id, st === 'due')}>
-                <Icon name="check" size={16} stroke={2.6} /> {st === 'due' ? 'ถึงเวลาแล้ว · เช็คอิน' : 'เช็คอิน'}
+                <Icon name="check" size={16} stroke={2.6} /> {st === 'due' ? 'เลยเวลาแล้ว · เช็คอิน' : 'เช็คอิน'}
               </button>
             )}
+            {passed && <span className="pt-stop-when">ข้ามไป</span>}
+            {st === 'skipped' && <span className="pt-stop-when">ไม่ไปจุดนี้</span>}
             {!compact && (
               <a className="pt-btn light sm pt-stop-nav" href={directionsUrl(s)} target="_blank" rel="noreferrer"><Icon name="nav" size={15} /> นำทาง</a>
             )}

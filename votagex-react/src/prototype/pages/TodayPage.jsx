@@ -14,7 +14,7 @@ import HOLIDAYS from '../thHolidays.json';
 import {
   ME, PEOPLE, CURRENCIES, HOME, addDays, parseISO, diffDays, thaiShort, byOrder, localHM,
   stopState, keepThai, fmtMoney, distanceKm, fmtKm, directionsUrl, countryOf, planStatus, toTHB, jarStats,
-  EVENT_KINDS, KINDS, eventOn, shufflePool, nextCheckIndex,
+  EVENT_KINDS, KINDS, eventOn, shufflePool, nextCheckIndex, passedStop,
 } from '../data';
 
 const FOLD_TOP = 12; // folded calendar's distance from the top of the screen
@@ -299,7 +299,7 @@ export default function TodayPage() {
                 <div className="pt-timeline compact">
                   {stops.map((s, i) => (
                     <StopRow key={s.id} compact stop={s} index={i} planId={plan.id} state={stopState(s, today, nowHM)}
-                      checkHere={selected === today && i === nextCheck} onOpen={() => openSheet('stop', { planId: plan.id, stopId: s.id })} />
+                      checkHere={selected === today && i === nextCheck} passed={passedStop(stops, i, today)} onOpen={() => openSheet('stop', { planId: plan.id, stopId: s.id })} />
                   ))}
                 </div>
               )}

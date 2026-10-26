@@ -325,21 +325,40 @@ export const directionsUrl = (p) => `https://www.google.com/maps/dir/?api=1&dest
 
 /* ---------- plan helpers ---------- */
 // My check-in state for a stop: done | late-done | missed | due | pending
+// Check-in window on the day: from an hour before the stop's time; up to 30 minutes after it still counts as
+// on time, later is "late". A stop someone chose not to go to (skip) is out of it.
+export const CHECKIN_EARLY = 60;
+export const CHECKIN_GRACE = 30;
+const hmMin = (hm) => Number(hm.slice(0, 2)) * 60 + Number(hm.slice(3, 5));
+const minHM = (m) => `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+export const checkInFrom = (time) => minHM(Math.max(0, hmMin(time) - CHECKIN_EARLY));
+
 export function stopState(stop, today, nowHM) {
   const mine = stop.checkIns?.[ME];
   if (mine) return mine.late ? 'late-done' : 'done';
-  if (!stop.date) return 'pending';
+  if (stop.skip) return 'skipped';
+  if (!stop.date || stop.date > today) return 'pending';
   if (stop.date < today) return 'missed';
-  if (stop.date === today && stop.time && stop.time < nowHM) return 'due';
+  if (stop.time) {
+    const d = hmMin(nowHM) - hmMin(stop.time);
+    if (d < -CHECKIN_EARLY) return 'early';
+    if (d > CHECKIN_GRACE) return 'due';
+  }
   return 'pending';
 }
 
 // the one stop to check in at: the first of today's not yet checked, after the last one I checked in at
+// (an 'early' one shows when its window opens instead of the button)
 export function nextCheckIndex(stops, today, nowHM) {
-  const can = (s) => s.date === today && ['pending', 'due'].includes(stopState(s, today, nowHM));
+  const can = (s) => s.date === today && ['pending', 'due', 'early'].includes(stopState(s, today, nowHM));
   const lastIn = stops.map((s) => Boolean(s.checkIns?.[ME])).lastIndexOf(true);
-  const i = stops.findIndex((s, j) => j > lastIn && can(s));
-  return i >= 0 ? i : stops.findIndex(can);
+  // the ones left behind before it aren't offered again here (their sheet has "เช็คอินย้อนหลัง")
+  return stops.findIndex((s, j) => j > lastIn && can(s));
+}
+// today's stops left behind: not checked in, before one I've checked in at since
+export function passedStop(stops, i, today) {
+  const s = stops[i];
+  return s.date === today && !s.checkIns?.[ME] && !s.skip && stops.slice(i + 1).some((x) => x.checkIns?.[ME]);
 }
 export const myShare = (e) => (e.split.includes(ME) ? toTHB(e) / e.split.length : 0);
 

@@ -9,7 +9,7 @@ import { fmtRate } from '../rates';
 import { Avatar, Avatars, CatIcon, Cover, Seg, Progress, SectionTitle, Empty } from '../ui';
 import {
   ME, PEOPLE, KINDS, EXPENSE_CATS, CURRENCIES, countryOf, thaiRange, thaiShort, thaiDay, dayList, diffDays,
-  planStatus, byOrder, localHM, stopState, nextCheckIndex, fmtMoney, toTHB, myShare, settleUp, directionsUrl, jarStats,
+  planStatus, byOrder, localHM, stopState, nextCheckIndex, passedStop, fmtMoney, toTHB, myShare, settleUp, directionsUrl, jarStats,
 } from '../data';
 
 const TABS = [
@@ -122,7 +122,7 @@ function PlanTab({ plan, day, setDay, days, status }) {
 
       <div className="pt-timeline">
         {stops.map((s, i) => (
-          <StopRow key={s.id} stop={s} index={i} planId={plan.id} state={stopState(s, today, nowHM)} checkHere={i === nextCheck}
+          <StopRow key={s.id} stop={s} index={i} planId={plan.id} state={stopState(s, today, nowHM)} checkHere={i === nextCheck} passed={passedStop(stops, i, today)}
             onOpen={() => openSheet('stop', { planId: plan.id, stopId: s.id })}
             drag={{
               rowRef: (el) => { dnd.rows.current[i] = el; },
