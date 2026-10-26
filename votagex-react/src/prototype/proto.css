@@ -1542,7 +1542,7 @@ button.pt-exp:active { background: var(--tw-sunken); }
 .pt-avatar-note { position: relative; }
 .pt-avatar-note .pt-speech-wrap { position: absolute; left: -4px; bottom: 89px; z-index: 4; display: block; padding: 0; flex: none; }
 .pt-avatar-note .pt-speech {
-  display: block; min-width: 72px; max-width: 210px; min-height: 0; padding: 7px 13px; border-radius: 18px;
+  display: block; min-width: 72px; max-width: 132px; min-height: 0; padding: 7px 13px; border-radius: 18px;
   font-size: 12px; font-weight: 500; line-height: 1.35; color: var(--tw-text-2); text-align: center;
   box-shadow: 0 1px 2px rgba(15, 23, 42, .05), 0 4px 14px rgba(15, 23, 42, .08);
   transform-origin: 26px 120%;
@@ -1559,7 +1559,7 @@ button.pt-exp:active { background: var(--tw-sunken); }
   content: ''; position: absolute; left: 28px; bottom: -15px; width: 5px; height: 5px; border-radius: 50%; background: #fff;
   box-shadow: 0 1px 3px rgba(15, 23, 42, .08);
 }
-.pt-avatar-note .pt-speech-wrap { width: max-content; max-width: 200px; }
+.pt-avatar-note .pt-speech-wrap { width: max-content; max-width: 210px; }
 .pt-avatar-note .pt-speech-text { text-wrap: balance; }
 
 /* icons standing in for emoji */

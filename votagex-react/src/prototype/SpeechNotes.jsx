@@ -10,11 +10,15 @@ export default function SpeechNotes({ notes }) {
   const note = notes.length ? notes[tick % notes.length] : null;
   const id = note ? `${note.key}-${tick}` : '';
 
-  // wrapped text keeps the box at its max width; shrink it to the longest line
+  // the bubble ends by the "กลุ่มใหม่" button, wrapping onto a second line; only a note that would need a
+  // third line gets wider (the bubble grows upward and has room for two). Then the box shrinks to its longest line.
   useLayoutEffect(() => {
     const el = btn.current;
     if (!el) return;
     el.style.width = '';
+    el.style.maxWidth = '';
+    const text = el.querySelector('.pt-speech-text');
+    if (text.offsetHeight / parseFloat(getComputedStyle(text).lineHeight) > 2.5) el.style.maxWidth = '210px';
     const range = document.createRange();
     range.selectNodeContents(el.querySelector('.pt-speech-text'));
     const scale = el.getBoundingClientRect().width / el.offsetWidth || 1; // the pop animation scales the bubble
