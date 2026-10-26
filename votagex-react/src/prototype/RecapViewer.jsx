@@ -5,7 +5,7 @@ import { Player } from '@remotion/player';
 import Icon from './icons';
 import RecapFilm from './RecapFilm';
 import { FPS, lengthOf, shotsFor } from './recapShots';
-import { PEOPLE, EXPENSE_CATS, byOrder, diffDays, distanceKm, parseISO, thaiShort, toTHB } from './data';
+import { PEOPLE, EXPENSE_CATS, tripTheme, byOrder, diffDays, distanceKm, parseISO, thaiShort, toTHB } from './data';
 
 const pad = (n) => String(n).padStart(2, '0');
 const DAYS = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
@@ -29,7 +29,7 @@ export default function RecapViewer({ plan, memories, expenses, label, onClose }
       .sort((a, b) => b[1] - a[1]).map(([cat, amount]) => ({ label: EXPENSE_CATS[cat]?.label || cat, color: EXPENSE_CATS[cat]?.color || '#6B7280', amount }));
     const start = parseISO(plan.startDate);
     return {
-      title: plan.name, label, kind: plan.kind,
+      title: plan.name, label, kind: plan.kind, theme: tripTheme(plan),
       cover: plan.cover?.img || photos[0]?.src || null,
       ago: label,
       dateLong: `วัน${DAYS[start.getDay()]}ที่ ${thaiShort(plan.startDate)} ${start.getFullYear() + 543}`,
@@ -48,6 +48,8 @@ export default function RecapViewer({ plan, memories, expenses, label, onClose }
   const H = Math.round(Math.min(2400, Math.max(1600, (W * size.h) / size.w)));
   const at = shots.reduce((k, s, i) => (frame >= s.from + 7 ? i : k), 0);
   const done = frame >= total - 1;
+  // between the cover opening and shutting we're on paper: the bars and title switch to ink
+  const onPaper = frame > shots[0].dur - 12 && frame < shots[shots.length - 1].from + 125;
 
   const jump = (by) => {
     const p = player.current;
@@ -92,7 +94,7 @@ export default function RecapViewer({ plan, memories, expenses, label, onClose }
   const open = (path) => { onClose(); navigate(path); };
 
   return createPortal(
-    <div className="pt-story" role="dialog" aria-label={`สรุปทริป ${plan.name}`}>
+    <div className={`pt-story${onPaper ? ' on-paper' : ''}`} role="dialog" aria-label={`สรุปทริป ${plan.name}`}>
       <Player ref={player} component={RecapFilm} inputProps={film} durationInFrames={total} fps={FPS}
         compositionWidth={W} compositionHeight={H} loop={false} moveToBeginningWhenEnded={false} acknowledgeRemotionLicense
         clickToPlay={false} doubleClickToFullscreen={false} spaceKeyToPlayOrPause={false}

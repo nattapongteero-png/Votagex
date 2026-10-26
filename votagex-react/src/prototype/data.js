@@ -63,6 +63,14 @@ export function fmtMoney(n, cur = 'THB') {
   return `${c.symbol}${Math.round(n).toLocaleString('en-US')}`;
 }
 export const toTHB = (e) => e.amount * e.toTHB;
+// a trip's diary binding for its recap: sea, mountains, abroad, else the city; colour and icon
+export function tripTheme(plan) {
+  const name = `${plan.name} ${plan.destination?.name || ''}`;
+  if (/ทะเล|หาด|เกาะ|อ่าว|beach|sea/i.test(name)) return { color: '#1F3A5F', icon: 'beach' };
+  if (/ดอย|เขา|ภู|อุทยาน|ป่า|น้ำตก|mountain/i.test(name)) return { color: '#2F4B3F', icon: 'mountain' };
+  if (plan.country && plan.country !== 'TH') return { color: '#6B2D2D', icon: 'plane' };
+  return { color: '#5A4632', icon: 'map' };
+}
 
 /* ---------- countries ---------- */
 export const COUNTRIES = {

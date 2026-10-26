@@ -1,8 +1,9 @@
+import { createContext, useContext } from 'react';
 import { AbsoluteFill, Easing, Img, interpolate, random, useCurrentFrame, useVideoConfig } from 'remotion';
 import { TURN, shotsFor } from './recapShots';
 
-// A trip's recap as an old diary opened again (Remotion), 9:16 at 1080 wide. The book lies on a desk under a
-// lamp: the band slips off, the cover opens, and each page is an entry written in blue ink as we watch: who
+// A trip's recap as an old diary opened again (Remotion), 9:16 at 1080 wide, the book filling the screen:
+// the band slips off, the cover opens, and each page is an entry written in blue ink as we watch: who
 // went, the route doodled with a pen, every photo taped in with its caption, the receipt glued beside the sums.
 // The last page says see you next time, the cover swings shut and a sticky note lands on it.
 
@@ -15,6 +16,8 @@ const clamp = { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' };
 const OUT = Easing.bezier(0.16, 1, 0.3, 1);
 const lerp = (f, a, b, from, to, easing = OUT) => interpolate(f, [a, b], [from, to], { ...clamp, easing });
 const graphemes = (s) => [...new Intl.Segmenter('th', { granularity: 'grapheme' }).segment(s || '')].map((x) => x.segment);
+// how far a page's entry sits down the paper, so it stays clear of the bars on top and centred on tall screens
+const Shift = createContext(0);
 const baht = (n) => `฿${Math.round(n).toLocaleString('en-US')}`;
 
 /* ---------------- pen and paper ---------------- */
@@ -43,16 +46,17 @@ const SUN = 'M70 50 A20 20 0 1 1 69.9 46 M50 4 V18 M50 82 V96 M4 50 H18 M82 50 H
 
 // the page itself: cream paper, blue rules, a red margin, the spine's shadow, a page number
 function Paper({ children, n, back = false }) {
+  const shift = useContext(Shift);
   return (
-    <AbsoluteFill style={{ background: PAPER, overflow: 'hidden', borderRadius: back ? '24px 4px 4px 24px' : '4px 24px 24px 4px' }}>
+    <AbsoluteFill style={{ background: PAPER, overflow: 'hidden' }}>
       <AbsoluteFill style={{ background: 'repeating-linear-gradient(180deg, transparent 0 79px, rgba(34,55,126,.13) 79px 81px)', backgroundPosition: '0 230px' }} />
       {!back && <div style={{ position: 'absolute', top: 0, bottom: 0, left: 118, width: 3, background: 'rgba(184,58,38,.28)' }} />}
       <AbsoluteFill style={{ background: back
         ? 'linear-gradient(270deg, rgba(60,40,20,.22), transparent 70px)'
         : 'linear-gradient(90deg, rgba(60,40,20,.28), rgba(60,40,20,.06) 50px, transparent 110px)' }} />
       <AbsoluteFill style={{ background: 'radial-gradient(130% 90% at 60% 40%, transparent 60%, rgba(120,90,50,.16))' }} />
-      {!back && children}
-      {!back && n != null && <span style={{ position: 'absolute', bottom: 36, right: 56, fontFamily: HAND, fontSize: 34, color: 'rgba(34,55,126,.5)' }}>{n}</span>}
+      {!back && <div style={{ position: 'absolute', left: 0, right: 0, top: shift, bottom: 0 }}>{children}</div>}
+      {!back && n != null && <span style={{ position: 'absolute', bottom: 110, right: 70, fontFamily: HAND, fontSize: 34, color: 'rgba(34,55,126,.5)' }}>{n}</span>}
     </AbsoluteFill>
   );
 }
@@ -62,7 +66,7 @@ function Paper({ children, n, back = false }) {
 function CoverFace({ d, f }) {
   const sheen = ((f * 1.2) % 160) - 30;
   return (
-    <AbsoluteFill style={{ borderRadius: '10px 28px 28px 10px', overflow: 'hidden', background: '#2F4B3F',
+    <AbsoluteFill style={{ overflow: 'hidden', background: d.theme.color,
       boxShadow: 'inset 0 0 0 14px rgba(0,0,0,.08), inset 18px 0 30px rgba(0,0,0,.35)' }}>
       <AbsoluteFill style={{ opacity: 0.35, background: 'repeating-linear-gradient(0deg, rgba(255,255,255,.05) 0 2px, transparent 2px 5px), repeating-linear-gradient(90deg, rgba(0,0,0,.08) 0 2px, transparent 2px 6px)' }} />
       <div style={{ position: 'absolute', inset: 70, border: '3px solid rgba(214,180,110,.6)', borderRadius: 18 }} />
@@ -79,7 +83,7 @@ function CoverFace({ d, f }) {
 
 // the inside of the cover: endpaper
 const Endpaper = () => (
-  <AbsoluteFill style={{ borderRadius: '28px 10px 10px 28px', overflow: 'hidden', background: '#E9DCC3',
+  <AbsoluteFill style={{ overflow: 'hidden', background: '#E9DCC3',
     backgroundImage: 'radial-gradient(rgba(47,75,63,.35) 3px, transparent 4px), radial-gradient(rgba(47,75,63,.2) 3px, transparent 4px)',
     backgroundSize: '60px 60px', backgroundPosition: '0 0, 30px 30px' }} />
 );
@@ -116,7 +120,7 @@ function Intro({ d, f }) {
 
 // the route, doodled: a wobbly pen line through numbered circles, the time and name written beside each
 function Route({ d, f, dur, pageH }) {
-  const box = { x: 260, y: 400, w: 500, h: Math.max(500, pageH - 760) };
+  const box = { x: 220, y: 380, w: 640, h: Math.max(500, pageH - 720) };
   const la = d.stops.map((s) => s.lat); const ln = d.stops.map((s) => s.lng);
   const k = Math.min(box.w / Math.max(Math.max(...ln) - Math.min(...ln), 1e-4), box.h / Math.max(Math.max(...la) - Math.min(...la), 1e-4));
   const cx = (Math.max(...ln) + Math.min(...ln)) / 2; const cy = (Math.max(...la) + Math.min(...la)) / 2;
@@ -140,7 +144,8 @@ function Route({ d, f, dur, pageH }) {
       {pts.map((p, i) => {
         const at = drawFrom + i * per;
         const s = d.stops[i];
-        const toLeft = i % 2 === 1;
+        // alternate sides, but always onto the side with room for the writing
+        const toLeft = p.x + 430 > 1040 || (i % 2 === 1 && p.x - 430 > 130);
         return (
           <div key={s.id}>
             <span style={{ position: 'absolute', left: p.x - 30, top: p.y - 30, width: 60, textAlign: 'center', fontFamily: HAND, fontSize: 38, lineHeight: '56px', color: RED_INK, opacity: f > at + 4 ? 1 : 0 }}>{i + 1}</span>
@@ -235,7 +240,7 @@ function End({ d, f, n }) {
   return (
     <Paper n={n}>
       <AbsoluteFill style={{ alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '0 110px 0 170px' }}>
-        <Write f={f} at={6} text="ไว้ไปด้วยกันอีกนะ" speed={0.55} style={{ fontSize: 100, lineHeight: '150px', fontWeight: 600 }} />
+        <Write f={f} at={6} text={'ไว้ไปด้วยกัน\nอีกนะ'} speed={0.55} style={{ fontSize: 100, lineHeight: '150px', fontWeight: 600 }} />
         <svg width="220" height="220" viewBox="0 0 100 100" style={{ marginTop: 20 }}>
           <Ink f={f} at={42} len={24} d={HEART} color={RED_INK} width={5} />
         </svg>
@@ -269,14 +274,13 @@ export default function RecapFilm(d) {
   const t = turning ? interpolate(local, [cur.dur - TURN, cur.dur], [0, 1], { ...clamp, easing: Easing.inOut(Easing.cubic) }) : 0;
   const next = pages[idx + 1];
 
-  const pageW = 940; const pageH = Math.min(1700, height - 360);
-  const left = (width - pageW) / 2 + 40; const top = (height - pageH) / 2 + 30;
+  const pageW = width; const pageH = height;
+  const left = 0; const top = 0;
   const close = lerp(f, last.from + 110, last.from + 140, 0, 1, Easing.inOut(Easing.cubic)); // the cover swings shut
   const note = lerp(f, last.from + 146, last.from + 160, 0, 1, Easing.out(Easing.back(1.6)));
-  // the camera: leans in as the band slips off, breathes while reading, pulls back once the book is shut
-  const cam = f < 40 ? lerp(f, 0, 40, 0.86, 1, Easing.inOut(Easing.quad)) : close > 0 ? 1 - close * 0.1 : 1 + Math.sin(f / 50) * 0.008;
   const bandOff = lerp(f, 16, 40, 0, 1, Easing.in(Easing.quad));
   const coverAngle = (idx === 0 ? -180 * t : -180) + 180 * close;
+  const shift = Math.max(170, (height - 1640) / 2);
 
   // one leaf of the book, hinged on the spine; its back shows once it's past upright
   const leaf = (content, angle, z, back) => (
@@ -292,22 +296,11 @@ export default function RecapFilm(d) {
       </div>
     </div>
   );
-  const view = (p, i) => <PageView d={d} page={p} f={f - p.from} index={i} pageH={pageH} />;
+  const view = (p, i) => <PageView d={d} page={p} f={f - p.from} index={i} pageH={Math.min(pageH, 1640)} />;
 
   return (
-    <AbsoluteFill style={{ background: '#24170F', overflow: 'hidden' }}>
-      {/* the desk: dark wood under a warm lamp */}
-      <AbsoluteFill style={{ background: 'repeating-linear-gradient(94deg, rgba(255,255,255,.025) 0 3px, transparent 3px 22px, rgba(0,0,0,.08) 22px 24px, transparent 24px 61px)' }} />
-      <AbsoluteFill style={{ background: 'radial-gradient(70% 55% at 30% 18%, rgba(255,196,120,.42), transparent 70%)' }} />
-      {/* a pen lying on the desk */}
-      <div style={{ position: 'absolute', right: -80, bottom: 120, width: 600, height: 30, borderRadius: 15, background: 'linear-gradient(180deg, #2a3866, #0d1530)',
-        boxShadow: '0 18px 22px rgba(0,0,0,.45)', transform: `rotate(-30deg) translateX(${close * -40}px)` }} />
-      <AbsoluteFill style={{ transform: `scale(${cam})`, perspective: 2600 }}>
-        {/* the rest of the book under the pages: the back cover and the edges of the pages */}
-        <div style={{ position: 'absolute', left: left - 6, top: top + 10, width: pageW + 24, height: pageH + 16, borderRadius: '10px 30px 30px 10px', background: '#243B31', boxShadow: '0 40px 70px rgba(0,0,0,.55)' }} />
-        {[4, 3, 2, 1].map((k) => (
-          <div key={k} style={{ position: 'absolute', left, top: top + k * 2.5, width: pageW + k * 3, height: pageH, borderRadius: '4px 24px 24px 4px', background: k % 2 ? '#EDE3CD' : '#E4D8BE' }} />
-        ))}
+    <Shift.Provider value={shift}>
+      <AbsoluteFill style={{ background: PAPER, overflow: 'hidden', perspective: 2600 }}>
         {/* the open page, or the next one already lying under the page that's turning */}
         {leaf(idx === 0 || turning ? view(next || cur, idx + 1) : view(cur, idx), 0, 1, null)}
         {/* the page turning over to the left */}
@@ -316,20 +309,19 @@ export default function RecapFilm(d) {
         {coverAngle > -179 && leaf(<CoverFace d={d} f={f} />, coverAngle, 5, <Endpaper />)}
         {/* the elastic band, slipping off the cover */}
         {bandOff < 1 && (
-          <div style={{ position: 'absolute', left: left + pageW - 130 + bandOff * 300, top: top - 24, width: 36, height: pageH + 48, borderRadius: 12,
+          <div style={{ position: 'absolute', right: 110 - bandOff * 300, top: -40, width: 40, height: height + 80, borderRadius: 12,
             background: 'linear-gradient(90deg, #6b1d1d, #b23a3a 50%, #6b1d1d)', boxShadow: '0 8px 14px rgba(0,0,0,.4)', zIndex: 6, opacity: 1 - bandOff * 0.8,
-            transform: `rotate(${bandOff * 16}deg)` }} />
+            transform: `rotate(${bandOff * 10}deg)` }} />
         )}
         {/* a sticky note on the shut book */}
         {note > 0 && (
-          <div style={{ position: 'absolute', left: left + pageW - 500, top: top + pageH - 560, width: 430, padding: '44px 40px', background: '#FFE27A', zIndex: 7,
+          <div style={{ position: 'absolute', right: 110, bottom: height * 0.2, width: 440, padding: '44px 40px', background: '#FFE27A', zIndex: 7,
             boxShadow: '0 14px 24px rgba(0,0,0,.35)', transform: `rotate(${10 - note * 5}deg) scale(${2 - note})`, opacity: note }}>
             <div style={{ fontFamily: HAND, fontSize: 60, lineHeight: '84px', color: INK }}>ไปอีกนะ ♡</div>
             <div style={{ fontFamily: HAND, fontSize: 40, lineHeight: '60px', color: RED_INK, marginTop: 14 }}>{d.ago}</div>
           </div>
         )}
       </AbsoluteFill>
-      <AbsoluteFill style={{ pointerEvents: 'none', background: 'radial-gradient(120% 90% at 45% 35%, transparent 55%, rgba(0,0,0,.6))' }} />
-    </AbsoluteFill>
+    </Shift.Provider>
   );
 }

@@ -16,7 +16,7 @@ import HOLIDAYS from '../thHolidays.json';
 import {
   ME, PEOPLE, CURRENCIES, HOME, addDays, parseISO, diffDays, thaiShort, byOrder, localHM,
   stopState, keepThai, fmtMoney, distanceKm, fmtKm, directionsUrl, countryOf, planStatus, toTHB, jarStats,
-  EVENT_KINDS, KINDS, eventOn, shufflePool, nextCheckIndex, passedStop,
+  EVENT_KINDS, KINDS, eventOn, shufflePool, nextCheckIndex, passedStop, tripTheme,
 } from '../data';
 
 const FOLD_TOP = 12; // folded calendar's distance from the top of the screen
@@ -361,22 +361,22 @@ export default function TodayPage() {
 
         {/* one block for the whole sheet, so a drag anywhere on it (gaps and handle too) moves it */}
         <div className="pt-home-sheet">
-          {/* a past trip to look back on, played back as a recap */}
-          {recap && (
-            <button className="hp-tile pt-rc-tile" onClick={() => setRecapOpen(true)}>
-              <span className="pt-rc-stack" aria-hidden="true">
-                {(recap.photos.length ? recap.photos : [recap.plan.cover?.img]).filter(Boolean).slice(0, 3).reverse().map((src, i) => (
-                  <i key={src + i} style={{ backgroundImage: `url(${src})` }} />
-                ))}
-              </span>
-              <span className="pt-grow">
+          {/* a past trip to look back on: its diary's spine, lying on the sheet; tap to open it */}
+          {recap && (() => {
+            const th = tripTheme(recap.plan);
+            const d = parseISO(recap.plan.startDate);
+            return (
+              <div className="pt-spine-wrap">
                 <span className="pt-muted sm">{recap.label}</span>
-                <span className="pt-strong ellipsis">{recap.plan.name}</span>
-                <span className="pt-muted sm ellipsis">{thaiShort(recap.plan.startDate)} {parseISO(recap.plan.startDate).getFullYear() + 543}{recap.photos.length ? ` · ${recap.photos.length} รูป` : ''}</span>
-              </span>
-              <span className="pt-rc-play"><Icon name="play" size={18} /></span>
-            </button>
-          )}
+                <button className="pt-spine" style={{ '--book': th.color }} aria-label={`เปิดไดอารี่ ${recap.plan.name}`} onClick={() => setRecapOpen(true)}>
+                  <Icon name={th.icon} size={18} className="pt-spine-icon" />
+                  <span className="pt-spine-title">{recap.plan.name}</span>
+                  <span className="pt-spine-date">{`${d.getDate()}.${d.getMonth() + 1}.${String(d.getFullYear() + 543).slice(2)}`}</span>
+                  <i className="pt-spine-band" />
+                </button>
+              </div>
+            );
+          })()}
 
           {/* the selected day's weather, its own card */}
           {wxSel && <WeatherCard wx={wxSel} place={selPlace || 'กรุงเทพฯ'} title={dayTitle} holiday={holiday} night={night} clock={selected === today} utc={countryOf(tripSel?.country).utc} />}
