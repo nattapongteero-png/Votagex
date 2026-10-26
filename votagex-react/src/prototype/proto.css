@@ -902,15 +902,10 @@ button.pt-exp:active { background: var(--tw-sunken); }
 .pt-demo { border-color: #CCFBF1; }
 .pt-me .me-content > * { flex-shrink: 0; }
 
-/* ---- dock: four fixed slots, icon over label; only the white pill moves ---- */
-.hp-dock.pt-dock { width: 100%; max-width: 340px; height: 64px; padding: 6px; gap: 4px; }
-.pt-dock .hp-tab, .pt-dock .hp-tab.active {
-  flex: 1 1 0; min-width: 0; height: 52px; padding: 0; border-radius: 26px;
-  flex-direction: column; justify-content: center; gap: 2px;
-}
-.pt-dock .hp-tab-label, .pt-dock .hp-tab.active .hp-tab-label {
-  max-width: none; margin: 0; opacity: 1; font-size: 11px; line-height: 14px; color: inherit; transition: none;
-}
+/* ---- dock: one fixed width, so it never re-centres; the chosen tab opens to a fixed-width pill with its name ---- */
+.hp-dock.pt-dock { width: 300px; }
+.pt-dock .hp-tab { flex: 1 1 0; min-width: 0; justify-content: center; padding: 0; transition: flex-grow .35s cubic-bezier(.22, 1, .36, 1), background .3s ease, box-shadow .3s ease; }
+.pt-dock .hp-tab.active { flex: 2 1 0; padding: 0; }
 
 /* ---- sheets ---- */
 .modal-sheet.pt-sheet {
