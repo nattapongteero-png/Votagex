@@ -9,12 +9,13 @@ import SavePlaceSheet, { ResultList } from './SavePlaceSheet';
 import { PiggySheet, NewJarSheet } from './PiggySheet';
 import PlaceSheet from './PlaceSheet';
 import ShuffleSheet from './ShuffleSheet';
+import CreatePlanSheet from './CreatePlanSheet';
 import { NewGroupSheet, GroupSheet } from './GroupSheet';
 import { PlanMenuSheet, EditPlanSheet, StopSheet } from './PlanSheets';
 import { MonthSheet } from './MonthMoney';
 import {
-  ME, PEOPLE, CURRENCIES, EXPENSE_CATS, MOODS, KINDS, DEMO_PROMPTPAY, PLACE_CATS, sendInvite, compressImage, eventEnded,
-  countryOf, fmtMoney, addDays, parseISO, thaiShort, thaiRange, planStatus, diffDays,
+  ME, PEOPLE, CURRENCIES, EXPENSE_CATS, MOODS, KINDS, DEMO_PROMPTPAY, PLACE_CATS, compressImage, eventEnded,
+  countryOf, fmtMoney, thaiShort, thaiRange, planStatus,
 } from './data';
 import { usePlaceSearch } from './placeSearch';
 
@@ -151,159 +152,6 @@ function AddMemorySheet({ onClose, planId: fixedPlanId }) {
           </div>
         </>
       )}
-    </Sheet>
-  );
-}
-
-/* ---------- Create: an outing (one day: a mall, an event) or a trip (nights away, abroad) ---------- */
-function nextSaturday(from) {
-  const d = parseISO(from);
-  const add = (6 - d.getDay() + 7) % 7 || 7;
-  return addDays(from, add);
-}
-
-const PLAN_TYPES = [{ value: 'outing', label: 'นัด · วันเดียว' }, { value: 'trip', label: 'ทริป · ค้างคืน' }];
-
-// place: start from a place (a saved one, or an event's venue); date/time/name/groupId: prefilled;
-// undated: a trip idea without dates yet
-function CreatePlanSheet({ onClose, place, groupId, type: startType, date, time: startTime = '', name: startName = '', undated = false }) {
-  const { actions, closeSheet, today, groups, settings, cloud, showToast } = useProto();
-  const navigate = useNavigate();
-  const [type, setType] = useState(startType || 'outing');
-  const [query, setQuery] = useState('');
-  const [dest, setDest] = useState(place ? { ...place, key: 'prefill' } : null);
-  const [day, setDay] = useState(date && date >= today ? date : today);
-  const [time, setTime] = useState(startTime);
-  const [start, setStart] = useState(addDays(today, 7));
-  const [end, setEnd] = useState(addDays(today, 9));
-  const [noDates, setNoDates] = useState(undated);
-  const [name, setName] = useState(startName);
-  // the group it's for: the one asked for, else the one home is showing; its members come along by default
-  const [group, setGroup] = useState(() => groups.find((g) => g.id === (groupId || settings.scope)) || null);
-  const [members, setMembers] = useState(() => group?.members || [ME]);
-  const pickGroup = (g) => { setGroup(g); setMembers(g ? g.members : [ME]); };
-  const outing = type === 'outing';
-  const search = usePlaceSearch(dest ? '' : query, { withDestinations: !outing });
-
-  const country = dest?.country || 'TH';
-  const c = countryOf(country);
-  const quick = [['วันนี้', today], ['พรุ่งนี้', addDays(today, 1)], ['เสาร์นี้', nextSaturday(today)]];
-  const dates = outing ? [day, day] : noDates ? [null, null] : [start, end < start ? start : end];
-  const kind = outing ? 'outing' : noDates ? 'idea' : country !== 'TH' ? 'abroad' : 'trip';
-  const autoName = dest ? (outing ? `ไป ${dest.name}` : `ทริป${dest.name}`) : '';
-  const title = name.trim() || autoName;
-  // an outing is somewhere to go; a trip at least needs a name
-  const ready = outing ? Boolean(dest) : Boolean(title);
-  const cat = dest?.cat in PLACE_CATS ? dest.cat : 'sight';
-
-  const create = () => {
-    // an outing's place is its first stop; a trip's is where it goes (unless it started from a place)
-    const firstStop = dest && dates[0] && (outing || place) ? [{
-      date: dates[0], time: outing ? time : '', name: dest.name, area: dest.area, prov: dest.prov, lat: dest.lat, lng: dest.lng, cat,
-      note: '', checkIns: {}, placeId: dest.savedAt ? dest.id : undefined, eventId: dest.eventId,
-    }] : [];
-    const id = actions.addPlan({
-      name: title, kind, country, currency: c.currency,
-      destination: dest ? { name: dest.name, lat: dest.lat, lng: dest.lng } : null,
-      startDate: dates[0], endDate: dates[1], members, groupId: group?.id || null, budget: 0,
-      cover: outing ? { icon: cat, tint: PLACE_CATS[cat].bg } : { icon: kind === 'abroad' ? 'globe' : 'sight', tint: kind === 'abroad' ? '#E8F3FF' : '#E6F7F4' },
-      checklist: kind === 'abroad' ? [
-        { id: 'a1', text: 'พาสปอร์ตอายุเหลือเกิน 6 เดือน', done: false },
-        { id: 'a2', text: 'เช็กเงื่อนไขวีซ่า / ลงทะเบียนเข้าเมือง', done: false },
-        { id: 'a3', text: 'ประกันการเดินทาง', done: false },
-        { id: 'a4', text: 'eSIM / Pocket WiFi', done: false },
-        { id: 'a5', text: `แลกเงิน ${c.currency}`, done: false },
-      ] : undefined,
-      stops: firstStop,
-    });
-    closeSheet();
-    navigate(`/proto/plan/${id}`);
-  };
-
-  return (
-    <Sheet title="แผนใหม่" onClose={onClose} tall
-      footer={<button className="pt-btn block" disabled={!ready} onClick={create}>สร้าง{ready ? ` “${title}”` : ''}</button>}>
-      <Seg value={type} onChange={setType} items={PLAN_TYPES} />
-
-      <div className="pt-label">ไปไหน</div>
-      {dest ? (
-        <div className="pt-picked-row boxed">
-          <CatIcon cat={cat} size={40} />
-          <div className="pt-grow">
-            <div className="pt-strong">{dest.name}</div>
-            <div className="pt-muted"><Flag code={c.code} /> {c.name}{dest.area ? ` · ${dest.area}` : ''}</div>
-          </div>
-          <button className="pt-chip" onClick={() => { setDest(null); setQuery(''); }}>เปลี่ยน</button>
-        </div>
-      ) : (
-        <>
-          <div className="pt-search">
-            <Icon name="search" size={18} />
-            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={outing ? 'ห้าง ร้าน คาเฟ่ ที่จัดงาน' : 'จังหวัด เมือง ประเทศ'} />
-          </div>
-          <ResultList search={search} onPick={setDest} />
-        </>
-      )}
-
-      {kind === 'abroad' && (
-        <div className="pt-chip-row">
-          <span className="pt-info-chip"><Flag code={c.code} /> {c.name}</span>
-          <span className="pt-info-chip">{c.currency}</span>
-          <span className="pt-info-chip"><Icon name="clock" size={14} /> {c.utc - 7 >= 0 ? '+' : ''}{c.utc - 7} ชม.</span>
-        </div>
-      )}
-
-      <div className="pt-label">เมื่อไร</div>
-      {outing ? (
-        <>
-          <div className="pt-chip-row wrap">
-            {quick.map(([label, d]) => <Chip key={label} active={day === d} onClick={() => setDay(d)}>{label}</Chip>)}
-          </div>
-          <div className="pt-date-row">
-            <label><span>วัน</span><input type="date" className="pt-input" value={day} min={today} onChange={(e) => e.target.value && setDay(e.target.value)} /></label>
-            <label><span>เวลา</span><input type="time" className="pt-input" value={time} onChange={(e) => setTime(e.target.value)} /></label>
-          </div>
-        </>
-      ) : (
-        <>
-          {!noDates && (
-            <div className="pt-date-row">
-              <label><span>ไป</span><input type="date" className="pt-input" value={start} min={today} onChange={(e) => e.target.value && setStart(e.target.value)} /></label>
-              <label><span>กลับ</span><input type="date" className="pt-input" value={end} min={start} onChange={(e) => e.target.value && setEnd(e.target.value)} /></label>
-            </div>
-          )}
-          <div className="pt-kind-line">
-            <Chip active={noDates} onClick={() => setNoDates((v) => !v)}>ยังไม่รู้วัน</Chip>
-            <span className="pt-badge">{KINDS[kind].label}</span>
-            {dates[0] && <span className="pt-muted">{diffDays(dates[0], dates[1]) + 1} วัน</span>}
-          </div>
-        </>
-      )}
-
-      <div className="pt-label">ไปกับใคร</div>
-      {groups.length > 0 && (
-        <div className="pt-chip-row wrap">
-          <Chip active={!group} onClick={() => pickGroup(null)}>ไม่มีกลุ่ม</Chip>
-          {groups.map((g) => <Chip key={g.id} active={group?.id === g.id} color={g.color} onClick={() => pickGroup(g)}><Icon name={g.icon} size={14} className="pt-inline-icon" /> {g.name}</Chip>)}
-        </div>
-      )}
-      <div className="pt-people">
-        {/* signed in, only people in the plan's group can come (they're the ones who can see it) */}
-        {(cloud ? (group ? group.members : [ME]).map((id) => PEOPLE[id]).filter(Boolean) : Object.values(PEOPLE)).map((p) => (
-          <button key={p.id} className={`pt-person check${members.includes(p.id) ? ' active' : ''}`} disabled={p.id === ME}
-            onClick={() => setMembers((m) => (m.includes(p.id) ? m.filter((x) => x !== p.id) : [...m, p.id]))}>
-            <Avatar id={p.id} size={40} /><span>{p.id === ME ? 'ฉัน' : p.name}</span>
-            {members.includes(p.id) && <i className="pt-person-check"><Icon name="check" size={12} stroke={3} /></i>}
-          </button>
-        ))}
-        {group && (
-          <button className="pt-person invite" onClick={() => actions.invite(group).then((link) => sendInvite(link, group.name, showToast)).catch(() => showToast('สร้างลิงก์ไม่สำเร็จ'))}>
-            <span className="pt-invite-icon"><Icon name="link" size={18} /></span><span>ชวนเข้ากลุ่ม</span>
-          </button>
-        )}
-      </div>
-
-      <input className="pt-input" placeholder={autoName || (outing ? 'ชื่อนัด' : 'ชื่อทริป')} value={name} onChange={(e) => setName(e.target.value)} />
     </Sheet>
   );
 }

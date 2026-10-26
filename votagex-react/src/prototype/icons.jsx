@@ -15,6 +15,7 @@ const P = {
   map: (<><path className="tone" d="M9 4.5 3.8 6.6v13l5.2-2.1 6 2.1 5.2-2.1v-13L15 6.6Z" /><path d="M9 4.5v13M15 6.6v13" /></>),
   user: (<><circle className="tone" cx="12" cy="8.2" r="3.6" /><path className="tone" d="M5.6 19.6c.5-3.5 3.1-5.6 6.4-5.6s5.9 2.1 6.4 5.6a.9.9 0 0 1-.9 1H6.5a.9.9 0 0 1-.9-1Z" /></>),
   plus: <path d="M12 5v14M5 12h14" />,
+  minus: <path d="M5 12h14" />,
   back: <path d="m15 18-6-6 6-6" />,
   next: <path d="m9 6 6 6-6 6" />,
   close: <path d="M6 6l12 12M18 6 6 18" />,
