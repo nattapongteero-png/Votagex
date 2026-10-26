@@ -262,12 +262,14 @@ export default function TodayPage() {
   const [story, setStory] = useState(null); // the scope whose stories are playing
   const seen = (id) => settings.storySeen?.[id] === today;
   const ringOf = (id) => (stories[id]?.length ? (seen(id) ? ' story seen' : ' story') : '');
-  // first tap switches to that calendar; tapping the one already shown plays its stories
+  // a ring not yet watched today: tap plays its stories and lands on that calendar; otherwise a tap just switches
+  const playStory = (id) => {
+    setStory(id);
+    if (!seen(id)) actions.setSetting('storySeen', { ...settings.storySeen, [id]: today });
+  };
   const pickScope = (id) => {
-    if (id === scopeId && stories[id]?.length) {
-      setStory(id);
-      if (!seen(id)) actions.setSetting('storySeen', { ...settings.storySeen, [id]: today });
-    } else actions.setSetting('scope', id);
+    if (stories[id]?.length && !seen(id)) playStory(id);
+    if (id !== scopeId) actions.setSetting('scope', id);
   };
 
   // this page's memory from about a year ago, else its latest one with a photo
@@ -425,7 +427,7 @@ export default function TodayPage() {
             <div className="hp-section">
               <SectionTitle title={throwback.label} />
               <button className="pt-throwback" style={{ backgroundImage: `url(${throwback.m.photos[0]})` }}
-                onClick={() => navigate(`/proto/plan/${throwback.m.planId}?tab=memories`)}>
+                onClick={() => (stories[scopeId].length ? playStory(scopeId) : navigate(`/proto/plan/${throwback.m.planId}?tab=memories`))}>
                 <span className="pt-throwback-text">
                   <span className="pt-muted light sm">{thaiShort(throwback.m.date)} {parseISO(throwback.m.date).getFullYear() + 543} · {plans.find((p) => p.id === throwback.m.planId)?.name}</span>
                   <span><Icon name={throwback.m.mood} size={16} className="pt-inline-icon" /> {throwback.m.text}</span>
