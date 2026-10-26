@@ -3,7 +3,7 @@ import { useProto } from '../useProto';
 import Icon, { Flag } from '../icons';
 import MapView from '../MapView';
 import { Avatar, Avatars } from '../ui';
-import { PEOPLE, EXPENSE_CATS, countryOf, thaiRange, thaiShort, dayList, byTime, distanceKm, fmtKm, fmtMoney, toTHB, myShare } from '../data';
+import { PEOPLE, EXPENSE_CATS, countryOf, thaiRange, thaiShort, dayList, byOrder, distanceKm, fmtKm, fmtMoney, toTHB, myShare } from '../data';
 
 // Auto-generated story of a finished plan: route, numbers, best photos and notes
 export default function RecapPage() {
@@ -14,7 +14,7 @@ export default function RecapPage() {
   if (!plan) return <Navigate to="/proto/plans" replace />;
 
   const days = dayList(plan.startDate, plan.endDate);
-  const stops = plan.stops.slice().sort((a, b) => (a.date || '').localeCompare(b.date || '') || byTime(a, b));
+  const stops = plan.stops.slice().sort((a, b) => (a.date || '').localeCompare(b.date || '') || byOrder(a, b));
   const km = stops.reduce((s, st, i) => (i ? s + distanceKm(stops[i - 1], st) : 0), 0);
   const mems = memories.filter((m) => m.planId === plan.id).sort((a, b) => a.date.localeCompare(b.date));
   const photos = mems.filter((m) => m.photos?.length);

@@ -38,6 +38,13 @@ export function localHM(utc = 7) {
   return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 export const byTime = (a, b) => (a.time || '99').localeCompare(b.time || '99');
+// a day's stops in the order set by dragging (order), else by time; a time always sits between its neighbours'
+export const byOrder = (a, b) => (a.order ?? 1e12) - (b.order ?? 1e12) || byTime(a, b);
+// the next order on a day that's been dragged into order (none if it hasn't: time decides)
+export const nextOrder = (stops, date) => {
+  const set = stops.filter((s) => s.date === date && s.order != null);
+  return set.length ? Math.max(...set.map((s) => s.order)) + 1 : null;
+};
 
 /* ---------- money ---------- */
 export const CURRENCIES = {

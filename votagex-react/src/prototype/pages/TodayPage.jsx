@@ -11,7 +11,7 @@ import { MonthPiggyTile } from '../MonthMoney';
 import { pm25Level, useWeather, weatherKind } from '../weather';
 import HOLIDAYS from '../thHolidays.json';
 import {
-  ME, PEOPLE, CURRENCIES, HOME, addDays, parseISO, diffDays, thaiShort, byTime, localHM,
+  ME, PEOPLE, CURRENCIES, HOME, addDays, parseISO, diffDays, thaiShort, byOrder, localHM,
   stopState, keepThai, fmtMoney, distanceKm, fmtKm, directionsUrl, countryOf, planStatus, toTHB, jarStats,
   EVENT_KINDS, KINDS, eventOn, shufflePool,
 } from '../data';
@@ -140,8 +140,8 @@ export default function TodayPage() {
   const dayPlans = plans.filter((p) => p.startDate && selected >= p.startDate && selected <= (p.endDate || p.startDate));
   const plan = dayPlans.find((p) => p.kind !== 'outing') || dayPlans[0] || null;
   // the day's other plans (an event during a trip, two outings…), each its own row under the main one
-  const morePlans = dayPlans.filter((p) => p !== plan).map((p) => ({ p, first: p.stops.filter((s) => s.date === selected).sort(byTime)[0] }));
-  const stops = plan ? plan.stops.filter((s) => s.date === selected).sort(byTime) : [];
+  const morePlans = dayPlans.filter((p) => p !== plan).map((p) => ({ p, first: p.stops.filter((s) => s.date === selected).sort(byOrder)[0] }));
+  const stops = plan ? plan.stops.filter((s) => s.date === selected).sort(byOrder) : [];
   const planGroup = plan && groups.find((g) => g.id === plan.groupId);
   const who = !plan ? '' : planGroup ? `ไปกับ${planGroup.name}` : plan.members.length > 1 ? `ไปกับ ${plan.members.filter((id) => id !== ME).map((id) => PEOPLE[id]?.name).join(', ')}` : 'ไปคนเดียว';
   const country = countryOf(plan?.country);

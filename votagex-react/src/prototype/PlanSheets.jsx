@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useProto } from './useProto';
 import { Sheet, Avatar, Chip } from './ui';
 import Icon, { SourceBadge } from './icons';
-import { ME, PEOPLE, KINDS, addDays, diffDays, dayList, parseISO, thaiShort, directionsUrl, sendInvite } from './data';
+import { ME, PEOPLE, KINDS, addDays, diffDays, dayList, parseISO, thaiShort, byOrder, nextOrder, directionsUrl, sendInvite } from './data';
 
 const after = (close, fn) => { close(); setTimeout(fn, 320); };
 
@@ -128,27 +128,38 @@ export function EditPlanSheet({ onClose, planId }) {
 const HOURS = Array.from({ length: 19 }, (_, i) => String(i + 6).padStart(2, '0')); // 06–24
 const MINUTES = ['00', '15', '30', '45'];
 
-// 24-hour time by taps: an hour strip and quarter hours; "ไม่ระบุ" clears it
-function TimePicker({ value, onChange }) {
+// 24-hour time by taps: an hour strip and quarter hours; "ไม่ระบุ" clears it.
+// min / max: the stops before and after it, so the times keep the stops' order
+function TimePicker({ value, onChange, min = '', max = '' }) {
   const box = useRef(null);
   const [h, m] = value ? value.split(':') : ['', '00'];
   useEffect(() => {
-    const el = box.current?.querySelector('.active') || box.current?.querySelector('[data-h="09"]');
+    const el = box.current?.querySelector('.active') || box.current?.querySelector('button:not(:disabled)');
     el?.scrollIntoView({ inline: 'center', block: 'nearest' });
   }, []);
-  const set = (hh, mm) => onChange(`${hh}:${mm}`);
+  const ok = (t) => (!min || t >= min) && (!max || t <= max);
+  // an hour works if any quarter of it does; landing on it keeps the minutes if they still fit
+  const pickHour = (hh) => {
+    const mm = [m, ...MINUTES].find((x) => ok(`${hh}:${x}`)) || '00';
+    onChange(`${hh}:${mm}`);
+  };
   return (
     <>
-      <div className="pt-time-big">{value || '--:--'}<small>{value ? 'น.' : ''}</small></div>
+      <div className={`pt-time-big${value && !ok(value) ? ' bad' : ''}`}>{value || '--:--'}<small>{value ? 'น.' : ''}</small></div>
       <div className="pt-hour-strip" ref={box}>
         {HOURS.map((hh) => (
-          <button key={hh} data-h={hh} className={`pt-hour${h === hh ? ' active' : ''}`} onClick={() => set(hh, m || '00')}>{hh}</button>
+          <button key={hh} disabled={!MINUTES.some((x) => ok(`${hh}:${x}`))} className={`pt-hour${h === hh ? ' active' : ''}`} onClick={() => pickHour(hh)}>{hh}</button>
         ))}
       </div>
       <div className="pt-chip-row">
-        {MINUTES.map((mm) => <Chip key={mm} active={Boolean(value) && m === mm} onClick={() => set(h || '09', mm)}>:{mm}</Chip>)}
+        {MINUTES.map((mm) => (
+          <button key={mm} className={`pt-chip${value && m === mm ? ' active' : ''}`} disabled={!ok(`${h || '09'}:${mm}`)} onClick={() => onChange(`${h || '09'}:${mm}`)}>:{mm}</button>
+        ))}
         <Chip active={!value} onClick={() => onChange('')}>ไม่ระบุ</Chip>
       </div>
+      {(min || max) && (
+        <div className="pt-muted sm">{[min && `หลังจุดก่อนหน้า ${min}`, max && `ก่อนจุดถัดไป ${max}`].filter(Boolean).join(' · ')}</div>
+      )}
     </>
   );
 }
@@ -165,14 +176,23 @@ export function StopSheet({ onClose, planId, stopId }) {
   const [note, setNote] = useState(stop?.note || '');
   if (!stop) return null;
   const days = dayList(plan.startDate, plan.endDate);
+  // its neighbours on the chosen day (moved to another day, it goes last there)
+  const sameDay = plan.stops.filter((s) => s.date === date && s.id !== stop.id).sort(byOrder);
+  const at = date === stop.date ? plan.stops.filter((s) => s.date === date).sort(byOrder).findIndex((s) => s.id === stop.id) : sameDay.length;
+  const min = sameDay.slice(0, at).map((s) => s.time).filter(Boolean).sort().pop() || '';
+  const max = sameDay.slice(at).map((s) => s.time).filter(Boolean).sort()[0] || '';
+  const fits = !time || ((!min || time >= min) && (!max || time <= max));
   const clip = ['tiktok', 'instagram'].includes(source?.type) && source.url;
   const changed = time !== (stop.time || '') || date !== (stop.date || null) || note.trim() !== (stop.note || '');
 
   return (
     <Sheet title={stop.name} subtitle={stop.area} onClose={onClose}
       footer={(close) => (
-        <button className="pt-btn block" onClick={() => { if (changed) actions.updateStop(plan.id, stop.id, { time, date, note: note.trim() }); close(); }}>
-          {changed ? 'บันทึก' : 'เสร็จ'}
+        <button className="pt-btn block" disabled={changed && !fits} onClick={() => {
+          if (changed) actions.updateStop(plan.id, stop.id, { time, date, note: note.trim(), ...(date !== stop.date && { order: nextOrder(plan.stops, date) }) });
+          close();
+        }}>
+          {changed && !fits ? 'เวลาต้องอยู่ระหว่างจุดก่อนหน้ากับจุดถัดไป' : changed ? 'บันทึก' : 'เสร็จ'}
         </button>
       )}>
       {(close) => (
@@ -185,7 +205,7 @@ export function StopSheet({ onClose, planId, stopId }) {
           </div>
 
           <div className="pt-label">เวลา</div>
-          <TimePicker value={time} onChange={setTime} />
+          <TimePicker key={date} value={time} onChange={setTime} min={min} max={max} />
 
           {days.length > 1 && (
             <>

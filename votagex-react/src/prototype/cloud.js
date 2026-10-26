@@ -202,6 +202,12 @@ export function addStop(uid, plan, stop) {
   return ref.id;
 }
 export const updateStop = (uid, plan, stopId, fields) => updateDoc(doc(planRef(uid, plan), 'stops', stopId), fields);
+// several stops at once (a day dragged into a new order)
+export function updateStops(uid, plan, updates) {
+  const batch = writeBatch(db);
+  updates.forEach(({ id, ...fields }) => batch.update(doc(planRef(uid, plan), 'stops', id), fields));
+  return batch.commit();
+}
 export const deleteStop = (uid, plan, stopId) => deleteDoc(doc(planRef(uid, plan), 'stops', stopId));
 // my own check-in only (the rules refuse anyone else's): set it, or take it back with null
 export const setCheckIn = (uid, plan, stopId, value) => updateDoc(doc(planRef(uid, plan), 'stops', stopId), { [`checkIns.${uid}`]: value ?? deleteField() });

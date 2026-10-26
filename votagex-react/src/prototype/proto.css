@@ -1916,3 +1916,14 @@ button.pt-pick-later { width: 100%; font: inherit; color: inherit; text-align: l
   min-height: 44px; padding: 0 16px; border: none; background: none; font-family: var(--font); font-size: 14px; font-weight: 600; color: var(--tw-text-2); cursor: pointer;
 }
 .pt-text-btn.danger { color: var(--tw-danger); }
+.pt-time-big.bad { color: var(--tw-danger); }
+.pt-hour:disabled, .pt-chip:disabled { opacity: .35; cursor: default; }
+
+/* ---- stops: drag to reorder ---- */
+.pt-timeline .pt-stop { transition: transform .2s cubic-bezier(.22, 1, .36, 1); position: relative; }
+.pt-stop.dragging .pt-stop-card { box-shadow: 0 12px 28px rgba(17, 24, 39, .18); background: var(--tw-surface); }
+.pt-drag {
+  flex-shrink: 0; align-self: stretch; display: flex; align-items: center; justify-content: center;
+  width: 24px; margin: -12px 0 -12px -6px; color: var(--tw-text-3); cursor: grab; touch-action: none;
+}
+.pt-stop.dragging .pt-drag { cursor: grabbing; }

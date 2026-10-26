@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ProtoCtx } from './useProto';
 import {
   TODAY, ME, PEOPLE, addPeople, addDays, diffDays, seedData, seedPiggy, withSeedGroups, shiftData, planStatus, eventToPlace,
-  splitByShare, jarCats, settleUp, fmtMoney, JAR_TEMPLATES, KINDS, DEMO_PROMPTPAY,
+  splitByShare, jarCats, settleUp, fmtMoney, JAR_TEMPLATES, KINDS, DEMO_PROMPTPAY, nextOrder,
 } from './data';
 
 import * as cloud from './cloud';
@@ -298,7 +298,10 @@ export function ProtoProvider({ children, user = null, exit }) {
       if (user) { cloud.updatePlanFields(user.uid, plan, { memberIds: members }); return; }
       updatePlan(planId, (p) => ({ ...p, members }));
     },
-    addStop: (planId, stop) => {
+    addStop: (planId, newStop) => {
+      // last on its day, after whatever's been dragged into order
+      const order = nextOrder(findPlan(planId)?.stops || [], newStop.date);
+      const stop = order == null ? newStop : { ...newStop, order };
       if (user) return cloud.addStop(user.uid, findPlan(planId), stop);
       const id = uid('s');
       updatePlan(planId, (p) => ({ ...p, stops: [...p.stops, { checkIns: {}, note: '', ...stop, id }] }));
@@ -307,6 +310,18 @@ export function ProtoProvider({ children, user = null, exit }) {
     updateStop: (planId, stopId, fields) => {
       if (user) { cloud.updateStop(user.uid, findPlan(planId), stopId, fields); return; }
       updatePlan(planId, (p) => ({ ...p, stops: p.stops.map((s) => (s.id === stopId ? { ...s, ...fields } : s)) }));
+    },
+    // updates: [{ id, order, time }] for a day's stops after a drag; the toast can put them back
+    reorderStops: (planId, updates) => {
+      const plan = findPlan(planId);
+      const before = updates.map(({ id }) => { const s = plan.stops.find((x) => x.id === id); return { id, order: s.order ?? null, time: s.time || '' }; });
+      const apply = (list) => {
+        if (user) { cloud.updateStops(user.uid, plan, list); return; }
+        const by = Object.fromEntries(list.map(({ id, ...f }) => [id, f]));
+        updatePlan(planId, (p) => ({ ...p, stops: p.stops.map((s) => (by[s.id] ? { ...s, ...by[s.id] } : s)) }));
+      };
+      apply(updates);
+      showToast('ย้ายจุดแวะแล้ว', { label: 'เลิกทำ', onClick: () => apply(before) });
     },
     removeStop: (planId, stopId) => {
       const plan = findPlan(planId);

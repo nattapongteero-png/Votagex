@@ -16,6 +16,7 @@ const P = {
   user: (<><circle className="tone" cx="12" cy="8.2" r="3.6" /><path className="tone" d="M5.6 19.6c.5-3.5 3.1-5.6 6.4-5.6s5.9 2.1 6.4 5.6a.9.9 0 0 1-.9 1H6.5a.9.9 0 0 1-.9-1Z" /></>),
   plus: <path d="M12 5v14M5 12h14" />,
   minus: <path d="M5 12h14" />,
+  grip: (<><circle cx="9" cy="6.5" r="1.3" /><circle cx="15" cy="6.5" r="1.3" /><circle cx="9" cy="12" r="1.3" /><circle cx="15" cy="12" r="1.3" /><circle cx="9" cy="17.5" r="1.3" /><circle cx="15" cy="17.5" r="1.3" /></>),
   back: <path d="m15 18-6-6 6-6" />,
   next: <path d="m9 6 6 6-6 6" />,
   close: <path d="M6 6l12 12M18 6 6 18" />,

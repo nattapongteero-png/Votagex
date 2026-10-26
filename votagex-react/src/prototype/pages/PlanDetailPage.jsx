@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useProto } from '../useProto';
 import Icon, { Flag } from '../icons';
@@ -8,7 +8,7 @@ import { fmtRate } from '../rates';
 import { Avatar, Avatars, CatIcon, Cover, Seg, Progress, SectionTitle, Empty } from '../ui';
 import {
   ME, PEOPLE, KINDS, EXPENSE_CATS, CURRENCIES, countryOf, thaiRange, thaiShort, thaiDay, dayList, diffDays,
-  planStatus, byTime, localHM, stopState, fmtMoney, toTHB, myShare, settleUp, directionsUrl, jarStats,
+  planStatus, byOrder, localHM, stopState, fmtMoney, toTHB, myShare, settleUp, directionsUrl, jarStats,
 } from '../data';
 
 const TABS = [
@@ -36,12 +36,52 @@ function DayChips({ days, value, onChange, plan, withAll }) {
 }
 
 /* ---------- แผน ---------- */
+// Drag a stop by its handle to give the day a new order. The others slide out of its way while it moves.
+function useDragOrder(onDrop) {
+  const [drag, setDrag] = useState(null); // { from, to, y0, dy, rects }
+  const rows = useRef([]);
+  const start = (e, i) => {
+    e.preventDefault();
+    e.stopPropagation();
+    e.currentTarget.setPointerCapture(e.pointerId);
+    setDrag({ from: i, to: i, y0: e.clientY, dy: 0, rects: rows.current.map((el) => el.getBoundingClientRect()) });
+  };
+  const move = (e) => setDrag((d) => {
+    if (!d) return d;
+    const dy = e.clientY - d.y0;
+    const mid = d.rects[d.from].top + d.rects[d.from].height / 2 + dy;
+    return { ...d, dy, to: d.rects.filter((r, j) => j !== d.from && r.top + r.height / 2 < mid).length };
+  });
+  const end = () => {
+    if (drag && drag.to !== drag.from) onDrop(drag.from, drag.to);
+    setDrag(null);
+  };
+  const style = (i) => {
+    if (!drag) return undefined;
+    const r = drag.rects;
+    // the dragged row's height plus the gap between rows
+    const step = r[drag.from].height + (r.length > 1 ? r[1].top - r[0].bottom : 0);
+    if (i === drag.from) return { transform: `translateY(${drag.dy}px)`, zIndex: 3, transition: 'none' };
+    if (drag.from < drag.to && i > drag.from && i <= drag.to) return { transform: `translateY(${-step}px)` };
+    if (drag.from > drag.to && i >= drag.to && i < drag.from) return { transform: `translateY(${step}px)` };
+    return { transform: 'none' };
+  };
+  return { rows, start, move, end, style, from: drag?.from };
+}
+
 function PlanTab({ plan, day, setDay, days, status }) {
   const { actions, openSheet, today } = useProto();
   const [showAllChecklist, setShowAllChecklist] = useState(false);
   const c = countryOf(plan.country);
   const nowHM = localHM(c.utc);
-  const stops = (plan.kind === 'idea' ? plan.stops : plan.stops.filter((s) => s.date === day)).slice().sort(byTime);
+  const stops = (plan.kind === 'idea' ? plan.stops : plan.stops.filter((s) => s.date === day)).slice().sort(byOrder);
+  // the places change order; the times stay in their slots, so the day still runs early to late
+  const dnd = useDragOrder((from, to) => {
+    const list = stops.slice();
+    list.splice(to, 0, list.splice(from, 1)[0]);
+    actions.reorderStops(plan.id, list.map((s, i) => ({ id: s.id, order: i, time: stops[i].time || '' })));
+  });
+  const canDrag = status !== 'past' && stops.length > 1;
   const checklist = plan.checklist || [];
   const doneCount = checklist.filter((x) => x.done).length;
   const visibleChecklist = showAllChecklist ? checklist : checklist.filter((x) => !x.done).slice(0, 4);
@@ -77,10 +117,16 @@ function PlanTab({ plan, day, setDay, days, status }) {
           const whoIn = Object.keys(s.checkIns || {});
           const canCheck = s.date === today && (st === 'pending' || st === 'due');
           return (
-            <div key={s.id} className={`pt-stop ${st}`}>
+            <div key={s.id} ref={(el) => { dnd.rows.current[i] = el; }} className={`pt-stop ${st}${dnd.from === i ? ' dragging' : ''}`} style={dnd.style(i)}>
               <div className="pt-stop-time">{s.time || '—'}</div>
               <div className="pt-stop-rail"><span className="pt-stop-dot">{i + 1}</span></div>
               <div className="pt-stop-card" role="button" tabIndex={0} onClick={() => openSheet('stop', { planId: plan.id, stopId: s.id })}>
+                {canDrag && (
+                  <span className="pt-drag" aria-label="ลากเพื่อย้าย" onClick={(e) => e.stopPropagation()}
+                    onPointerDown={(e) => dnd.start(e, i)} onPointerMove={dnd.move} onPointerUp={dnd.end} onPointerCancel={dnd.end}>
+                    <Icon name="grip" size={18} />
+                  </span>
+                )}
                 <CatIcon cat={s.cat} size={40} />
                 <div className="pt-grow">
                   <div className="pt-strong">{s.name}</div>
@@ -118,7 +164,7 @@ function MapTab({ plan, days }) {
   const [sel, setSel] = useState(null);
   const stops = useMemo(() => {
     const list = day === 'all' ? plan.stops.slice() : plan.stops.filter((s) => s.date === day);
-    return list.sort((a, b) => (a.date || '').localeCompare(b.date || '') || byTime(a, b));
+    return list.sort((a, b) => (a.date || '').localeCompare(b.date || '') || byOrder(a, b));
   }, [plan.stops, day]);
   const points = stops.map((s, i) => ({ id: s.id, lat: s.lat, lng: s.lng, cat: s.cat, label: day === 'all' && s.date ? `${days.indexOf(s.date) + 1}` : i + 1 }));
 
