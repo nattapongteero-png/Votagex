@@ -1577,12 +1577,13 @@ button.pt-exp:active { background: var(--tw-sunken); }
 .homepage.pt-today .hp-stage { height: auto; }
 .homepage.pt-today.header-collapsed .hp-stage { opacity: 1; }
 .pt-snap-stop { position: absolute; top: 0; left: 0; height: 6px; padding: 0; margin: 0; pointer-events: none; }
-/* the profile row stays when the calendar folds up under it; only the speech note fades, with the scroll itself */
-.homepage.pt-today .pt-avatar-note .pt-speech-wrap { opacity: clamp(0, calc(1 - var(--sheet-p, 0) * 3), 1); }
-/* and the row moves up into the note's room */
-.homepage.pt-today .hp-header { background: none; }
-.homepage.pt-today .hp-header-top.pt-talk { transform: translateY(calc(var(--sheet-p, 0) * var(--row-lift, 0px) * -1)); }
-.homepage.pt-today.header-collapsed .pt-speech-wrap { pointer-events: none; }
+/* the greeting goes up with the calendar, as if scrolled away (so the calendar never slides over it), fading as it goes */
+.homepage.pt-today .hp-header {
+  opacity: clamp(0, calc(1 - var(--sheet-p, 0) * 2.5), 1);
+  transform: translateY(calc(var(--sheet-p, 0) * (var(--fold-top, 12px) - var(--hp-stage-top))));
+}
+.homepage.pt-today.header-collapsed .hp-header { pointer-events: none; }
+.homepage.pt-today.header-collapsed .hp-header * { pointer-events: none; }
 
 /* ===== Trip money tab: the glass piggy ===== */
 .pt-jar-card { display: flex; flex-direction: column; gap: 10px; background: #fff; }
