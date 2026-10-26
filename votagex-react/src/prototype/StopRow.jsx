@@ -17,7 +17,7 @@ export default function StopRow({ stop: s, planId, state: st, checkHere, passed 
 
   // under the planned time: when someone checked in, or that it was left behind / not going
   const under = at ? (
-    <span className={`pt-line-at${st === 'late-done' ? ' late' : ''}`}><Icon name="check" size={11} stroke={3} />{at.at}</span>
+    <span className={`pt-line-at${st === 'late-done' ? ' late' : ''}`}>{at.at}</span>
   ) : passed ? <span className="pt-line-at muted">ข้ามไป</span> : st === 'skipped' ? <span className="pt-line-at muted">ไม่ไป</span> : null;
 
   return (
