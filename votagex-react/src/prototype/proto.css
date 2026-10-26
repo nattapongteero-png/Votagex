@@ -2002,3 +2002,21 @@ button.pt-pick-later { width: 100%; font: inherit; color: inherit; text-align: l
 .pt-hero-map { position: relative; height: 188px; overflow: hidden; border-radius: var(--tw-r-xl); background: var(--tw-sunken); }
 .pt-hero-map > :first-child { position: absolute; inset: 0; width: 100%; height: 100%; border-radius: inherit; }
 .pt-hero-map .pt-badge.right { position: absolute; top: 12px; right: 12px; z-index: 2; }
+/* home's day card: the day's stops on a small map */
+.pt-day-map { position: relative; display: block; width: 100%; height: 132px; padding: 0; border: none; border-radius: var(--tw-r-lg); overflow: hidden; background: var(--tw-sunken); cursor: pointer; }
+.pt-day-map > :first-child { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+:is(.pt-day-map, .pt-hero-map) .maplibregl-ctrl-attrib { font-size: 9px; line-height: 12px; margin: 0 6px 6px 0; }
+:is(.pt-day-map, .pt-hero-map) .maplibregl-ctrl-attrib a { font-size: 9px; }
+
+/* stop line: icon buttons on the right; the check-in time under the planned one */
+.pt-line-end { gap: 6px; }
+.pt-icon-btn {
+  width: 34px; height: 34px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; padding: 0;
+  border-radius: 50%; border: 1px solid var(--tw-border); background: var(--tw-surface); color: var(--tw-text-2); cursor: pointer;
+}
+.pt-icon-btn.check { border-color: transparent; background: var(--tw-brand); color: #fff; box-shadow: 0 3px 10px rgba(13, 148, 136, .3); }
+.pt-icon-btn.check.due { background: var(--tw-danger); box-shadow: 0 3px 10px rgba(220, 38, 38, .3); }
+.pt-line-time { display: flex; flex-direction: column; gap: 2px; }
+.pt-line-at { display: inline-flex; align-items: center; gap: 2px; font-size: 11px; font-weight: 700; color: var(--tw-success); }
+.pt-line-at.late { color: var(--tw-accent); }
+.pt-line-at.muted { font-weight: 500; color: var(--tw-text-3); }

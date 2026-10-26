@@ -9,6 +9,7 @@ import SpeechNotes from '../SpeechNotes';
 import WeatherCard from '../WeatherCard';
 import { MonthPiggyTile } from '../MonthMoney';
 import StopRow from '../StopRow';
+import MapView from '../MapView';
 import { pm25Level, useWeather, weatherKind } from '../weather';
 import HOLIDAYS from '../thHolidays.json';
 import {
@@ -134,6 +135,7 @@ export default function TodayPage() {
   // the day's other plans (an event during a trip, two outings…), each its own row under the main one
   const morePlans = dayPlans.filter((p) => p !== plan).map((p) => ({ p, first: p.stops.filter((s) => s.date === selected).sort(byOrder)[0] }));
   const stops = plan ? plan.stops.filter((s) => s.date === selected).sort(byOrder) : [];
+  const dayPins = stops.filter((s) => s.lat != null && !s.skip);
   const planGroup = plan && groups.find((g) => g.id === plan.groupId);
   const who = !plan ? '' : planGroup ? `ไปกับ${planGroup.name}` : plan.members.length > 1 ? `ไปกับ ${plan.members.filter((id) => id !== ME).map((id) => PEOPLE[id]?.name).join(', ')}` : 'ไปคนเดียว';
   const country = countryOf(plan?.country);
@@ -295,6 +297,13 @@ export default function TodayPage() {
                 </span>
               </div>
             )}
+              {/* the day's stops on a map, in order; tap for the plan */}
+              {plan && dayPins.length > 0 && (
+                <button className="pt-day-map" aria-label="เปิดแผน" onClick={() => navigate(`/proto/plan/${plan.id}`)}>
+                  <MapView points={dayPins.map((st) => ({ id: st.id, lat: st.lat, lng: st.lng, cat: st.cat, label: stops.indexOf(st) + 1 }))}
+                    route={dayPins.length > 1} interactive={false} padding={32} fitKey={`${plan.id}-${selected}-${dayPins.map((st) => st.id).join()}`} />
+                </button>
+              )}
               {plan && stops.length > 0 && (
                 <div className="pt-lines">
                   {stops.map((s, i) => (
