@@ -49,12 +49,13 @@ function Pattern({ ink }) {
   );
 }
 
-// a cancellation: a double ring with the place and date, and wavy lines running off it, in uneven ink
-function Postmark({ stamp, id, style }) {
+// a cancellation: a double ring with the place and date, and wavy lines running off it, in uneven ink (over a
+// stamp's corner, or struck across a postcard's: Postcard)
+export function Postmark({ stamp, id, className = 'pt-postmark', style }) {
   const d = new Date(`${stamp.date}T00:00:00`);
   const date = `${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(stamp.year).slice(2)}`;
   return (
-    <svg className="pt-postmark" viewBox="0 0 108 60" aria-hidden="true" style={style}>
+    <svg className={className} viewBox="0 0 108 60" aria-hidden="true" style={style}>
       <defs><path id={id} d="M30,30 m-21,0 a21,21 0 1,1 42,0 a21,21 0 1,1 -42,0" /></defs>
       <g filter="url(#pt-ink)">
         <circle cx="30" cy="30" r="26" /><circle cx="30" cy="30" r="16" />

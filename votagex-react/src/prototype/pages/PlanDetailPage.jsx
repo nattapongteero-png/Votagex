@@ -8,7 +8,7 @@ import MapView from '../MapView';
 import { fmtRate } from '../rates';
 import { Avatar, Avatars, CatIcon, Cover, Seg, Progress, SectionTitle, Empty } from '../ui';
 import {
-  ME, PEOPLE, KINDS, EXPENSE_CATS, CURRENCIES, countryOf, thaiRange, thaiShort, thaiDay, dayList, diffDays,
+  ME, PEOPLE, KINDS, EXPENSE_CATS, CURRENCIES, countryOf, thaiRange, thaiShort, thaiDay, thaiYear, dayList, diffDays,
   planStatus, byOrder, localHM, stopState, nextCheckIndex, passedStop, fmtMoney, toTHB, myShare, settleUp, directionsUrl, jarStats,
 } from '../data';
 
@@ -299,11 +299,26 @@ function MoneyTab({ plan }) {
 
 /* ---------- ความทรงจำ ---------- */
 function MemoriesTab({ plan, status }) {
-  const { memories, openSheet, actions } = useProto();
+  const { memories, postcards, today, openSheet, actions } = useProto();
   const navigate = useNavigate();
   const list = memories.filter((m) => m.planId === plan.id).sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+  // a postcard to myself, while the trip's on and for a few days after; it comes back on its anniversary (Postcard)
+  const canWrite = plan.members.includes(ME) && (status === 'ongoing' || (status === 'past' && diffDays(plan.endDate || plan.startDate, today) <= 3));
+  const sent = postcards.find((x) => x.planId === plan.id && x.by === ME);
   return (
     <>
+      {canWrite && (sent ? (
+        <div className="pt-recap-banner pt-pc-banner sent">
+          <Icon name="check" size={22} />
+          <span className="pt-grow"><span className="pt-strong">ส่งโปสการ์ดแล้ว</span><span className="pt-muted sm">ถึง {thaiShort(sent.deliver)} {thaiYear(sent.deliver)}</span></span>
+        </div>
+      ) : (
+        <button className="pt-recap-banner pt-pc-banner" onClick={() => openSheet('postcard', { planId: plan.id })}>
+          <Icon name="mail" size={22} />
+          <span className="pt-grow"><span className="pt-strong">เขียนโปสการ์ดถึงตัวเองปีหน้า</span></span>
+          <Icon name="next" size={18} />
+        </button>
+      ))}
       {status === 'past' && list.length > 0 && (
         <button className="pt-recap-banner" onClick={() => navigate(`/proto/plan/${plan.id}/recap`)}>
           <Icon name="sparkle" size={22} />

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ProtoCtx } from './useProto';
 import {
-  TODAY, ME, PEOPLE, addPeople, addDays, diffDays, seedData, seedPiggy, withSeedGroups, shiftData, planStatus, eventToPlace,
+  TODAY, ME, PEOPLE, addPeople, addDays, addYear, diffDays, seedData, seedPiggy, withSeedGroups, shiftData, planStatus, eventToPlace,
   splitByShare, jarCats, settleUp, fmtMoney, JAR_TEMPLATES, KINDS, DEMO_PROMPTPAY, nextOrder, SEED_GROUPS,
 } from './data';
 
@@ -11,7 +11,7 @@ import * as cloud from './cloud';
 // expenses and transfers, settings and saved places (events too) live in Firestore; the rest (memories, savings
 // piggies) moves there piece by piece (docs/ROADMAP.md, phase 3) and until then is kept on this device, per account.
 const KEY = 'votagex.proto.v1';
-const emptyData = () => ({ v: 1, seededOn: TODAY, simMode: 'normal', plans: [], places: [], expenses: [], payments: [], memories: [], jars: [], piggyLog: [], groups: [], settings: {} });
+const emptyData = () => ({ v: 1, seededOn: TODAY, simMode: 'normal', plans: [], places: [], expenses: [], payments: [], memories: [], postcards: [], jars: [], piggyLog: [], groups: [], settings: {} });
 
 // data saved while moods and piggies still used emoji
 const OLD_MOODS = { '😍': 'moodLove', '😊': 'moodHappy', '🙂': 'moodSmile', '😐': 'moodMeh', '😮‍💨': 'moodTired' };
@@ -33,10 +33,14 @@ const withPayments = (d) => (d.payments ? d : {
 });
 
 // sample plans added to the demo later, given to a device that already has demo data (once each, so a deleted one stays gone)
-// bangsaen-recap: the year-ago day out got more stops, photos and spends for its recap
-const LATER_SAMPLES = ['lunch', 'g-fam', 'bangsaen-recap'];
+// bangsaen-recap: the year-ago day out got more stops, photos and spends for its recap; bangsaen-postcard: the
+// postcard I sent myself from it
+const LATER_SAMPLES = ['lunch', 'g-fam', 'bangsaen-recap', 'bangsaen-postcard'];
 function withNewSamples(d) {
   const given = d.samplesGiven || [];
+  if (!given.includes('bangsaen-postcard') && d.plans.some((p) => p.id === 'bangsaen') && !(d.postcards || []).some((x) => x.planId === 'bangsaen')) {
+    d = { ...d, postcards: [...(d.postcards || []), ...seedData().postcards] };
+  }
   if (!given.includes('bangsaen-recap') && d.plans.some((p) => p.id === 'bangsaen')) {
     const seed = seedData();
     const more = (list, from) => [...list, ...from.filter((x) => x.planId === 'bangsaen' && !list.some((y) => y.id === x.id))];
@@ -69,6 +73,7 @@ function load(key, signedIn) {
   return signedIn ? emptyData() : seedData();
 }
 
+const NONE = [];
 const uid = (p) => `${p}${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}`;
 
 // user: the signed-in Firebase user, or null for the demo
@@ -296,6 +301,7 @@ export function ProtoProvider({ children, user = null, exit }) {
           plans: d.plans.filter((p) => p.id !== planId),
           expenses: d.expenses.filter((e) => e.planId !== planId),
           memories: d.memories.filter((m) => m.planId !== planId),
+          postcards: (d.postcards || []).filter((x) => x.planId !== planId),
           jars: d.jars.map((j) => (j.planId === planId ? { ...j, planId: null } : j)),
         }));
       });
@@ -440,6 +446,11 @@ export function ProtoProvider({ children, user = null, exit }) {
       return user ? cloud.readSlip(user.uid, findPlan(pay.planId), payId) : Promise.resolve(pay?.slip || null);
     },
     addMemory: (m) => setData((d) => ({ ...d, memories: [{ ...m, id: uid('m') }, ...d.memories] })),
+    // a postcard to myself from a trip, written `on` a day, delivered on the trip's first anniversary (one per trip)
+    writePostcard: ({ planId, text, on }) => {
+      const deliver = addYear(findPlan(planId)?.startDate || on);
+      setData((d) => ({ ...d, postcards: [...(d.postcards || []).filter((x) => !(x.planId === planId && x.by === ME)), { id: uid('pc'), planId, by: ME, on, deliver, text }] }));
+    },
     removeMemory: (id) => removeLater(id, 'ลบความทรงจำแล้ว', () => setData((d) => ({ ...d, memories: d.memories.filter((m) => m.id !== id) }))),
 
     // Piggies: 'in' splits across the jar's categories by share (target 'split') or goes to one category;
@@ -476,6 +487,7 @@ export function ProtoProvider({ children, user = null, exit }) {
   const value = {
     ...data, plans, expenses, payments, today, activePlan, ensureActivePlan, actions,
     memories: hidden.length ? data.memories.filter((m) => !hidden.includes(m.id)) : data.memories,
+    postcards: data.postcards || NONE,
     groups: user ? myGroups : data.groups,
     loading,
     cloud: Boolean(user),

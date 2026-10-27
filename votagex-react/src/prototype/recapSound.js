@@ -1,11 +1,12 @@
-import { BEAT, FPS, cuesFor } from './recapShots';
+import { BEAT, CUT, FPS, T, cuesFor } from './recapShots';
 
 // The recap's sound, synthesized in the browser (no sound files): a short track in F major on the film's beat
 // grid (112.5 bpm), F–C–Dm–B♭ a bar each, that builds with the film — a plucked arpeggio and a pad under the
 // opening, hats and claps from the big words, kick and bass from the trip's card, a riser into the numbers,
 // then only the pad and a chime under the close. Over it, a sound for every cue the film draws to (recapShots
 // cuesFor): pops pitched to the key, dings for the map's pins, typing ticks, a shutter for each photo,
-// whooshes and an iris sweep on the cuts, impacts on the colour blocks. Noise is seeded (mulberry32), so the
+// whooshes and an iris sweep on the cuts, impacts on the colour blocks; a turn of paper, a rubber stamp's thud
+// and the postmark's slap on the closing postcard. Noise is seeded (mulberry32), so the
 // track is the same every time. The mix is measured as integrated loudness (ITU-R BS.1770: K-weighting,
 // 400 ms blocks, gated) and set to -14 LUFS, with a soft limiter keeping peaks under -1 dBFS.
 
@@ -61,6 +62,24 @@ function wav(buf) {
     out.setInt16(46 + i * 4, Math.max(-1, Math.min(1, R[i])) * 32767, true);
   }
   return new Blob([out], { type: 'audio/wav' });
+}
+
+// the postmark struck, live (sending a postcard): the film's stamp and ink hits, on a real-time context
+export function playStamp() {
+  const AC = window.AudioContext || window.webkitAudioContext;
+  if (!AC) return;
+  const ctx = new AC();
+  const t = ctx.currentTime + 0.01;
+  const rnd = mulberry32(3);
+  const noise = ctx.createBuffer(1, Math.round(ctx.sampleRate * 0.12), ctx.sampleRate);
+  noise.getChannelData(0).forEach((_, i, a) => { a[i] = rnd() * 2 - 1; });
+  const env = (peak, len) => { const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(peak, t + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, t + len); g.connect(ctx.destination); return g; };
+  const osc = ctx.createOscillator(); osc.frequency.setValueAtTime(150, t); osc.frequency.exponentialRampToValueAtTime(55, t + 0.08);
+  osc.connect(env(0.5, 0.18)); osc.start(t); osc.stop(t + 0.25);
+  const hit = ctx.createBufferSource(); hit.buffer = noise;
+  const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 1300;
+  hit.connect(lp).connect(env(0.28, 0.08)); hit.start(t);
+  setTimeout(() => ctx.close(), 500);
 }
 
 export async function buildSound(d, shots, total) {
@@ -136,7 +155,8 @@ export async function buildSound(d, shots, total) {
       CHORDS[k % 4].forEach((n) => tone(fx, 'sawtooth', midi(n), t, 0.24, 0.05, { lp: 2200, lpTo: 600 }));
     },
     chime: (t) => [77, 81, 84, 89].forEach((n, i) => bell(t + i * 0.05, n, 0.12)),
-    // a rubber stamp coming down on paper, and the postmark struck after it
+    // a postcard turned over, a rubber stamp coming down on paper, and the postmark struck after it
+    flip: (t) => hiss(fx, t - 0.04, 0.22, 0.16, 'bandpass', 2400, { to: 700, swell: 0.35, q: 0.9 }),
     stamp: (t) => { tone(fx, 'sine', 150, t, 0.18, 0.6, { to: 55, glide: 0.08 }); hiss(fx, t, 0.08, 0.32, 'lowpass', 1300); },
     ink: (t) => { hiss(fx, t, 0.06, 0.28, 'bandpass', 950, { q: 0.8 }); tone(fx, 'sine', 95, t, 0.12, 0.42, { to: 50, glide: 0.06 }); },
   };
@@ -159,8 +179,12 @@ export async function buildSound(d, shots, total) {
     }
   }
   hiss(fx, riserTo - bar, bar, 0.16, 'bandpass', 300, { to: 5000, swell: 0.97, q: 0.9 }); // the riser into the numbers
-  pad(outro, CHORDS[0], 3.2);
+  // under the close only a pad; under the postcard after it, B♭ while it turns over, home to F as its stamp lands
+  const card = at.postcard != null && sec(at.postcard + CUT);
+  const land = card && sec(at.postcard + T.postcard.land);
+  pad(outro, CHORDS[0], card ? card - outro : 3.2);
   bass(outro, ROOTS[0], 1.6);
+  if (card) { pad(card, CHORDS[3], land - card); pad(land, CHORDS[0], Math.max(2, sec(total) - land)); bass(land, ROOTS[0], 1.6); }
   cuesFor(d, shots).forEach((cue) => play[cue.kind]?.(sec(cue.f), cue.n));
 
   // render, then set the loudness to -14 LUFS with a soft limiter under -1 dBFS; the limiter takes a little

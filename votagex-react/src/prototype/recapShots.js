@@ -16,7 +16,7 @@ export const T = {
   map: { title: 0, start: 16, per: 16 },
   photo: { date: 16, text: 24, by: 32 },
   blocks: { step: 2 * BEAT },
-  stamp: { land: 16, mark: 24, no: 40, total: 56 },
+  postcard: { flip: 16, drop: 36, land: 48, mark: 56, no: 72, total: 88 },
   end: { mascot: 8, title: 16, sub: 24, crew: 40 },
 };
 
@@ -27,8 +27,8 @@ export const quotesOf = (d) => d.photos.map((p) => p.text).filter(Boolean).slice
 // how many colour blocks the numbers shot has (the spend drops out when nothing was noted)
 export const blocksFor = (d) => (d.spend.total > 0 ? 4 : 3);
 
-// shots follow the trip: a shot per photo (up to 4); no stops, that shot drops out; the trip's stamp (from the
-// stamp book) is pressed in before the close, when it has one
+// shots follow the trip: a shot per photo (up to 4); no stops, that shot drops out; after the close, the trip's
+// postcard (the home page's) turns over and its stamp from the stamp book is pressed in, when it has one
 export function shotsFor(d) {
   const B = BEAT;
   return [
@@ -38,8 +38,8 @@ export function shotsFor(d) {
     d.stops.length > 0 && { key: 'map', dur: (6 + d.stops.length) * B, light: true, cut: 'iris' },
     ...d.photos.slice(0, 4).map((_, i) => ({ key: `photo${i}`, photo: i, dur: 6 * B, light: true, cut: 'slide' })),
     { key: 'blocks', dur: (blocksFor(d) * 2 + 1) * B, cut: 'iris' },
-    d.stamp && { key: 'stamp', dur: 6 * B, light: true, cut: 'iris' },
-    { key: 'end', dur: 8 * B, light: true, cut: d.stamp ? 'rise' : 'iris' },
+    { key: 'end', dur: 8 * B, light: true, cut: 'iris' },
+    d.postcard && { key: 'postcard', dur: (d.postcard.stamp ? 8 : 5) * B, light: true, cut: 'rise' },
   ].filter(Boolean).reduce((list, s) => {
     const prev = list[list.length - 1];
     return [...list, { ...s, from: prev ? prev.from + prev.dur - (s.cut ? CUT : 0) : 0 }];
@@ -77,8 +77,9 @@ export function cuesFor(d, shots) {
       at(o + T.photo.date, 'pop', 1); at(o + T.photo.text, 'pop', 3); at(o + T.photo.by, 'pop', 5);
     } else if (s.key === 'blocks') {
       for (let k = 0; k < blocksFor(d); k += 1) at(o + k * T.blocks.step, 'impact', k);
-    } else if (s.key === 'stamp') {
-      at(o + T.stamp.land, 'stamp'); at(o + T.stamp.mark, 'ink'); at(o + T.stamp.no, 'pop', 2); at(o + T.stamp.total, 'pop', 4);
+    } else if (s.key === 'postcard') {
+      at(o + T.postcard.flip, 'flip');
+      if (d.postcard.stamp) { at(o + T.postcard.land, 'stamp'); at(o + T.postcard.mark, 'ink'); at(o + T.postcard.no, 'pop', 2); at(o + T.postcard.total, 'pop', 4); }
     } else if (s.key === 'end') {
       at(o + T.end.mascot, 'pop', 0); at(o + T.end.title, 'chime'); at(o + T.end.crew, 'pop', 4);
     }

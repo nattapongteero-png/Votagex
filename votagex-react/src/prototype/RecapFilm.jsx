@@ -6,7 +6,8 @@ import * as maplibregl from 'maplibre-gl';
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { BEAT, CUT, FPS, T, blocksFor, queryOf, quotesOf, shotsFor } from './recapShots';
-import { InkDefs, Stamp } from './StampBook';
+import { InkDefs } from './StampBook';
+import { Postcard } from './Postcard';
 
 // A trip's recap cut like a launch film (after mtioon's), 9:16 at 1080 wide, every beat on the sound's grid
 // (recapShots). A pastel ground; a mascot (a map pin with eyes) pops up and the trip bursts out of it as
@@ -15,7 +16,8 @@ import { InkDefs, Stamp } from './StampBook';
 // its photos; a real map (MapLibre, free OpenFreeMap tiles) draws the route with the mascot riding the head
 // of the line, a callout pill at each stop placed where it covers nothing; each photo as a tilted card with
 // its note and who took it; the numbers as full-screen colour blocks opening one from another in circles;
-// the trip's stamp from the stamp book pressed in; the name with the mascot to close. Cuts: a parallax swipe (the old shot falls back as the new one comes
+// the name with the mascot; and to close, the trip's postcard from the home page turning over, its stamp from
+// the stamp book pressed in and the postmark struck across it. Cuts: a parallax swipe (the old shot falls back as the new one comes
 // over it) and iris circles, both on a spring. Shots are laid out 1080 wide and zoomed to the player's frame,
 // which is the screen's size (see Shot).
 
@@ -441,32 +443,41 @@ function Blocks({ d, f, H }) {
   );
 }
 
-// the trip's stamp from the stamp book, pressed in: it comes down from above, big and turned, speeding up as a
-// hand would, lands on the beat a touch squashed with its shadow pulled in tight, and the postmark is struck
-// over its corner an eighth later; then its number in the book and how many you've collected pop on
-function StampShot({ d, f, H }) {
-  const S = T.stamp; const s = d.stamp;
-  const w = 620; const h = (w * 184) / 148; const cy = H * 0.41;
-  const lift = 1 - lerp(f, 0, S.land, 0, 1, Easing.in(Easing.cubic)); // 1 in the air, 0 down
-  const t = f - S.land;
-  const squash = t < 0 ? 1 : 1 - 0.04 * Math.exp(-t / 3) * Math.cos(t / 1.6);
-  const mark = Math.min(1, sp(f, S.mark, { damping: 16, stiffness: 320, mass: 0.6 }));
-  const kind = s.kind === 'country' ? 'ประเทศ' : 'จังหวัด';
+// after the close, the trip's postcard, the one on the home page: it lies photo up, turns over to its back on
+// the beat, and its stamp comes down onto its corner from above, big and turned, speeding up as a hand would;
+// it lands a touch squashed with its shadow pulled in tight, the postmark is struck across it onto the card an
+// eighth later, and then its number in the book and how many you've collected pop on
+function PostcardShot({ d, f, H }) {
+  const P = T.postcard; const c = d.postcard; const s = c.stamp;
+  const w = 1000; const h = w / 1.5; const cy = H * 0.44;
+  const turned = sp(f, P.flip, { damping: 14, stiffness: 110, mass: 0.9 });
+  const turn = 180 + 180 * turned;
+  const up = Math.sin(Math.min(1, Math.max(0, turned)) * Math.PI); // lifted off the table mid-turn
+  const lift = 1 - lerp(f, P.drop, P.land, 0, 1, Easing.in(Easing.cubic)); // 1 in the air, 0 down
+  const t = f - P.land;
+  const squash = t < 0 ? 1 : 1 - 0.05 * Math.exp(-t / 3) * Math.cos(t / 1.6);
+  const mark = Math.min(1, sp(f, P.mark, { damping: 16, stiffness: 320, mass: 0.6 }));
+  const kind = s?.kind === 'country' ? 'ประเทศ' : 'จังหวัด';
   return (
     <AbsoluteFill style={{ overflow: 'hidden' }}>
-      <Pastel f={f + 720} />
+      <Pastel f={f + 760} />
       <InkDefs />
-      <div style={{ position: 'absolute', left: 540 - w / 2, top: cy - h / 2, translate: `0 ${-280 * lift}px`, scale: (1.45 - 0.45 * (1 - lift)) * squash, rotate: `${-14 * lift}deg` }}>
-        <Stamp stamp={s} w={w}
-          style={{ filter: `drop-shadow(0 ${0.08 + 2.4 * lift}em ${0.1 + 2 * lift}em rgba(60, 45, 25, ${0.24 - 0.1 * lift})) drop-shadow(0 ${0.5 + 3 * lift}em ${0.8 + 2.4 * lift}em rgba(60, 45, 25, .14))` }}
-          markStyle={{ opacity: f >= S.mark ? 1 : 0, scale: `${1.7 - 0.7 * mark}` }} />
+      <div style={{ position: 'absolute', left: 540 - w / 2, top: cy - h / 2 + float(f, 2, 5) - 40 * up, scale: 1 + 0.07 * up, rotate: `${-3 + 2 * lerp(f, 0, P.flip + 20, 1, 0)}deg` }}>
+        <Postcard card={c} w={w} flip={turn} mark={f >= P.mark}
+          stampStyle={{ opacity: f >= P.drop ? 1 : 0, translate: `${120 * lift}px ${-560 * lift}px`, scale: (1 + 0.7 * lift) * squash, rotate: `${-16 * lift}deg` }}
+          stampShadow={{ filter: `drop-shadow(0 ${0.08 + 2.4 * lift}em ${0.1 + 2 * lift}em rgba(60, 45, 25, ${0.24 - 0.1 * lift})) drop-shadow(0 ${0.5 + 3 * lift}em ${0.8 + 2.4 * lift}em rgba(60, 45, 25, .14))` }}
+          markStyle={{ scale: `${1.7 - 0.7 * mark}` }} />
       </div>
-      <Pop f={f} at={S.no} x={540} y={cy + h / 2 + 110} r={-3} bob={5}>
-        <Pill bg={C.black} size={44}>{`${s.kind === 'country' ? `ประเทศที่ ${s.no}` : `No.${String(s.no).padStart(2, '0')} / 77`}`}</Pill>
-      </Pop>
-      <Pop f={f} at={S.total} x={540} y={cy + h / 2 + 240} r={3} bob={5} seed={2}>
-        <Pill bg={C.white} fg={INK} size={40}>{`สะสมแล้ว ${s.total} ${kind}`}</Pill>
-      </Pop>
+      {s && (
+        <>
+          <Pop f={f} at={P.no} x={540} y={cy + h / 2 + 130} r={-3} bob={5}>
+            <Pill bg={C.black} size={44}>{`${s.kind === 'country' ? `ประเทศที่ ${s.no}` : `No.${String(s.no).padStart(2, '0')} / 77`}`}</Pill>
+          </Pop>
+          <Pop f={f} at={P.total} x={540} y={cy + h / 2 + 260} r={3} bob={5} seed={2}>
+            <Pill bg={C.white} fg={INK} size={40}>{`สะสมแล้ว ${s.total} ${kind}`}</Pill>
+          </Pop>
+        </>
+      )}
     </AbsoluteFill>
   );
 }
@@ -522,7 +533,7 @@ function Shot({ d, shot }) {
     : shot.key === 'brief' ? <Brief {...p} />
     : shot.key === 'map' ? <RouteMap {...p} />
     : shot.key === 'blocks' ? <Blocks {...p} />
-    : shot.key === 'stamp' ? <StampShot {...p} />
+    : shot.key === 'postcard' ? <PostcardShot {...p} />
     : shot.key === 'end' ? <End {...p} />
     : <PhotoShot {...p} i={shot.photo} />;
   return <div style={{ position: 'absolute', left: 0, top: 0, width: 1080, height: H, zoom: z }}>{body}</div>;

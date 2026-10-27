@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useCollection, useProto } from './useProto';
-import { COUNTRIES, diffDays, parseISO, planStatus } from './data';
+import { COUNTRIES, ME, PEOPLE, addDays, byOrder, diffDays, distanceKm, parseISO, planStatus, thaiShort, thaiYear } from './data';
 
 // The stamp book (StampBook): a postage stamp for every province and country collected, the same collection
 // the me page counts (useCollection). Each stamp carries the trip that earned it, its date and a photo from
@@ -101,6 +101,48 @@ export function stampOfTrip({ provinces, countries }, plan) {
   plan.stops.forEach((s) => { if (s.prov && checkedIn(s)) count[s.prov] = (count[s.prov] || 0) + 1; });
   const most = Object.keys(count).sort((a, b) => count[b] - count[a])[0];
   return provinces.find((s) => s.name === most) || null;
+}
+
+// the stamp a trip still under way will get (for its postcard): its own, else one made up for the province most
+// of its stops are in (or its country), numbered next in the book
+export function stampToSend(stamps, plan, today) {
+  const own = stampOfTrip(stamps, plan);
+  if (own || !plan) return own;
+  const year = parseISO(today).getFullYear() + 543;
+  if (plan.country && plan.country !== 'TH') {
+    const code = plan.country;
+    return { key: `c:${code}`, kind: 'country', code, name: COUNTRIES[code]?.name || code, en: COUNTRY_EN[code] || code, no: stamps.countries.length + 1, date: today, year, photo: null, from: [plan.name] };
+  }
+  const count = {};
+  plan.stops.forEach((s) => { if (s.prov) count[s.prov] = (count[s.prov] || 0) + 1; });
+  const most = Object.keys(count).sort((a, b) => count[b] - count[a])[0];
+  if (!most) return null;
+  return stamps.provinces.find((s) => s.name === most)
+    || { key: `p:${most}`, kind: 'prov', name: most, en: EN[most] || most, no: stamps.provinces.length + 1, date: today, year, photo: null, from: [plan.name] };
+}
+
+// what a trip's postcard (Postcard.jsx) shows; `label` heads its back (the home page's "วันนี้เมื่อปีที่แล้ว")
+export function postcardOf({ plan, memories, postcards, stamp, label, today }) {
+  const stops = plan.stops.filter((s) => s.date && !s.skip).sort((a, b) => a.date.localeCompare(b.date) || byOrder(a, b));
+  const pins = stops.filter((s) => s.lat != null);
+  const photos = memories.filter((m) => m.planId === plan.id).flatMap((m) => m.photos || []);
+  const sent = postcards.find((x) => x.planId === plan.id && x.by === ME);
+  const arrived = sent && today >= addDays(sent.deliver, -3); // as the look-back's "this day" (±3 days)
+  return {
+    key: plan.id, label, title: plan.name,
+    date: `${thaiShort(plan.startDate)} ${thaiYear(plan.startDate)}`,
+    where: stamp ? (stamp.kind === 'prov' ? `${stamp.en} · Thailand` : stamp.en) : plan.destination?.name || '',
+    photo: plan.cover?.img || photos[0] || null,
+    note: arrived ? { text: sent.text, name: PEOPLE[sent.by]?.name, avatar: PEOPLE[sent.by]?.avatar, on: `${thaiShort(sent.on)} ${thaiYear(sent.on)}` } : null,
+    numbers: [
+      [stops.length, 'ที่'],
+      [Math.round(pins.reduce((t, s, i) => (i ? t + distanceKm(pins[i - 1], s) : 0), 0)), 'กม.'],
+      [photos.length, 'รูป'],
+    ],
+    stamp,
+    // the postmark: where the stamp is from, dated the day it was posted
+    mark: stamp && { ...stamp, key: `pc-${plan.id}`, date: sent?.on || plan.startDate, year: thaiYear(sent?.on || plan.startDate) },
+  };
 }
 
 // a seeded random in [0, 1) from a string, so a stamp always sits at the same tilt

@@ -11,8 +11,8 @@ import { MonthPiggyTile } from '../MonthMoney';
 import StopRow from '../StopRow';
 import MapView from '../MapView';
 import RecapViewer from '../RecapViewer';
-import { InkDefs, Stamp } from '../StampBook';
-import { stampOfTrip, useStamps } from '../stamps';
+import PostcardTile from '../Postcard';
+import { postcardOf, stampOfTrip, useStamps } from '../stamps';
 import { pm25Level, useWeather, weatherKind } from '../weather';
 import HOLIDAYS from '../thHolidays.json';
 import {
@@ -69,8 +69,16 @@ function EventTile({ ev, last, onOpen }) {
   );
 }
 
+// a trip looked back on as a postcard, with its stamp from the stamp book (and how many of its kind are collected)
+function postcardOfLook(look, stamps, postcards, today) {
+  if (!look) return null;
+  const s = stampOfTrip(stamps, look.plan);
+  const stamp = s && { ...s, total: (s.kind === 'country' ? stamps.countries : stamps.provinces).length };
+  return postcardOf({ plan: look.plan, memories: look.memories, postcards, stamp, label: look.label, today });
+}
+
 export default function TodayPage() {
-  const { plans: allPlans, places, expenses, memories, jars, piggyLog, groups, settings, today, openSheet, actions } = useProto();
+  const { plans: allPlans, places, expenses, memories, postcards, jars, piggyLog, groups, settings, today, openSheet, actions } = useProto();
   // whose calendar: mine (every trip I'm on) or one group's (only its trips, and the events shared with it)
   const group = groups.find((g) => g.id === settings.scope) || null;
   const plans = useMemo(() => (group ? allPlans.filter((p) => p.groupId === group.id) : allPlans.filter((p) => p.members.includes(ME))), [allPlans, group]);
@@ -271,13 +279,10 @@ export default function TodayPage() {
   }, [plans, memories, expenses, today]);
   const [recapOf, setRecapOf] = useState(null); // the trip whose diary is open
   const recap = looks.find((l) => l.plan.id === recapOf);
-  // the trip's stamp from the stamp book: on the card, and pressed in near the end of its film
+  // the trip as a postcard: on the home page, and closing its film
   const stamps = useStamps();
-  const stampOf = (plan) => {
-    const s = stampOfTrip(stamps, plan);
-    return s && { ...s, total: (s.kind === 'country' ? stamps.countries : stamps.provinces).length };
-  };
-  const cardStamp = stampOf(looks[0]?.plan);
+  const card = useMemo(() => postcardOfLook(looks[0], stamps, postcards, today), [looks, stamps, postcards, today]);
+  const recapCard = useMemo(() => postcardOfLook(recap, stamps, postcards, today), [recap, stamps, postcards, today]);
 
   // one plan of the day, its own card: its head, its own map, its stops, then add a stop / open the plan
   // (the day's ongoing trip also gets its next stop, and noting a spend instead of adding a stop)
@@ -361,26 +366,8 @@ export default function TodayPage() {
 
         {/* one block for the whole sheet, so a drag anywhere on it (gaps and handle too) moves it */}
         <div className="pt-home-sheet">
-          {/* the trip to look back on (this day in a past year, else the latest), played back as its diary */}
-          {looks[0] && (
-            <button className="hp-tile pt-rc-tile" onClick={() => setRecapOf(looks[0].plan.id)}>
-              {cardStamp ? (
-                <span className="pt-rc-stamp" aria-hidden="true"><InkDefs /><Stamp stamp={cardStamp} w={50} press /></span>
-              ) : (
-                <span className="pt-rc-stack" aria-hidden="true">
-                  {(looks[0].photos.length ? looks[0].photos : [looks[0].plan.cover?.img]).filter(Boolean).slice(0, 3).reverse().map((src, i) => (
-                    <i key={src + i} style={{ backgroundImage: `url(${src})` }} />
-                  ))}
-                </span>
-              )}
-              <span className="pt-grow">
-                <span className="pt-muted sm">{looks[0].label}</span>
-                <span className="pt-strong ellipsis">{looks[0].plan.name}</span>
-                <span className="pt-muted sm ellipsis">{thaiShort(looks[0].plan.startDate)} {parseISO(looks[0].plan.startDate).getFullYear() + 543} · {looks[0].photos.length} รูป</span>
-              </span>
-              <span className="pt-rc-play"><Icon name="play" size={18} /></span>
-            </button>
-          )}
+          {/* the trip to look back on (this day in a past year, else the latest), as a postcard; its button plays its film */}
+          {card && <PostcardTile card={card} onPlay={() => setRecapOf(looks[0].plan.id)} />}
 
           {/* the selected day's weather, its own card */}
           {wxSel && <WeatherCard wx={wxSel} place={selPlace || 'กรุงเทพฯ'} title={dayTitle} holiday={holiday} night={night} clock={selected === today} utc={countryOf(tripSel?.country).utc} />}
@@ -438,7 +425,7 @@ export default function TodayPage() {
           )}
         </div>
       </div>
-      {recap && <RecapViewer {...recap} stamp={stampOf(recap.plan)} onClose={() => setRecapOf(null)} />}
+      {recap && <RecapViewer {...recap} stamp={recapCard.stamp} postcard={recapCard} onClose={() => setRecapOf(null)} />}
     </div>
   );
 }

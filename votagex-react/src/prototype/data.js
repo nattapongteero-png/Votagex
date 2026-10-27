@@ -6,6 +6,7 @@ const pad = (n) => String(n).padStart(2, '0');
 export const iso = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 export const parseISO = (s) => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
 export const addDays = (s, n) => { const d = parseISO(s); d.setDate(d.getDate() + n); return iso(d); };
+export const addYear = (s) => { const d = parseISO(s); d.setFullYear(d.getFullYear() + 1); return iso(d); }; // 29 Feb: 1 Mar
 export const diffDays = (a, b) => Math.round((parseISO(b) - parseISO(a)) / 86400000);
 export const TODAY = iso(new Date());
 const rel = (n) => addDays(TODAY, n);
@@ -626,6 +627,11 @@ export function seedData() {
     { id: 'm7', planId: 'iconsiam', date: rel(-5), stopId: 'ic1', photos: [], text: 'ลมริมน้ำเย็นสบาย นั่งดูเรือจนเย็น', mood: 'moodSmile', by: 'u1' },
   ];
 
+  // a postcard to myself from the year-ago day out, arriving today (Postcard.jsx)
+  const postcards = [
+    { id: 'pc1', planId: 'bangsaen', by: 'u1', on: rel(-365), deliver: TODAY, text: 'ปูนึ่งร้านริมหาดดีที่สุด หอยแครงข้ามได้ ขึ้นเขาสามมุขก่อนห้าโมงครึ่ง แดดสวยสุด ขนมหนองมนซื้อเจ้าหน้าตลาดพอ' },
+  ];
+
   // paid back: บิว (u4) settled up the Chiang Mai trip; ฝ้าย says she sent her half of tonight's dinner
   const cnxBack = settleUp(expenses.filter((e) => e.planId === 'cnx'), ALL).find((t) => t.from === 'u4' && t.to === 'u1');
   const payments = [
@@ -633,7 +639,7 @@ export function seedData() {
     { id: 'pay2', planId: 'tonight', from: 'u2', to: 'u1', amount: 240, status: 'sent', date: TODAY, slip: null },
   ];
 
-  return withSeedGroups({ v: 1, seededOn: TODAY, simMode: 'normal', plans, places: [...seedEvents(), ...places], expenses, payments, memories, ...seedPiggy() });
+  return withSeedGroups({ v: 1, seededOn: TODAY, simMode: 'normal', plans, places: [...seedEvents(), ...places], expenses, payments, memories, postcards, ...seedPiggy() });
 }
 
 // sample events around today: one on now, a weekend market, a concert, a pop-up next week
@@ -682,6 +688,7 @@ export function shiftData(data, n) {
     expenses: data.expenses.map((e) => ({ ...e, date: s(e.date) })),
     payments: data.payments?.map((x) => ({ ...x, date: s(x.date) })),
     memories: data.memories.map((m) => ({ ...m, date: s(m.date) })),
+    postcards: (data.postcards || []).map((x) => ({ ...x, on: s(x.on), deliver: s(x.deliver) })),
     piggyLog: (data.piggyLog || []).map((e) => ({ ...e, date: s(e.date) })),
     events: (data.events || []).map((e) => ({ ...e, startDate: s(e.startDate), endDate: s(e.endDate) })),
   };

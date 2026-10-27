@@ -755,6 +755,10 @@ button.pt-exp:active { background: var(--tw-sunken); }
   flex-shrink: 0;
 }
 .pt-recap-banner .tone { fill: #8B6BFF; fill-opacity: 0.3; }
+.pt-pc-banner { background: #F6F1E6; }
+.pt-pc-banner .tone { fill: #C0884B; fill-opacity: .3; }
+.pt-pc-banner .pt-grow { display: flex; flex-direction: column; }
+.pt-pc-banner.sent { cursor: default; color: var(--tw-text); }
 .pt-mem-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: start; }
 .pt-mem {
   border-radius: var(--tw-r-lg);
@@ -2107,18 +2111,6 @@ button.pt-pick-later { width: 100%; font: inherit; color: inherit; text-align: l
 .pt-story-foot { position: absolute; left: 16px; right: 16px; bottom: max(24px, env(safe-area-inset-bottom)); display: flex; gap: 8px; flex-wrap: wrap; }
 .pt-story-foot .pt-story-cta { margin-left: auto; background: #fff; color: var(--tw-text); }
 
-/* home: the recap's way in, above the weather. A little stack of the trip's photos */
-.pt-rc-tile { display: flex; align-items: center; gap: 14px; width: 100%; text-align: left; font: inherit; color: inherit; border: none; cursor: pointer; }
-.pt-rc-tile .pt-grow { display: flex; flex-direction: column; min-width: 0; }
-.pt-rc-tile .pt-strong { line-height: 22px; }
-.pt-rc-stack { position: relative; width: 58px; height: 58px; flex-shrink: 0; }
-.pt-rc-stack i { position: absolute; inset: 4px; border-radius: 10px; border: 2px solid #fff; background: var(--tw-sunken) center / cover; box-shadow: 0 2px 6px rgba(15, 23, 42, .18); }
-.pt-rc-stack i:nth-last-child(2) { transform: rotate(-12deg) translate(-6px, 1px); }
-.pt-rc-stack i:nth-last-child(3) { transform: rotate(12deg) translate(6px, -1px); }
-/* the trip's stamp in place of its photos (StampBook) */
-.pt-rc-stamp { width: 58px; height: 64px; flex-shrink: 0; display: grid; place-items: center; }
-.pt-rc-play { width: 40px; height: 40px; flex-shrink: 0; display: grid; place-items: center; border-radius: 50%; background: var(--tw-btn-primary); color: #fff; }
-.pt-rc-play .pt-icon { margin-left: 2px; }
 
 /* ===== Mood: Japanese travel-poster. Paper grain over everything, poster type for headings ===== */
 body::after { content: ''; position: fixed; inset: 0; z-index: 9998; pointer-events: none; opacity: .07; mix-blend-mode: multiply;
@@ -2134,7 +2126,7 @@ body::after { content: ''; position: fixed; inset: 0; z-index: 9998; pointer-eve
   filter: drop-shadow(0 .08em .1em rgba(60, 45, 25, .24)) drop-shadow(0 .5em .8em rgba(60, 45, 25, .14)); }
 /* the stock: off-white with a fibrous grain (its tile is bigger than any stamp: tiles of noise show seams), and light falling across it as on paper that isn't quite flat
    (StampView moves the light with --tx / --ty) */
-.pt-stamp-paper { position: absolute; inset: 0; background: #FBF8F0 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320'%3E%3Cfilter id='f' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.3 .5' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .42 0 0 0 0 .34 0 0 0 0 .22 0 0 0 .7 -.08'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)' opacity='.5'/%3E%3C/svg%3E"); }
+.pt-stamp-paper, .pt-pc-back { position: absolute; inset: 0; background: #FBF8F0 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320'%3E%3Cfilter id='f' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.3 .5' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .42 0 0 0 0 .34 0 0 0 0 .22 0 0 0 .7 -.08'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)' opacity='.5'/%3E%3C/svg%3E"); }
 .pt-stamp-paper::after { content: ''; position: absolute; inset: 0; pointer-events: none; mix-blend-mode: soft-light;
   background: radial-gradient(circle at calc(28% + var(--tx, 0) * 40%) calc(18% + var(--ty, 0) * 40%), rgba(255, 255, 255, .7), rgba(255, 255, 255, 0) 55%),
     linear-gradient(125deg, rgba(255, 255, 255, 0) 55%, rgba(60, 40, 20, .22)); }
@@ -2236,3 +2228,59 @@ body::after { content: ''; position: fixed; inset: 0; z-index: 9998; pointer-eve
 .pt-stampview-when { font-size: 14px; color: var(--tw-text-2); }
 .pt-stampview-trip { display: inline-flex; align-items: center; gap: 4px; margin-top: 16px; padding: 10px 14px 10px 18px; border: 1px solid var(--tw-border); border-radius: 999px;
   background: #fff; box-shadow: var(--tw-shadow-round); color: var(--tw-text); font: 600 14px var(--font); cursor: pointer; }
+
+/* ===== Postcard (Postcard.jsx): a trip as a postcard, 24 × 16 em, everything in em of its width / 24. Two
+   faces back to back that turn over in 3D: the back (the message, the trip where the address goes, the stamp
+   with the postmark struck across onto the card) and the front (a photo from the trip) ===== */
+.pt-pc { position: relative; perspective: 70em; }
+.pt-pc-card { position: absolute; inset: 0; transform-style: preserve-3d; }
+.pt-pc-face { position: absolute; inset: 0; border-radius: .28em; overflow: hidden; backface-visibility: hidden; -webkit-backface-visibility: hidden;
+  box-shadow: 0 .03em .06em rgba(60, 45, 25, .2), 0 .5em 1.2em -.3em rgba(60, 45, 25, .3); }
+.pt-pc-back { transform: rotateY(0deg); overflow: visible; } /* a stamp coming down onto it (the film) isn't cut off */
+/* light falling across the card stock */
+.pt-pc-back::after { content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; mix-blend-mode: soft-light;
+  background: radial-gradient(circle at 22% 14%, rgba(255, 255, 255, .65), rgba(255, 255, 255, 0) 60%), linear-gradient(140deg, rgba(255, 255, 255, 0) 60%, rgba(60, 40, 20, .16)); }
+.pt-pc-front { transform: rotateY(180deg); background: #E8E0CF; }
+.pt-pc-card[data-side="back"] .pt-pc-front, .pt-pc-card[data-side="front"] .pt-pc-back { visibility: hidden; }
+/* card stock is brighter than a stamp's paper: its grain washed back */
+.pt-pc-back::before { content: ''; position: absolute; inset: 0; border-radius: inherit; background: rgba(255, 254, 250, .5); }
+.pt-pc-front img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.pt-pc-front::after { content: ''; position: absolute; inset: 55% 0 0; background: linear-gradient(rgba(10, 12, 20, 0), rgba(10, 12, 20, .4)); }
+.pt-pc-caption { position: absolute; z-index: 1; left: 1.6em; bottom: 1.4em; color: #fff; font-size: .62em; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; }
+/* the message side: left of a rule */
+.pt-pc-msg { position: absolute; left: 1.25em; top: 1.15em; bottom: 1.15em; width: 11.7em; display: flex; flex-direction: column; color: #2B2721; }
+.pt-pc-kicker { font-size: .66em; font-weight: 600; line-height: 1.4; color: #8A7F6C; }
+.pt-pc-text { margin: .35em 0 0; font-size: .9em; line-height: 1.6; font-weight: 500; overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 7; }
+.pt-pc-write { flex: 1; width: 100%; margin: 0; padding: 0; border: 0; background: none; resize: none; font-family: inherit; color: inherit; outline: none; display: block; }
+.pt-pc-write::placeholder { color: #B3A993; }
+.pt-pc-by { margin-top: auto; display: flex; align-items: center; gap: .4em; font-size: .62em; font-weight: 600; color: #8A7F6C; }
+.pt-pc-by img { width: 1.9em; height: 1.9em; border-radius: 50%; background: #fff; }
+/* no message yet: the trip's numbers */
+.pt-pc-numbers { margin-top: auto; display: flex; gap: 1.1em; }
+.pt-pc-numbers span { display: flex; flex-direction: column; font-size: .66em; font-weight: 600; color: #8A7F6C; }
+.pt-pc-numbers b { font-family: var(--font-display); font-size: 3.2em; line-height: 1; font-weight: 700; color: #2B2721; letter-spacing: -.02em; }
+.pt-pc-rule { position: absolute; left: 13.55em; top: 1.5em; bottom: 1.5em; width: .05em; background: rgba(60, 45, 25, .2); }
+/* the address side: the trip on lines, under the stamp */
+.pt-pc-to { position: absolute; left: 14.5em; right: 1.3em; top: 8.5em; display: flex; flex-direction: column; color: #2B2721; }
+.pt-pc-to > * { display: block; padding: .2em 0 .1em; border-bottom: .05em solid rgba(60, 45, 25, .26); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pt-pc-to b { font-family: var(--font-display); font-size: .98em; line-height: 1.45; font-weight: 700; }
+.pt-pc-to span { font-size: .7em; line-height: 1.9; font-weight: 500; color: #5E5648; }
+.pt-pc-to .en { font-size: .56em; line-height: 2.3; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
+.pt-pc-stamp { position: absolute; right: 1.15em; top: 1.1em; }
+/* struck across the stamp's left edge onto the card: the ring on the card, the waves over the stamp */
+.pt-postmark.pt-pc-mark { right: auto; left: 15.1em; top: 2.5em; width: 7.2em; rotate: -7deg; }
+.pt-pc.press .pt-pc-mark, .pt-pc.sent .pt-pc-mark { animation: pt-postmark .46s cubic-bezier(.2, 0, .1, 1) both; }
+.pt-pc.press .pt-pc-mark { animation-delay: .42s; }
+.pt-pc.sent .pt-pc-card { animation: pt-pc-thud .32s cubic-bezier(.3, 0, .2, 1); }
+@keyframes pt-pc-thud { 30% { scale: .985; } }
+@media (prefers-reduced-motion: reduce) { .pt-pc.press .pt-pc-mark, .pt-pc.sent .pt-pc-mark, .pt-pc.sent .pt-pc-card { animation: none; } }
+/* on the home page: lying a little turned on the sheet, the play button on its corner */
+.pt-pc-tile { position: relative; aspect-ratio: 3 / 2; margin: 4px 6px 14px; rotate: -1.2deg; touch-action: pan-y; cursor: pointer; -webkit-tap-highlight-color: transparent; outline: none;
+  user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.pt-pc-tile:focus-visible .pt-pc-face { box-shadow: 0 0 0 3px var(--tw-brand); }
+.pt-pc-play { position: absolute; right: -8px; bottom: -8px; width: 44px; height: 44px; display: grid; place-items: center; border: 0; border-radius: 50%; cursor: pointer;
+  background: var(--tw-btn-primary); color: #fff; box-shadow: 0 6px 16px -4px rgba(15, 23, 42, .4); }
+.pt-pc-play .pt-icon { margin-left: 2px; }
+/* the sheet that writes one */
+.pt-pc-compose { position: relative; padding: 6px 0 10px; }
+

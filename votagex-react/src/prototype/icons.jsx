@@ -27,6 +27,7 @@ const P = {
   calendar: (<><rect x="3.8" y="5" width="16.4" height="15" rx="3" /><path d="M8 3v4M16 3v4M3.8 10h16.4" /></>),
   wallet: (<><path className="tone" d="M4 7.5A2.5 2.5 0 0 1 6.5 5h11A2.5 2.5 0 0 1 20 7.5v9a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 16.5Z" /><path d="M16 12h.01M4 9h16" /></>),
   camera: (<><path className="tone" d="M4 8.5A2.5 2.5 0 0 1 6.5 6h1.7l1.4-2h4.8l1.4 2h1.7A2.5 2.5 0 0 1 20 8.5v8a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 16.5Z" /><circle cx="12" cy="12.5" r="3.3" /></>),
+  mail: (<><rect className="tone" x="3.5" y="5.5" width="17" height="13" rx="2.5" /><path d="m4.5 7.5 7.5 5.6 7.5-5.6" /></>),
   bookmark: (<><path className="tone" d="M6.5 4h11a1 1 0 0 1 1 1v15.2l-6.5-4.1-6.5 4.1V5a1 1 0 0 1 1-1Z" /></>),
   link: (<><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1" /><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1" /></>),
   search: (<><circle cx="11" cy="11" r="6.5" /><path d="m20 20-4.3-4.3" /></>),
