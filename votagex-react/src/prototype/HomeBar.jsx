@@ -58,6 +58,7 @@ export function CreateSheet({ onClose }) {
     live && !sent && ['mail', 'เขียนโปสการ์ดถึงตัวเอง', live.name, () => openSheet('postcard', { planId: live.id })],
     ['link', 'วางลิงก์ TikTok / IG', null, () => openSheet('savePlace')],
     ['plans', 'สร้างแผน', null, () => openSheet('createPlan')],
+    ['users', 'สร้างกลุ่มเที่ยว', null, () => openSheet('newGroup')],
     !live && ['wallet', 'จดรายจ่าย', null, () => openSheet('expense')],
   ].filter(Boolean);
   return (

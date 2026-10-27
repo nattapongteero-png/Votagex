@@ -355,10 +355,7 @@ export default function TodayPage() {
           <button aria-pressed={!group} className={`pt-scope-btn${!group ? ' active' : ''}`} onClick={() => actions.setSetting('scope', 'me')}>
             <span className="pt-group-badge pt-scope-me"><img src={avatarOf(ME)} alt="" /></span><span>{PEOPLE[ME].name}</span>
           </button>
-          {/* new group stays put; only the list of groups scrolls sideways */}
-          <button className="pt-scope-btn pt-scope-add" onClick={() => openSheet('newGroup')}>
-            <span className="pt-group-badge add"><Icon name="plus" size={22} /></span><span>กลุ่มใหม่</span>
-          </button>
+          {/* a new group is made from + in the top bar */}
           <div className="pt-scope">
             {groups.map((g) => (
               <button key={g.id} aria-pressed={group?.id === g.id} className={`pt-scope-btn${group?.id === g.id ? ' active' : ''}`} onClick={() => actions.setSetting('scope', g.id)}>
