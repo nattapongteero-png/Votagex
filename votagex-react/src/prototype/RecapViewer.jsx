@@ -5,7 +5,7 @@ import { Player } from '@remotion/player';
 import Icon from './icons';
 import RecapFilm from './RecapFilm';
 import { FPS, lengthOf, shotsFor } from './recapShots';
-import { PEOPLE, EXPENSE_CATS, byOrder, diffDays, distanceKm, parseISO, toTHB } from './data';
+import { PEOPLE, EXPENSE_CATS, byOrder, diffDays, distanceKm, parseISO, thaiShort, toTHB } from './data';
 
 const pad = (n) => String(n).padStart(2, '0');
 
@@ -24,7 +24,7 @@ export default function RecapViewer({ plan, memories, expenses, label, onClose }
     const photos = memories.filter((m) => m.photos?.length)
       .flatMap((m) => m.photos.map((src) => {
         const t = parseISO(m.date);
-        return { src, text: m.text, by: PEOPLE[m.by]?.name, stamp: `'${String(t.getFullYear()).slice(2)} ${pad(t.getMonth() + 1)} ${pad(t.getDate())}` };
+        return { src, text: m.text, by: PEOPLE[m.by]?.name, date: `${thaiShort(m.date)} ${t.getFullYear() + 543}` };
       }));
     const total = expenses.reduce((t, e) => t + toTHB(e), 0);
     const cats = Object.entries(expenses.reduce((o, e) => ({ ...o, [e.cat]: (o[e.cat] || 0) + toTHB(e) }), {}))
@@ -34,6 +34,7 @@ export default function RecapViewer({ plan, memories, expenses, label, onClose }
       title: plan.name, label,
       cover: plan.cover?.img || photos[0]?.src || null,
       ago: label,
+      dateFull: `${thaiShort(plan.startDate)} ${start.getFullYear() + 543}`,
       dateCode: `${pad(start.getDate())}.${pad(start.getMonth() + 1)}.${start.getFullYear() + 543}`,
       crew: plan.members.map((id) => ({ id, name: PEOPLE[id]?.name, avatar: PEOPLE[id]?.avatar })).filter((c) => c.avatar),
       stops: stops.map((s) => ({ id: s.id, name: s.name, time: s.time, lat: s.lat, lng: s.lng })),
@@ -92,7 +93,7 @@ export default function RecapViewer({ plan, memories, expenses, label, onClose }
   const open = (path) => { onClose(); navigate(path); };
 
   return createPortal(
-    <div className="pt-story" role="dialog" aria-label={`สรุปทริป ${plan.name}`}>
+    <div className={`pt-story${shots[at]?.light ? ' on-light' : ''}`} role="dialog" aria-label={`สรุปทริป ${plan.name}`}>
       <Player ref={player} component={RecapFilm} inputProps={film} durationInFrames={total} fps={FPS}
         compositionWidth={W} compositionHeight={H} loop={false} moveToBeginningWhenEnded={false} acknowledgeRemotionLicense
         clickToPlay={false} doubleClickToFullscreen={false} spaceKeyToPlayOrPause={false}

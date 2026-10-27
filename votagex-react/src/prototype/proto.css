@@ -2046,6 +2046,9 @@ button.pt-pick-later { width: 100%; font: inherit; color: inherit; text-align: l
 .pt-story-top .pt-strong, .pt-story-top .pt-muted { color: #fff; text-shadow: 0 1px 4px rgba(0, 0, 0, .4); }
 .pt-story-close { width: 44px; height: 44px; display: grid; place-items: center; border: none; background: none; color: #fff; cursor: pointer; pointer-events: auto; }
 .pt-story-bars, .pt-story-top, .pt-story-foot { z-index: 2; }
+.pt-story.on-light .pt-story-bar { background: rgba(17, 19, 24, .15); }
+.pt-story.on-light .pt-story-bar i { background: #111318; }
+.pt-story.on-light .pt-story-top .pt-strong, .pt-story.on-light .pt-story-top .pt-muted, .pt-story.on-light .pt-story-close { color: #111318; text-shadow: none; }
 .pt-story-bar i, .pt-story-top .pt-strong, .pt-story-top .pt-muted, .pt-story-close { transition: color .3s, background-color .3s; }
 .pt-story-foot { position: absolute; left: 16px; right: 16px; bottom: max(24px, env(safe-area-inset-bottom)); display: flex; gap: 8px; flex-wrap: wrap; }
 .pt-story-foot .pt-story-cta { margin-left: auto; background: #fff; color: var(--tw-text); }
