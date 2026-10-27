@@ -60,8 +60,11 @@ export default function RecapViewer({ plan, memories, expenses, label, onClose }
     return () => { live = false; if (url) URL.revokeObjectURL(url); };
   }, [film, shots, total]);
   const inputProps = useMemo(() => ({ ...film, sound: sound?.url }), [film, sound]);
-  const W = 1080;
-  const H = Math.round(Math.min(2400, Math.max(1600, (W * size.h) / size.w)));
+  // the film is laid out 1080 wide (RecapFilm) but played in a frame the screen's own size, so it draws at the
+  // phone's real resolution: Safari keeps a 1080 frame scaled down at full size, and ran out of memory
+  const H = Math.round(Math.min(2400, Math.max(1600, (1080 * size.h) / size.w)));
+  const W = size.w;
+  const frameH = Math.round((H * W) / 1080);
   const at = shots.reduce((k, s, i) => (frame >= s.from + (s.cut ? CUT : 0) ? i : k), 0);
   const done = frame >= total - 1;
 
@@ -133,7 +136,7 @@ export default function RecapViewer({ plan, memories, expenses, label, onClose }
   return createPortal(
     <div className={`pt-story${shots[at]?.light ? ' on-light' : ''}`} role="dialog" aria-label={`สรุปทริป ${plan.name}`}>
       <Player ref={player} component={RecapFilm} inputProps={inputProps} durationInFrames={total} fps={FPS}
-        compositionWidth={W} compositionHeight={H} loop={false} moveToBeginningWhenEnded={false} acknowledgeRemotionLicense
+        compositionWidth={W} compositionHeight={frameH} loop={false} moveToBeginningWhenEnded={false} acknowledgeRemotionLicense
         clickToPlay={false} doubleClickToFullscreen={false} spaceKeyToPlayOrPause={false}
         errorFallback={({ error }) => (
           <div className="pt-story-error"><b>เล่นต่อไม่ได้</b><span>{error?.message}</span></div>

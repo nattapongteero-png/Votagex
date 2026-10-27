@@ -15,7 +15,8 @@ import { BEAT, CUT, FPS, T, blocksFor, queryOf, quotesOf, shotsFor } from './rec
 // of the line, a callout pill at each stop placed where it covers nothing; each photo as a tilted card with
 // its note and who took it; the numbers as full-screen colour blocks opening one from another in circles;
 // the name with the mascot to close. Cuts: a parallax swipe (the old shot falls back as the new one comes
-// over it) and iris circles, both on a spring.
+// over it) and iris circles, both on a spring. Shots are laid out 1080 wide and zoomed to the player's frame,
+// which is the screen's size (see Shot).
 
 maplibregl.setWorkerUrl(workerUrl);
 const MAP_STYLE = 'https://tiles.openfreemap.org/styles/positron';
@@ -265,7 +266,7 @@ function placeCallouts(pins, names, H) {
 
 // the route on a real map: the line draws with the mascot riding its head, each stop pops a pin and a
 // callout pill on a leader line; the distance lands as a pill when the line arrives
-function RouteMap({ d, f, H, dur }) {
+function RouteMap({ d, f, H, z, dur }) { // z: the shot's zoom
   const M = T.map;
   const box = useRef(null);
   const [pins, setPins] = useState(null);
@@ -274,7 +275,7 @@ function RouteMap({ d, f, H, dur }) {
   useEffect(() => {
     const lng = d.stops.map((s) => s.lng); const lat = d.stops.map((s) => s.lat);
     const m = new maplibregl.Map({
-      // the player shows this 1080-wide frame at phone size, so the map draws at under half its CSS size
+      // the map draws 1080 wide, shown at phone size, so at under half its CSS size
       container: box.current, style: MAP_STYLE, interactive: false, attributionControl: false, fadeDuration: 0, pixelRatio: 0.6,
       bounds: [[Math.min(...lng), Math.min(...lat)], [Math.max(...lng), Math.max(...lat)]],
       fitBoundsOptions: { padding: { top: H * 0.3, bottom: H * 0.32, left: 230, right: 230 }, maxZoom: 15 },
@@ -310,16 +311,18 @@ function RouteMap({ d, f, H, dur }) {
     <AbsoluteFill style={{ overflow: 'hidden' }}>
       <Pastel f={f + 280} />
       <div style={{ position: 'absolute', inset: 0, scale: lerp(f, 0, dur, 1, 1.06, Easing.linear) }}>
-        <div ref={box} style={{ position: 'absolute', inset: 0, width: 1080, height: H, opacity: ready ? 1 : 0 }} />
+        {/* out of the shot's zoom and scaled down instead, so the map measures a plain 1080 box in any browser
+            (a canvas is kept at its own drawing size, not its CSS size, so scaling costs it no memory) */}
+        <div ref={box} style={{ position: 'absolute', left: 0, top: 0, width: 1080, height: H, zoom: 1 / z, transform: `scale(${z})`, transformOrigin: '0 0', opacity: ready ? 1 : 0 }} />
         <AbsoluteFill style={{ background: 'linear-gradient(180deg, rgba(251,249,251,.96), rgba(251,249,251,0) 22%, rgba(251,249,251,0) 74%, rgba(251,249,251,.96))' }} />
         {route && (
-          <svg width="1080" height={H} style={{ position: 'absolute', inset: 0, opacity: ready ? 1 : 0 }}>
+          <svg width="1080" height={H} viewBox={`0 0 1080 ${H}`} style={{ position: 'absolute', inset: 0, opacity: ready ? 1 : 0 }}>
             <path d={route.d} pathLength="1" fill="none" stroke="#fff" strokeWidth="24" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="1" strokeDashoffset={1 - drawn} />
             <path d={route.d} pathLength="1" fill="none" stroke={C.orange} strokeWidth="12" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="1" strokeDashoffset={1 - drawn} />
           </svg>
         )}
         {pins && (
-          <svg width="1080" height={H} style={{ position: 'absolute', inset: 0 }}>
+          <svg width="1080" height={H} viewBox={`0 0 1080 ${H}`} style={{ position: 'absolute', inset: 0 }}>
             {calls.map((c) => {
               const p = pins[c.i]; const at = M.start + c.i * M.per;
               const k = lerp(f, at + 4, at + 12, 0, 1, IN_OUT);
@@ -413,7 +416,6 @@ function Blocks({ d, f, H }) {
     { bg: C.yellow, fg: INK, big: baht(each), small: d.crew.length > 1 ? 'ต่อคน' : 'ที่ใช้ไป' },
   ].slice(0, blocksFor(d));
   const words = useMemo(() => [d.title, ...d.stops.map((s) => s.name), ...d.crew.map((c) => c.name), d.dateCode, `${d.stats.km.toFixed(1)} กม.`], [d]);
-  const R = Math.hypot(540, H / 2);
   const cur = Math.min(rows.length - 1, Math.floor((f + 6) / T.blocks.step));
   return (
     <AbsoluteFill style={{ overflow: 'hidden' }}>
@@ -421,8 +423,9 @@ function Blocks({ d, f, H }) {
         const t = f - k * T.blocks.step;
         if (t < -6 || k < cur - 1) return null;
         const open = k === 0 ? 1 : lerp(t, -6, 6, 0, 1, Easing.bezier(0.5, 0, 0.2, 1)); // fully open on the beat
+        // in percent, which zoom can't get wrong: 70.72% of a circle's reference length reaches the corners
         return (
-          <AbsoluteFill key={k} style={{ background: r.bg, clipPath: open < 1 ? `circle(${open * R}px at 540px ${H / 2}px)` : 'none', overflow: 'hidden' }}>
+          <AbsoluteFill key={k} style={{ background: r.bg, clipPath: open < 1 ? `circle(${open * 70.72}% at 50% 50%)` : 'none', overflow: 'hidden' }}>
             <div style={{ position: 'absolute', left: -600, top: -400, width: 2400, rotate: '-18deg', display: 'flex', flexDirection: 'column', gap: 26, translate: `${-(f * 3) % 400}px 0px` }}>
               <WordField words={words} H={H} />
             </div>
@@ -464,28 +467,33 @@ function End({ d, f }) {
 // a parallax swipe: the new shot comes over from the side (or from below), the old one moves a third as far
 // while it falls back and dims, so the cut reads as one camera move rather than two pages sliding
 function Swipe({ children, presentationDirection, presentationProgress: p, passedProps: { axis } }) {
+  const { width } = useVideoConfig(); // cuts are outside the shots' zoom, in the frame's own pixels
   const along = axis === 'y' ? (v) => `0 ${v}%` : (v) => `${v}% 0`;
   return (
     <AbsoluteFill style={presentationDirection === 'entering'
-      ? { translate: along((1 - p) * 100), boxShadow: '0 0 80px rgba(27,42,74,.18)' }
+      ? { translate: along((1 - p) * 100), boxShadow: `0 0 ${(80 * width) / 1080}px rgba(27,42,74,.18)` }
       : { translate: along(-p * 32), scale: 1 - 0.06 * p, filter: `brightness(${1 - 0.25 * p})` }}>
       {children}
     </AbsoluteFill>
   );
 }
 
-// one shot, reading its own frame (local to its sequence)
+// one shot, reading its own frame (local to its sequence). It is laid out 1080 wide and zoomed to the frame:
+// zoom lays it out at the screen's size, so its layers are drawn at the phone's real resolution, where a
+// scaled-down 1080 frame is drawn at full size first (on Safari, over a gigabyte by the third shot)
 function Shot({ d, shot }) {
   const f = useCurrentFrame();
-  const { height: H } = useVideoConfig();
-  const p = { d, f, dur: shot.dur, H };
-  if (shot.key === 'hook') return <Hook {...p} />;
-  if (shot.key === 'say') return <Say {...p} />;
-  if (shot.key === 'brief') return <Brief {...p} />;
-  if (shot.key === 'map') return <RouteMap {...p} />;
-  if (shot.key === 'blocks') return <Blocks {...p} />;
-  if (shot.key === 'end') return <End {...p} />;
-  return <PhotoShot {...p} i={shot.photo} />;
+  const { width, height } = useVideoConfig();
+  const z = width / 1080; const H = height / z;
+  const p = { d, f, dur: shot.dur, H, z };
+  const body = shot.key === 'hook' ? <Hook {...p} />
+    : shot.key === 'say' ? <Say {...p} />
+    : shot.key === 'brief' ? <Brief {...p} />
+    : shot.key === 'map' ? <RouteMap {...p} />
+    : shot.key === 'blocks' ? <Blocks {...p} />
+    : shot.key === 'end' ? <End {...p} />
+    : <PhotoShot {...p} i={shot.photo} />;
+  return <div style={{ position: 'absolute', left: 0, top: 0, width: 1080, height: H, zoom: z }}>{body}</div>;
 }
 
 export default function RecapFilm(d) {
