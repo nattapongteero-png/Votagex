@@ -136,11 +136,19 @@ export default function TodayPage() {
       t.y = y;
     };
     const end = () => { t = null; };
+    // (a mouse wheel or trackpad over it too, on a computer)
+    const wheel = (e) => {
+      if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
+      e.preventDefault();
+      list.scrollTop += e.deltaMode === 1 ? e.deltaY * 16 : e.deltaY;
+    };
     stage.addEventListener('touchstart', start, { passive: true });
     stage.addEventListener('touchmove', move, { passive: false });
     stage.addEventListener('touchend', end);
     stage.addEventListener('touchcancel', end);
+    stage.addEventListener('wheel', wheel, { passive: false });
     return () => {
+      stage.removeEventListener('wheel', wheel);
       stage.removeEventListener('touchstart', start);
       stage.removeEventListener('touchmove', move);
       stage.removeEventListener('touchend', end);
@@ -259,8 +267,8 @@ export default function TodayPage() {
     const me = lookOf(ME);
     // on my own page it's only me; with a group picked, always the group: whoever's going with me, else (a
     // free day, or a trip of mine alone) the group's people
-    // (three of us at most in the scene, me and two more: any more crowd the screen)
-    const crew = (ids) => ids.filter((id) => id !== ME).slice(0, 2).map(lookOf);
+    // (three friends at most in the scene, four of us with me: any more crowd the screen)
+    const crew = (ids) => ids.filter((id) => id !== ME).slice(0, 3).map(lookOf);
     const together = (ids) => (group ? (crew(ids).length ? crew(ids) : crew(group.members)) : []);
     const next = sections.find((x) => x.stops.some((s) => !s.skip && (s.time || '99') >= nowHM)) || sections[sections.length - 1];
     if (!next) {

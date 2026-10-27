@@ -37,8 +37,9 @@ export default function useSheetSnap(pageRef, { cssDriven = false } = {}) {
     page.style.setProperty('--sheet-p', range ? (p / range).toFixed(3) : '0'); // 0 resting → 1 open, for CSS
   };
 
-  // Measure every render (cheap reads) so the steps follow content and font changes
-  useLayoutEffect(() => {
+  // Measure every render (cheap reads) so the steps follow content and font changes; also when the cards change
+  // size without one (fonts, images loading)
+  const measure = () => {
     const page = pageRef.current;
     const content = page?.querySelector('.hp-content');
     const spacer = page?.querySelector('.hp-stage-spacer');
@@ -56,14 +57,16 @@ export default function useSheetSnap(pageRef, { cssDriven = false } = {}) {
     page.style.setProperty('--hp-mask-top', `${stopTop + HANDLE_ZONE - 6}px`);
     page.style.setProperty('--sheet-range', `${Math.max(1, range)}px`);
 
-    // Short lists still need enough scroll room to reach step 2. Measured from the padding already there, never
-    // by setting it back first: that would shrink the list mid-scroll and the browser would pull it back down
-    const pad = parseFloat(content.style.paddingBottom) || BASE_PADDING;
-    const missing = range - (content.scrollHeight - pad + BASE_PADDING - content.clientHeight);
-    const want = BASE_PADDING + Math.max(0, missing);
-    if (Math.abs(want - pad) > 0.5) content.style.paddingBottom = `${want}px`;
+    // Short lists still need enough scroll room to reach step 2: the bottom padding makes it up, worked out from
+    // the cards' own height, never from the scroll height (that counts the padding, or the box when the list is
+    // shorter than it): a padding that feeds on itself shrinks the list mid-scroll and the browser pulls it back
+    const last = content.lastElementChild;
+    const cards = last.offsetTop + last.offsetHeight;
+    const want = Math.max(BASE_PADDING, Math.ceil(range + content.clientHeight - cards));
+    if (Math.abs(want - (parseFloat(content.style.paddingBottom) || 0)) > 0.5) content.style.paddingBottom = `${want}px`;
     apply(content.scrollTop);
-  });
+  };
+  useLayoutEffect(() => measure());
 
   useEffect(() => {
     const page = pageRef.current;
@@ -99,20 +102,24 @@ export default function useSheetSnap(pageRef, { cssDriven = false } = {}) {
     // without momentum no scrollend follows, so a touch also ends in a snap unless scrolling carries on
     const onTouchEnd = () => { st.touching = false; later(hasEnd ? 220 : 160); };
     const onResize = () => apply(el.scrollTop);
+    const ro = new ResizeObserver(() => measure());
+    [...el.children].forEach((c) => ro.observe(c));
 
     el.addEventListener('scroll', onScroll, { passive: true });
     if (hasEnd) el.addEventListener('scrollend', onEnd);
     page.addEventListener('touchstart', onTouchStart, { passive: true });
-    el.addEventListener('wheel', onWheel, { passive: true });
+    // (on the page: a wheel over a stage that passes it on to the list counts too)
+    page.addEventListener('wheel', onWheel, { passive: true });
     page.addEventListener('touchend', onTouchEnd, { passive: true });
     page.addEventListener('touchcancel', onTouchEnd, { passive: true });
     window.addEventListener('resize', onResize);
     return () => {
       clearTimeout(st.timer);
+      ro.disconnect();
       el.removeEventListener('scroll', onScroll);
       el.removeEventListener('scrollend', onEnd);
       page.removeEventListener('touchstart', onTouchStart);
-      el.removeEventListener('wheel', onWheel);
+      page.removeEventListener('wheel', onWheel);
       page.removeEventListener('touchend', onTouchEnd);
       page.removeEventListener('touchcancel', onTouchEnd);
       window.removeEventListener('resize', onResize);
