@@ -15,7 +15,7 @@ import HomeBar from '../HomeBar';
 import DayScene from '../DayScene';
 import { avatarOf, lookOf } from '../peeps';
 import { postcardOf, stampOfTrip, useStamps } from '../stamps';
-import { pm25Level, useWeather, weatherKind } from '../weather';
+import { pm25Level, sceneWeather, useWeather, weatherKind } from '../weather';
 import HOLIDAYS from '../thHolidays.json';
 import {
   ME, PEOPLE, CURRENCIES, HOME, addDays, parseISO, diffDays, thaiShort, byOrder, localHM,
@@ -81,7 +81,7 @@ function postcardOfLook(look, stamps, postcards, today) {
 }
 
 export default function TodayPage() {
-  const { plans: allPlans, places, expenses, memories, postcards, jars, piggyLog, groups, settings, today, openSheet, actions } = useProto();
+  const { plans: allPlans, places, expenses, memories, postcards, jars, piggyLog, groups, settings, today, openSheet, actions, cloud } = useProto();
   // whose calendar: mine (every trip I'm on) or one group's (only its trips, and the events shared with it)
   const group = groups.find((g) => g.id === settings.scope) || null;
   const plans = useMemo(() => (group ? allPlans.filter((p) => p.groupId === group.id) : allPlans.filter((p) => p.members.includes(ME))), [allPlans, group]);
@@ -378,7 +378,7 @@ export default function TodayPage() {
             <MonthCalendar selected={selected} today={today} onSelect={setSelected} stopsOn={stopsOn} eventsOn={eventsOn} groupsOn={groupsOn} plans={plans} />
           </div>
         ) : (
-          <DayScene scene={scene} notes={notes} onTap={() => (scene.kind === 'meet' ? navigate(`/proto/plan/${scene.planId}`)
+          <DayScene scene={scene} notes={notes} weather={sceneWeather(wxToday, !cloud && settings.simWeather)} onTap={() => (scene.kind === 'meet' ? navigate(`/proto/plan/${scene.planId}`)
             : openSheet(canShuffle ? 'shuffle' : 'createPlan', { date: selected }))} />
         )}
       </div>

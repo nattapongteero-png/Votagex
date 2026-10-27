@@ -97,3 +97,19 @@ export function weatherKind(code) {
   if (code <= 57) return { icon: 'wRain', label: 'ฝนปรอย' };
   return { icon: 'wRain', label: 'ฝนตก' };
 }
+
+// The home day scene's weather (DayScene.jsx): kind as the weather card's ('sun' | 'partly' | 'cloud' | 'fog' |
+// 'rain' | 'snow' | 'storm'), how hard it rains, and whether it's hot (35° and up) or cold (18° and under).
+// `sim` (demo only) puts on one of SCENE_SIMS instead of the day's own
+const SCENE_KIND = { wSun: 'sun', wPartly: 'partly', wCloud: 'cloud', wFog: 'fog', wRain: 'rain', wSnow: 'snow', wStorm: 'storm' };
+export const SCENE_SIMS = [
+  ['sun', 'แดด', { kind: 'sun' }], ['hot', 'ร้อนจัด', { kind: 'sun', hot: true }], ['cloud', 'เมฆมาก', { kind: 'cloud' }],
+  ['rain', 'ฝน', { kind: 'rain', level: 2 }], ['storm', 'พายุ', { kind: 'storm', level: 4 }], ['fog', 'หมอก', { kind: 'fog' }],
+  ['cold', 'หนาว', { kind: 'partly', cold: true }],
+];
+export function sceneWeather(wx, sim) {
+  const forced = sim && SCENE_SIMS.find(([k]) => k === sim);
+  if (forced) return forced[2];
+  if (!wx) return { kind: 'partly' };
+  return { kind: SCENE_KIND[weatherKind(wx.code).icon] || 'partly', level: rainLevel(wx), hot: wx.max >= 35, cold: wx.max <= 18 };
+}

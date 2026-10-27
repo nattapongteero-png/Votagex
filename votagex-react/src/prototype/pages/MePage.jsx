@@ -6,6 +6,7 @@ import { Seg, SectionTitle, Progress, Avatars } from '../ui';
 import { ME, PEOPLE, EXPENSE_CATS, parseISO, myShare, fmtMoney, planStatus, jarStats } from '../data';
 import { StampBook } from '../StampBook';
 import { avatarOf } from '../peeps';
+import { SCENE_SIMS } from '../weather';
 
 const CAL_THEME_KEY = 'votagex.proto.calTheme'; // read by the home calendar
 const CAL_THEMES = [['riso', 'Riso'], ['poster', 'โปสเตอร์ 1969']];
@@ -178,6 +179,18 @@ export default function MePage() {
               { value: 'trip', label: 'กำลังเที่ยวโอซาก้า' },
             ]} />
           </div>}
+          {/* the home scene in any weather, to see each without waiting for it */}
+          {!cloud && (
+            <div className="pt-pad-x pt-sim-loc">
+              <div className="pt-muted sm">จำลองอากาศหน้าแรก</div>
+              <div className="pt-chip-row wrap">
+                {[['', 'อากาศจริง'], ...SCENE_SIMS].map(([k, label]) => (
+                  <button key={k || 'real'} className={`pt-chip${(settings.simWeather || '') === k ? ' active' : ''}`}
+                    onClick={() => actions.setSetting('simWeather', k || null)}>{label}</button>
+                ))}
+              </div>
+            </div>
+          )}
           {autoOn && todayStops.length > 0 && (
             <div className="pt-pad-x pt-sim-loc">
               <div className="pt-muted sm">จำลองว่าอยู่ที่</div>

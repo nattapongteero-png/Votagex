@@ -2358,9 +2358,9 @@ body::after { content: ''; position: fixed; inset: 0; z-index: 9998; pointer-eve
 @keyframes ds-me-a { 0%, 41.6% { opacity: 1; } 41.7%, 100% { opacity: 0; } }
 @keyframes ds-me-b { 0%, 41.6% { opacity: 0; } 41.7%, 99.8% { opacity: 1; } 100% { opacity: 0; } }
 @keyframes ds-me-c { 0%, 99.8% { opacity: 0; } 100% { opacity: 1; } }
-/* on my own: I walk in to the middle and just stand there (no hand out, no hop) */
-.ds-me.ds-alone .ds-pose-1 { opacity: 0; animation: ds-alone-b 1.5s both; }
-@keyframes ds-alone-b { 0%, 99.8% { opacity: 0; } 100% { opacity: 1; } }
+/* on my own, or with my umbrella up: I walk in and stay in the second pose (no hop) */
+.ds-me.ds-stays .ds-pose-1 { opacity: 0; animation: ds-stays-b 1.5s both; }
+@keyframes ds-stays-b { 0%, 99.8% { opacity: 0; } 100% { opacity: 1; } }
 /* I'm the one to tap: my thoughts */
 .ds-person.ds-tappable { pointer-events: auto; cursor: pointer; -webkit-tap-highlight-color: transparent; outline: none; }
 .ds-person.ds-tappable:active .ds-pose { scale: .98; transform-origin: 50% 100%; }
@@ -2398,6 +2398,38 @@ body::after { content: ''; position: fixed; inset: 0; z-index: 9998; pointer-eve
   content: ''; position: absolute; left: 10px; bottom: -16px; width: 5px; height: 5px; border-radius: 50%; background: #fff;
   box-shadow: 0 1px 3px rgba(15, 23, 42, .08);
 }
+/* ===== the day's weather on the scene: the sky and land take its colour (lines stay ink), the sun's rays
+   turn, a storm shakes the trees; the rain, heat and fog are SceneWeather.jsx; what we have on for it ===== */
+.ds { --sky: transparent; }
+.ds-skytint { position: absolute; left: 0; right: 0; top: 0; bottom: calc(var(--ground) + var(--horizon) - 4px); background: var(--sky); }
+.ds.ds-wx-sun { --sky: #FBF6E9; --land: #EEEADC; }
+.ds.ds-hot { --sky: #FCEFDA; --land: #F0E6D1; }
+.ds.ds-wx-cloud, .ds.ds-wx-snow { --sky: #EEF0F3; --land: #E7EAE6; }
+.ds.ds-wx-fog { --sky: #F1F2F3; --land: #EAECEB; }
+.ds.ds-wx-rain { --sky: #E8EDF2; --land: #E0E6EA; }
+.ds.ds-wx-storm { --sky: #DDE3EA; --land: #D8DFE4; }
+.ds.ds-cold { --sky: #EDF2F8; --land: #E8EDF1; }
+.ds-wx { position: absolute; inset: 0; pointer-events: none; }
+.ds-rays { transform-box: fill-box; transform-origin: center; animation: ds-turn 60s linear infinite; }
+@keyframes ds-turn { to { rotate: 360deg; } }
+.ds-wx-rain .ds-cloud path { fill: #EEF1F5; }
+.ds-wx-storm .ds-cloud path { fill: #DFE4EA; }
+.ds-wx-storm .ds-leaves { animation: ds-sway-hard 2.4s ease-in-out infinite; }
+@keyframes ds-sway-hard { 0%, 100% { rotate: -1.2deg; } 50% { rotate: 2.2deg; } }
+.ds-wx-fog :is(.ds-far, .ds-hills) { opacity: .3; }
+/* what we have about us: drawn over the pose (or, sitting with an umbrella on my shoulder, behind) */
+.ds-gear { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; color: #18181B; }
+.ds-umbrella { transform-box: fill-box; transform-origin: 50% 100%; }
+.ds-me .ds-umbrella { animation: ds-umbrella-up .55s 1.45s cubic-bezier(.3, 1.5, .5, 1) both; }
+@keyframes ds-umbrella-up { from { scale: 0; opacity: 0; } 30% { opacity: 1; } }
+.ds-sweat path { animation: ds-sweat 2.8s var(--blink, 0s) ease-in infinite both; }
+.ds-sweat path + path { animation-delay: calc(var(--blink, 0s) + 1.4s); }
+@keyframes ds-sweat { 0% { opacity: 0; translate: 0 -40px; } 20%, 65% { opacity: 1; } 100% { opacity: 0; translate: 0 140px; } }
+.ds-puff { transform-box: fill-box; transform-origin: center; opacity: 0; animation: ds-puff 3.2s var(--blink, 0s) ease-out infinite both; }
+.ds-puff-1 { --to: 250px -40px; animation-delay: calc(var(--blink, 0s) + .14s); }
+.ds-puff-2 { --to: 180px -150px; animation-delay: calc(var(--blink, 0s) + .28s); }
+@keyframes ds-puff { 0% { opacity: 0; scale: .3; translate: 0 0; } 12% { opacity: 1; } 55%, 100% { opacity: 0; scale: 1.25; translate: var(--to, 300px -90px); } }
+
 /* the sheet over it: everything holds still */
 .homepage.pt-today:not(.at-rest) .ds * { animation-play-state: paused; }
 @media (prefers-reduced-motion: reduce) {
@@ -2407,6 +2439,7 @@ body::after { content: ''; position: fixed; inset: 0; z-index: 9998; pointer-eve
   .ds-say { display: none; }
   .ds .pt-speech-text { opacity: 1; }
   .ds .pt-speech-dots { display: none; }
+  .ds-puff-0 { opacity: 1; }
 }
 
 /* ===== My character (LookSheet.jsx): me as I'll be on home, and each choice as my picture would be ===== */

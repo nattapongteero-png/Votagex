@@ -121,7 +121,23 @@ const SIGN = {
   ),
 };
 
-const PROPS = { tree: TREE, lamp: LAMP, bench: BENCH, bush: BUSH, cloud: CLOUD, tuft: TUFT, birds: BIRDS, sign: SIGN };
+// the sun, its rays turning slowly
+const SUN = {
+  box: [0, 0, 1600, 1600],
+  art: (
+    <>
+      <g className="ds-rays">
+        <path {...line} strokeWidth={30} d={Array.from({ length: 12 }, (_, i) => {
+          const a = (i / 12) * 2 * Math.PI; const r0 = i % 2 ? 500 : 470; const r1 = i % 2 ? 610 : 660;
+          return `M${Math.round(800 + r0 * Math.cos(a))} ${Math.round(800 + r0 * Math.sin(a))} L${Math.round(800 + r1 * Math.cos(a))} ${Math.round(800 + r1 * Math.sin(a))}`;
+        }).join(' ')} />
+      </g>
+      <circle {...shape} strokeWidth={30} cx="800" cy="800" r="360" />
+    </>
+  ),
+};
+
+const PROPS = { sun: SUN, tree: TREE, lamp: LAMP, bench: BENCH, bush: BUSH, cloud: CLOUD, tuft: TUFT, birds: BIRDS, sign: SIGN };
 
 // one prop at --x (its centre), feet on the ground line; `size` scales it from life size
 export function Prop({ kind, x, size = 1, className = '', style }) {
@@ -147,5 +163,40 @@ export function Land() {
           d="M-10 60 C80 58 140 26 250 28 C340 30 380 52 470 50 C560 48 600 14 720 16 C820 18 870 56 1010 54" />
       </svg>
     </>
+  );
+}
+
+// What the people have about them for the weather, drawn in a person's own units over (or behind) their pose:
+// an umbrella held up in a hand at [x, y, lean°] (the shaft from the grip, the canopy over the head), drops
+// of sweat by the head, breath puffing out of the mouth. The head is always at the same place on a pose
+// (peeps.js HEAD_AT), so sweat and breath sit right on any of them.
+export function Umbrella({ at: [x, y, lean], className = '' }) {
+  return (
+    <g transform={`translate(${x} ${y}) rotate(${lean})`}>
+      <g className={`ds-umbrella ${className}`}>
+        <path {...line} strokeWidth={40} d="M0 -60 L0 70 C0 190 -150 190 -150 90" />
+        <path {...line} strokeWidth={26} d="M0 0 L0 -1300" />
+        <path {...shape} d="M-930 -1250 C-900 -1640 -470 -1860 0 -1860 C470 -1860 900 -1640 930 -1250 Q700 -1340 465 -1250 Q232 -1340 0 -1250 Q-232 -1340 -465 -1250 Q-700 -1340 -930 -1250 Z" />
+        <path {...line} d="M0 -1860 Q-330 -1700 -465 -1250 M0 -1860 Q330 -1700 465 -1250 M0 -1860 L0 -1250 M0 -1860 L0 -1950" />
+      </g>
+    </g>
+  );
+}
+
+export function Sweat() {
+  const drop = 'M0 -60 C22 -20 38 6 38 26 A38 38 0 0 1 -38 26 C-38 6 -22 -20 0 -60 Z';
+  return (
+    <g className="ds-sweat">
+      <path {...shape} strokeWidth={16} transform="translate(705 215)" d={drop} />
+      <path {...shape} strokeWidth={16} transform="translate(690 390) scale(.8)" d={drop} />
+    </g>
+  );
+}
+
+export function Breath() {
+  return (
+    <g className="ds-breath" transform="translate(600 420)">
+      {[0, 1, 2].map((i) => <path key={i} {...shape} strokeWidth={14} className={`ds-puff ds-puff-${i}`} d={`${bumpy(0, 0, 70, 52, 5, 26, 21 + i)} Z`} />)}
+    </g>
   );
 }
