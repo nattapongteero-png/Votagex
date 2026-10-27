@@ -18,6 +18,7 @@
     "@mui/lab": "^7.0.1-beta.22",
     "@mui/material": "^7.3.8",
     "@remotion/player": "^4.0.534",
+    "@remotion/transitions": "^4.0.534",
     "firebase": "^12.10.0",
     "flag-icons": "^7.6.0",
     "maplibre-gl": "^6.15.0",

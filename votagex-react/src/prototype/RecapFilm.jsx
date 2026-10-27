@@ -1,10 +1,14 @@
 import { AbsoluteFill, Easing, Img, interpolate, spring, useCurrentFrame, useVideoConfig } from 'remotion';
-import { FPS, shotsFor } from './recapShots';
+import { TransitionSeries, linearTiming } from '@remotion/transitions';
+import { slide } from '@remotion/transitions/slide';
+import { CUT, FPS, shotsFor } from './recapShots';
 
 // A trip's recap cut like a product launch film (Remotion), 9:16 at 1080 wide. Big words land one beat at a
-// time on a pale ground, the trip's name fills with its cover and the camera pushes through it; the photos are rounded cards that spring in and then open out to fill the screen;
-// who went pop in as faces, the route draws itself on a card with its stops as chips, the numbers count up a
-// beat each on black, and the trip's name closes over a wall of its photos.
+// time on a pale ground; the trip's name fills with its cover and the camera pushes through it; the first
+// photo springs in as a card and opens out to fill the screen, the rest slide in after it; who went pop in as faces, the route draws itself on a card with its stops as chips, the numbers count up a
+// beat each on black, and the trip's name closes over a wall of its photos. Shots are laid out with
+// TransitionSeries: a slide between shots of a kind, a zoom (the new shot settles in from close up while the
+// old one falls back) where the film changes key.
 
 const FONT = "'IBM Plex Sans Thai', sans-serif";
 const INK = '#111318';
@@ -47,7 +51,7 @@ function Intro({ d, f, H }) {
   const size = Math.min(230, 1800 / Math.max(5, [...d.title].length));
   const inP = sp(f, 46, POP);
   const fill = lerp(f, 60, 74, 0, 1, Easing.inOut(Easing.quad));
-  const zoom = interpolate(f, [78, 108], [1, 30], { ...clamp, easing: Easing.in(Easing.cubic) });
+  const zoom = interpolate(f, [78, 108], [1, 30], { ...clamp, easing: Easing.in(Easing.quad), output: 'perceptual-scale' });
   const full = lerp(f, 94, 108, 0, 1, Easing.linear);
   const at = `translate(540 ${cy + (1 - inP) * 80}) scale(${(0.92 + 0.08 * Math.min(1.05, inP)) * zoom}) translate(-540 ${-cy})`;
   const text = (props) => (
@@ -150,11 +154,12 @@ function Route({ d, f, H }) {
   );
 }
 
-// a photo springs in as a card, then opens out to fill the screen; its note lands at the bottom
+// the first photo springs in as a card, then opens out to fill the screen (the rest slide in already full);
+// its note lands at the bottom
 function PhotoShot({ d, f, dur, i, H }) {
   const ph = d.photos[i];
-  const inP = sp(f, 0, POP);
-  const open = lerp(f, 16, 36, 0, 1, Easing.bezier(0.65, 0, 0.35, 1));
+  const inP = i ? 1 : sp(f, 0, POP);
+  const open = i ? 1 : lerp(f, 16, 36, 0, 1, Easing.bezier(0.65, 0, 0.35, 1));
   const w = 760 + (1080 - 760) * open; const h = 980 + (H - 980) * open;
   const side = i % 2 ? 1 : -1;
   return (
@@ -163,8 +168,8 @@ function PhotoShot({ d, f, dur, i, H }) {
         drift={lerp(f, 0, dur, 1.12, 1.02, Easing.linear)} />
       <AbsoluteFill style={{ background: 'linear-gradient(180deg, rgba(0,0,0,.3), transparent 25%, transparent 52%, rgba(0,0,0,.7))', opacity: open }} />
       <div style={{ position: 'absolute', left: 80, right: 80, bottom: 420, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 20 }}>
-        {ph.text && <Beat f={f} from={34} to={dur - 8} size={ph.text.length > 40 ? 58 : 68} weight={600} color="#fff" style={{ textAlign: 'left', lineHeight: 1.4 }}>{ph.text}</Beat>}
-        <Beat f={f} from={40} to={dur - 8} size={40} weight={500} color="rgba(255,255,255,.75)" style={{ textAlign: 'left' }}>{[ph.by, ph.date].filter(Boolean).join(' · ')}</Beat>
+        {ph.text && <Beat f={f} from={i ? 16 : 34} to={dur - 8} size={ph.text.length > 40 ? 58 : 68} weight={600} color="#fff" style={{ textAlign: 'left', lineHeight: 1.4 }}>{ph.text}</Beat>}
+        <Beat f={f} from={i ? 22 : 40} to={dur - 8} size={40} weight={500} color="rgba(255,255,255,.75)" style={{ textAlign: 'left' }}>{[ph.by, ph.date].filter(Boolean).join(' · ')}</Beat>
       </div>
     </AbsoluteFill>
   );
@@ -224,25 +229,44 @@ function End({ d, f, H }) {
 
 /* ---------------- the cut ---------------- */
 
-export default function RecapFilm(d) {
+// the new shot settles in from close up and out of a blur, while the old one falls back and darkens
+function Zoom({ children, presentationDirection, presentationProgress: p }) {
+  const entering = presentationDirection === 'entering';
+  return (
+    <AbsoluteFill style={entering
+      ? { opacity: p, scale: 1.14 - 0.14 * p, filter: `blur(${(1 - p) * 14}px)` }
+      : { scale: 1 - 0.08 * p, filter: `brightness(${1 - 0.5 * p})` }}>
+      {children}
+    </AbsoluteFill>
+  );
+}
+const PRESENT = { slide: slide({ direction: 'from-right' }), zoom: { component: Zoom, props: {} } };
+const timing = linearTiming({ durationInFrames: CUT, easing: Easing.bezier(0.65, 0, 0.35, 1) });
+
+// one shot, reading its own frame (local to its sequence)
+function Shot({ d, shot }) {
   const f = useCurrentFrame();
   const { height: H } = useVideoConfig();
+  const p = { d, f, dur: shot.dur, H };
+  if (shot.key === 'intro') return <Intro {...p} />;
+  if (shot.key === 'cover') return <Cover {...p} />;
+  if (shot.key === 'crew') return <Crew {...p} />;
+  if (shot.key === 'route') return <Route {...p} />;
+  if (shot.key === 'numbers') return <Numbers {...p} />;
+  if (shot.key === 'end') return <End {...p} />;
+  return <PhotoShot {...p} i={shot.photo} />;
+}
+
+export default function RecapFilm(d) {
   const shots = shotsFor(d);
-  const found = shots.findIndex((s) => f < s.from + s.dur);
-  const shot = shots[found < 0 ? shots.length - 1 : found];
-  const p = { d, f: f - shot.from, dur: shot.dur, H };
-  // a quick dip between shots, except into the cover, which carries straight on from the intro's card
-  const dip = shot.key === 'cover' ? 0 : lerp(p.f, 0, 6, 1, 0, Easing.linear);
   return (
-    <AbsoluteFill style={{ background: '#000', overflow: 'hidden' }}>
-      {shot.key === 'intro' && <Intro {...p} />}
-      {shot.key === 'cover' && <Cover {...p} />}
-      {shot.key === 'crew' && <Crew {...p} />}
-      {shot.key === 'route' && <Route {...p} />}
-      {shot.photo != null && <PhotoShot {...p} i={shot.photo} />}
-      {shot.key === 'numbers' && <Numbers {...p} />}
-      {shot.key === 'end' && <End {...p} />}
-      {dip > 0 && <AbsoluteFill style={{ background: shot.light ? PALE : INK, opacity: dip }} />}
+    <AbsoluteFill style={{ background: '#000' }}>
+      <TransitionSeries>
+        {shots.flatMap((shot) => [
+          PRESENT[shot.cut] && <TransitionSeries.Transition key={`${shot.key}-cut`} presentation={PRESENT[shot.cut]} timing={timing} />,
+          <TransitionSeries.Sequence key={shot.key} name={shot.key} durationInFrames={shot.dur}><Shot d={d} shot={shot} /></TransitionSeries.Sequence>,
+        ].filter(Boolean))}
+      </TransitionSeries>
     </AbsoluteFill>
   );
 }
