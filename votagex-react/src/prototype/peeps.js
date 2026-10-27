@@ -20,7 +20,7 @@ export const piecesOf = (look, pose, face) => [pose, look.hair && `hair/${look.h
 // each full-body pose's box in the library's units with a short-haired head on it, [x, y, width, height]
 // (measured from the drawings), to stand people on one line at one size
 export const POSE_BOX = {
-  'standing/CrossedArmsWB': [-199, 62, 1071, 2871], 'standing/EasingBW': [-190, 62, 1075, 2884], 'standing/EasingWB': [-190, 62, 1075, 2884],
+  'standing/CrossedArmsBW': [-199, 62, 1071, 2871], 'standing/CrossedArmsWB': [-199, 62, 1071, 2871], 'standing/EasingBW': [-190, 62, 1075, 2884], 'standing/EasingWB': [-190, 62, 1075, 2884],
   'standing/PointingFingerBW': [-15, 62, 1300, 2607], 'standing/PointingFingerWB': [-16, 62, 1300, 2607],
   'standing/RestingBW': [7, 62, 1274, 2880], 'standing/RestingWB': [7, 62, 1274, 2879],
   'standing/RoboDanceBW': [-146, 62, 1350, 2926], 'standing/RoboDanceWB': [-146, 62, 1350, 2927],

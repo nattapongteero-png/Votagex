@@ -2331,13 +2331,16 @@ body::after { content: ''; position: fixed; inset: 0; z-index: 9998; pointer-eve
 .ds-hills .ds-land-fill { fill: var(--land); stroke: none; }
 /* the little trees far off on the hills (no leaf marks: they'd only be specks) */
 .ds-far .ds-leaves > path:last-child { display: none; }
-.ds-sitter { bottom: calc(var(--ground) + var(--tall) * var(--lift, 0)); }
 .ds-pose { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 /* the park, alive a little: the leaves sway, the clouds and birds drift */
 .ds-leaves { transform-box: fill-box; transform-origin: 50% 100%; animation: ds-sway 8s ease-in-out infinite; }
 @keyframes ds-sway { 0%, 100% { rotate: 0deg; } 50% { rotate: .8deg; } }
-.ds-cloud { animation: ds-drift 24s ease-in-out infinite alternate; }
 .ds-birds { animation: ds-drift 16s ease-in-out infinite alternate-reverse; }
+/* clouds sail across, off one side and in at the other (still, where they're placed, with reduced motion) */
+@media (prefers-reduced-motion: no-preference) {
+  .ds-cloud { left: 0; translate: none; animation: ds-across var(--dur, 80s) linear var(--delay, 0s) infinite; }
+}
+@keyframes ds-across { from { translate: -100% 0; } to { translate: 100cqw 0; } }
 @keyframes ds-drift { to { translate: calc(-50% + 5cqw) 0; } }
 /* breathing, and a blink every few seconds (--blink sets each person apart) */
 .ds-pose > g { transform-box: fill-box; transform-origin: 50% 100%; animation: ds-breathe 3.6s ease-in-out infinite; }
@@ -2351,16 +2354,13 @@ body::after { content: ''; position: fixed; inset: 0; z-index: 9998; pointer-eve
 .ds-me { animation: ds-walk-in 1.5s cubic-bezier(.33, .2, .35, 1) both; }
 .ds-me .ds-pose-0 { animation: ds-step .375s ease-in-out 4 both, ds-me-a 3.6s both; }
 .ds-me .ds-pose-1 { opacity: 0; animation: ds-me-b 3.6s both, ds-hop .45s 1.5s ease-out both; }
-.ds-me .ds-pose-2 { opacity: 0; animation: ds-me-c 3.6s both; }
 @keyframes ds-walk-in { from { transform: translateX(-62cqw); } }
 @keyframes ds-step { 0%, 100% { translate: 0 0; rotate: 0deg; } 50% { translate: 0 -2.5%; rotate: 1.2deg; } }
 @keyframes ds-hop { 0%, 100% { translate: 0 0; } 35% { translate: 0 -4%; } }
-@keyframes ds-me-a { 0%, 41.6% { opacity: 1; } 41.7%, 100% { opacity: 0; } }
+@keyframes ds-me-a { 0%, 41.6% { opacity: 1; } 41.7%, 99.8% { opacity: 0; } 100% { opacity: 1; } }
 @keyframes ds-me-b { 0%, 41.6% { opacity: 0; } 41.7%, 99.8% { opacity: 1; } 100% { opacity: 0; } }
-@keyframes ds-me-c { 0%, 99.8% { opacity: 0; } 100% { opacity: 1; } }
-/* on my own, or with my umbrella up: I walk in and stay in the second pose (no hop) */
-.ds-me.ds-stays .ds-pose-1 { opacity: 0; animation: ds-stays-b 1.5s both; }
-@keyframes ds-stays-b { 0%, 99.8% { opacity: 0; } 100% { opacity: 1; } }
+/* on my own: I come in and just stand (no hand out, no hop) */
+.ds-me.ds-alone .ds-pose-0 { animation: ds-step .375s ease-in-out 4 both; }
 /* I'm the one to tap: my thoughts */
 .ds-person.ds-tappable { pointer-events: auto; cursor: pointer; -webkit-tap-highlight-color: transparent; outline: none; }
 .ds-person.ds-tappable:active .ds-pose { scale: .98; transform-origin: 50% 100%; }
@@ -2374,7 +2374,7 @@ body::after { content: ''; position: fixed; inset: 0; z-index: 9998; pointer-eve
   box-shadow: 0 4px 14px rgba(15, 23, 42, .1); opacity: 0; transform-origin: 100% 100%; animation: ds-say 2.4s 1.7s both; }
 @keyframes ds-say { 0% { opacity: 0; scale: .4; } 14% { opacity: 1; scale: 1.08; } 22%, 84% { opacity: 1; scale: 1; } 100% { opacity: 0; scale: .92; } }
 /* a free day: on the bench, the head tilting now and then */
-.ds-sitter .pp-head { transform-box: fill-box; transform-origin: 50% 85%; animation: ds-tilt 6s ease-in-out infinite; }
+.ds-wonder .pp-head { transform-box: fill-box; transform-origin: 50% 85%; animation: ds-tilt 6s ease-in-out infinite; }
 @keyframes ds-tilt { 0%, 100% { transform: rotate(0deg); } 30% { transform: rotate(-4deg); } 60% { transform: rotate(2deg); } }
 /* what I say (SpeechNotes, once the hellos are done): a small bubble over my head, two dots trailing down to it */
 .ds-note { position: absolute; left: calc(var(--x) - 14px); bottom: calc(var(--ground) + var(--tall) * var(--head) + 18px); z-index: 1;
@@ -2417,11 +2417,8 @@ body::after { content: ''; position: fixed; inset: 0; z-index: 9998; pointer-eve
 .ds-wx-storm .ds-leaves { animation: ds-sway-hard 2.4s ease-in-out infinite; }
 @keyframes ds-sway-hard { 0%, 100% { rotate: -1.2deg; } 50% { rotate: 2.2deg; } }
 .ds-wx-fog :is(.ds-far, .ds-hills) { opacity: .3; }
-/* what we have about us: drawn over the pose (or, sitting with an umbrella on my shoulder, behind) */
+/* what we have about us: drawn over the pose */
 .ds-gear { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; color: #18181B; }
-.ds-umbrella { transform-box: fill-box; transform-origin: 50% 100%; }
-.ds-me .ds-umbrella { animation: ds-umbrella-up .55s 1.45s cubic-bezier(.3, 1.5, .5, 1) both; }
-@keyframes ds-umbrella-up { from { scale: 0; opacity: 0; } 30% { opacity: 1; } }
 .ds-sweat path { animation: ds-sweat 2.8s var(--blink, 0s) ease-in infinite both; }
 .ds-sweat path + path { animation-delay: calc(var(--blink, 0s) + 1.4s); }
 @keyframes ds-sweat { 0% { opacity: 0; translate: 0 -40px; } 20%, 65% { opacity: 1; } 100% { opacity: 0; translate: 0 140px; } }
@@ -2434,8 +2431,8 @@ body::after { content: ''; position: fixed; inset: 0; z-index: 9998; pointer-eve
 .homepage.pt-today:not(.at-rest) .ds * { animation-play-state: paused; }
 @media (prefers-reduced-motion: reduce) {
   .ds *, .ds *::before, .ds *::after { animation: none !important; }
-  .ds-me .ds-pose-0, .ds-me .ds-pose-1, .ds-greeter .ds-pose-1, .ds .pp-shut { opacity: 0; }
-  .ds-me .ds-pose-2 { opacity: 1; }
+  .ds-me .ds-pose-1, .ds-greeter .ds-pose-1, .ds .pp-shut { opacity: 0; }
+  .ds-me .ds-pose-0, .ds-greeter .ds-pose-0 { opacity: 1; }
   .ds-say { display: none; }
   .ds .pt-speech-text { opacity: 1; }
   .ds .pt-speech-dots { display: none; }

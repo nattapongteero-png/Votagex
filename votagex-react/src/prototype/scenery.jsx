@@ -137,7 +137,24 @@ const SUN = {
   ),
 };
 
-const PROPS = { sun: SUN, tree: TREE, lamp: LAMP, bench: BENCH, bush: BUSH, cloud: CLOUD, tuft: TUFT, birds: BIRDS, sign: SIGN };
+// a shelter from the rain, as at a bus stop: a flat roof on thin posts, a glass wall at the back, seen as the
+// bench is (the back posts stand further back, higher up); the roof 2.2 m up, `w` across (4600, about 2.6 m,
+// for a few of us; 2900 for one). The rain keeps off under it (SceneWeather.jsx knows its size from DayScene)
+const shelter = (w) => ({
+  box: [0, 0, w, 3800],
+  art: (
+    <>
+      <path fill={INK} d={`M520 300 h70 v3080 h-70 Z M${w - 590} 300 h70 v3080 h-70 Z`} />
+      <path {...line} strokeWidth={18} d={`M590 760 H${w - 590} V3260 H590 Z`} />
+      <path {...line} strokeWidth={16} d={`M900 1500 L1500 900 M1100 1800 L2000 900 M${w - 1500} 3000 L${w - 900} 2400`} />
+      <path {...shape} d={`M140 210 H${w - 140} L${w - 220} 320 H220 Z`} />
+      <path {...shape} d={`M40 60 h${w - 80} a40 40 0 0 1 40 40 v110 a40 40 0 0 1 -40 40 h${80 - w} a40 40 0 0 1 -40 -40 v-110 a40 40 0 0 1 40 -40 Z`} />
+      <path fill={INK} d={`M250 250 h96 l8 3550 h-112 Z M${w - 346} 250 h96 l8 3550 h-112 Z`} />
+    </>
+  ),
+});
+
+const PROPS = { shelter: shelter(4600), shelterOne: shelter(2900), sun: SUN, tree: TREE, lamp: LAMP, bench: BENCH, bush: BUSH, cloud: CLOUD, tuft: TUFT, birds: BIRDS, sign: SIGN };
 
 // one prop at --x (its centre), feet on the ground line; `size` scales it from life size
 export function Prop({ kind, x, size = 1, className = '', style }) {
@@ -166,23 +183,9 @@ export function Land() {
   );
 }
 
-// What the people have about them for the weather, drawn in a person's own units over (or behind) their pose:
-// an umbrella held up in a hand at [x, y, lean°] (the shaft from the grip, the canopy over the head), drops
-// of sweat by the head, breath puffing out of the mouth. The head is always at the same place on a pose
-// (peeps.js HEAD_AT), so sweat and breath sit right on any of them.
-export function Umbrella({ at: [x, y, lean], className = '' }) {
-  return (
-    <g transform={`translate(${x} ${y}) rotate(${lean})`}>
-      <g className={`ds-umbrella ${className}`}>
-        <path {...line} strokeWidth={40} d="M0 -60 L0 70 C0 190 -150 190 -150 90" />
-        <path {...line} strokeWidth={26} d="M0 0 L0 -1300" />
-        <path {...shape} d="M-930 -1250 C-900 -1640 -470 -1860 0 -1860 C470 -1860 900 -1640 930 -1250 Q700 -1340 465 -1250 Q232 -1340 0 -1250 Q-232 -1340 -465 -1250 Q-700 -1340 -930 -1250 Z" />
-        <path {...line} d="M0 -1860 Q-330 -1700 -465 -1250 M0 -1860 Q330 -1700 465 -1250 M0 -1860 L0 -1250 M0 -1860 L0 -1950" />
-      </g>
-    </g>
-  );
-}
-
+// What the people have about them for the weather, drawn in a person's own units over their pose: drops of
+// sweat by the head, breath puffing out of the mouth. The head is always at the same place on a pose (peeps.js
+// HEAD_AT), so they sit right on any of them.
 export function Sweat() {
   const drop = 'M0 -60 C22 -20 38 6 38 26 A38 38 0 0 1 -38 26 C-38 6 -22 -20 0 -60 Z';
   return (
