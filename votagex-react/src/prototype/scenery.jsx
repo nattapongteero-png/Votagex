@@ -1,8 +1,9 @@
 // The day scene's backdrop (DayScene.jsx), drawn as Open Peeps are: one line of the same weight, white
 // fills, solid for the dark parts, at life size beside them (a standing person is 3000 tall in their units,
 // about 1.75 m: the tree is some 4.5 m, the lamp 3.7 m, the bench's seat 50 cm up), feet on the bottom, so
-// it's sized off --tall like the people and stands on the same ground. It's drawn in currentColor, set
-// lighter than the people (CSS) so they stand out in front of it.
+// it's sized off --tall like the people and stands on the same ground. It's drawn in currentColor, the
+// people's ink (CSS). What stands on the ground has a short stroke of ground under it, as the people do
+// (Floor): no soft shadows, which made everything look as if it floated.
 
 const INK = 'currentColor';
 const LINE = 22; // the people's line weight, in their units
@@ -30,7 +31,7 @@ const shape = { ...line, fill: '#fff' };
 // a tree as tall as two and a half people: the trunk up past our heads, the leaves in three clumps
 const TREE = {
   box: [0, 0, 5600, 7800],
-  shadow: 0.36,
+  floor: 0.3,
   art: (
     <>
       <path {...shape} d="M2380 7800 C2560 7740 2640 7520 2660 7200 C2690 6400 2700 5200 2690 4300 L2700 3500 L3000 3500 C2990 4300 3000 5200 3030 6400 C3050 7200 3140 7740 3330 7800" />
@@ -67,7 +68,7 @@ const LAMP = {
 // back (higher up) than the front ones. Its seat's middle is 960 off the front ground (DayScene sits me there)
 const BENCH = {
   box: [0, 0, 2800, 1760],
-  shadow: 0.95,
+  floor: 1,
   art: (
     <>
       {/* the ironwork in solid ink (back legs and posts, then the front legs), the planks white */}
@@ -84,7 +85,7 @@ const BENCH = {
 
 const BUSH = {
   box: [0, 0, 2400, 1300],
-  shadow: 0.9,
+  floor: 1.02,
   art: (
     <>
       <path {...shape} d={bumpy(1200, 1300, 1110, 1060, 9, 150, 3, Math.PI, 2 * Math.PI)} />
@@ -111,7 +112,7 @@ const BIRDS = {
 // a signpost, two blank boards pointing different ways
 const SIGN = {
   box: [0, 0, 1400, 3400],
-  shadow: 0.34,
+  floor: 0.34,
   art: (
     <>
       <path {...shape} d="M640 3400 L654 500 L756 500 L770 3400" />
@@ -124,19 +125,28 @@ const SIGN = {
 
 const PROPS = { tree: TREE, lamp: LAMP, bench: BENCH, bush: BUSH, cloud: CLOUD, tuft: TUFT, birds: BIRDS, sign: SIGN };
 
+// a short stroke of ground under something standing, a pen's line, a little uneven
+export function Floor({ className = '', style }) {
+  return (
+    <svg className={`ds-floor ${className}`} viewBox="0 0 100 4" preserveAspectRatio="none" aria-hidden="true" style={style}>
+      <path fill="none" stroke={INK} strokeLinecap="round" vectorEffect="non-scaling-stroke" d="M1 2 C24 1.4 50 2.6 76 2 C86 1.8 93 2.2 99 2" />
+    </svg>
+  );
+}
+
 // one prop at --x (its centre), standing `d` px further back than the front of the ground (higher up the
 // page); `size` scales it from life size (DayScene works out how much smaller further back makes it). Things
-// on the ground cast a soft shadow there, as the people do (not things far off, nor in the sky)
+// on the ground (not far off, nor in the sky) have their stroke of ground under them
 export function Prop({ kind, x, d = 0, size = 1, className = '', style }) {
-  const { box: [bx, by, w, h], art, shadow } = PROPS[kind];
+  const { box: [bx, by, w, h], art, floor } = PROPS[kind];
   const width = `calc(var(--tall) * ${(w * size) / 3000})`;
   return (
     <>
-      {shadow && d < 100 && <i className="ds-prop-shadow" style={{ '--x': x, '--d': `${d}px`, width: `calc(${width} * ${shadow})` }} />}
       <svg className={`ds-prop ds-${kind} ${className}`} viewBox={`${bx} ${by} ${w} ${h}`} aria-hidden="true"
         style={{ '--x': x, '--d': `${d}px`, height: `calc(var(--tall) * ${(h * size) / 3000})`, aspectRatio: `${w} / ${h}`, ...style }}>
         {art}
       </svg>
+      {floor && d < 100 && <Floor className="ds-prop-floor" style={{ '--x': x, '--d': `${d}px`, width: `calc(${width} * ${floor})` }} />}
     </>
   );
 }
@@ -147,19 +157,6 @@ export function Hills() {
     <svg className="ds-hills" viewBox="0 0 1000 60" preserveAspectRatio="none" aria-hidden="true">
       <path fill="none" stroke={INK} strokeLinecap="round" vectorEffect="non-scaling-stroke"
         d="M-10 60 C80 58 140 26 250 28 C340 30 380 52 470 50 C560 48 600 14 720 16 C820 18 870 56 1010 54" />
-    </svg>
-  );
-}
-
-// the ground: a footpath along the front that we stand on, its near edge and, out at the sides only (never
-// a line behind our legs), its far one with the lawn beyond; broken here and there as a pen would leave it
-export function Ground() {
-  return (
-    <svg className="ds-ground" viewBox="0 0 1000 32" preserveAspectRatio="none" aria-hidden="true">
-      <path fill="none" stroke={INK} strokeLinecap="round" vectorEffect="non-scaling-stroke"
-        d="M-10 31 C120 30 230 31.5 352 31 M378 31 C520 31.5 640 30 742 31 M766 31 C860 31.5 930 30 1010 31" />
-      <path className="ds-path-far" fill="none" stroke={INK} strokeLinecap="round" vectorEffect="non-scaling-stroke"
-        d="M-10 1 C50 1.4 110 0.6 170 1 M850 1 C910 1.4 960 0.6 1010 1" />
     </svg>
   );
 }

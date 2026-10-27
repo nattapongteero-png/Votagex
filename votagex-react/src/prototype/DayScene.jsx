@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import Peep from './Peep';
 import Icon from './icons';
 import SpeechNotes from './SpeechNotes';
-import { Ground, Hills, Prop } from './scenery';
+import { Floor, Hills, Prop } from './scenery';
 import { POSE_BOX, piecesOf, usePeeps } from './peeps';
 import { PLACE_CATS } from './data';
 
@@ -41,7 +41,7 @@ function Person({ look, poses, flip, d = 0, className = '', style }) {
   const [x, y, w, h] = boxOf(poses);
   return (
     <div className={`ds-person ${className}`} style={{ aspectRatio: `${w} / ${h}`, height: `calc(var(--tall) * ${(h / FULL) * far(d)})`, '--d': `${d}px`, ...style }}>
-      <i className="ds-shadow" />
+      {!className.includes('ds-sitter') && <Floor />}
       {poses.map((pose, i) => (
         <svg key={pose} className={poses.length > 1 ? `ds-pose ds-pose-${i}` : 'ds-pose'} viewBox={`${x} ${y} ${w} ${h}`}
           style={flip ? { transform: 'scaleX(-1)' } : undefined}>
@@ -101,7 +101,6 @@ export default function DayScene({ scene, notes = [], onTap }) {
   return (
     <div className={`ds ds-${kind}${ready ? ' ready' : ''}`} style={{ '--horizon': `${HORIZON}px` }}>
       <div className="ds-world" aria-hidden="true">
-        <Ground />
         {BACKDROP[kind].map(({ p, x, d = 0, size = 1, top }, i) => (p === 'hills' ? <Hills key={i} />
           : top ? <Prop key={i} kind={p} x={x} size={size} className="ds-sky" style={{ top }} />
             : <Prop key={i} kind={p} x={x} d={d} size={size * far(d)} className={d > 100 ? 'ds-far' : ''} />))}

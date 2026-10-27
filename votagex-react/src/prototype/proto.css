@@ -2299,8 +2299,8 @@ body::after { content: ''; position: fixed; inset: 0; z-index: 9998; pointer-eve
    it shows, then only breathes and blinks. People are --tall (a standing person's height) and stand on one
    line, --ground off the bottom; movement uses translate / rotate / scale on their own, so a person's flip
    (an inline transform) is kept. No card: it's drawn on the page, edge to edge (out past the stage's 20px
-   sides), and the park behind (.ds-world) goes on up behind the header, lighter than the people, and
-   lighter again under the header so its buttons stay clear ===== */
+   sides), and the park behind (.ds-world) goes on up behind the header, in the people's own ink, faded
+   only under the header so its buttons stay clear ===== */
 .ds { position: relative; width: calc(100% + 40px); height: var(--ds-h, 356px); margin: 0 -20px; container-type: size;
   --tall: 196px; --ground: 18px; font-family: var(--font); color: var(--tw-text); text-align: left; }
 /* the card sheet comes up over it (solid, its top edge a soft fade, no line) and stops under the profile row,
@@ -2315,26 +2315,25 @@ body::after { content: ''; position: fixed; inset: 0; z-index: 9998; pointer-eve
 .homepage.pt-today.with-scene.header-collapsed .hp-header > :not(.pt-snap-stop),
 .homepage.pt-today.with-scene.header-collapsed .hp-header > * * { pointer-events: auto; }
 .ds-tap { position: absolute; inset: 0; padding: 0; border: 0; background: none; cursor: pointer; -webkit-tap-highlight-color: transparent; }
-.ds-world { position: absolute; left: 0; right: 0; bottom: 0; top: calc(-1 * var(--hp-stage-top, 0px)); overflow: hidden; pointer-events: none; color: #BCC2CD;
-  --fade: linear-gradient(to bottom, rgba(0, 0, 0, .3), rgba(0, 0, 0, .3) calc(var(--hp-stage-top, 0px) - 30px), #000 calc(var(--hp-stage-top, 0px) + 40px));
+.ds-world { position: absolute; left: 0; right: 0; bottom: 0; top: calc(-1 * var(--hp-stage-top, 0px)); overflow: hidden; pointer-events: none; color: #18181B;
+  --fade: linear-gradient(to bottom, rgba(0, 0, 0, .16), rgba(0, 0, 0, .16) calc(var(--hp-stage-top, 0px) - 20px), #000 calc(var(--hp-stage-top, 0px) + 50px));
   -webkit-mask-image: var(--fade); mask-image: var(--fade); }
 .ds-person, .ds-prop { position: absolute; left: var(--x); bottom: calc(var(--ground) + var(--d, 0px)); translate: -50% 0; pointer-events: none; }
-/* everything on the ground casts the same soft shadow, people and park alike */
-.ds-prop-shadow { position: absolute; left: var(--x); bottom: calc(var(--ground) + var(--d, 0px) - 4px); height: 10px; translate: -50% 0; border-radius: 50%;
-  background: radial-gradient(closest-side, rgba(24, 24, 27, .13), rgba(24, 24, 27, 0)); }
+/* what stands on the ground has a short pen stroke of ground under it, people and park alike (no soft shadows) */
+.ds-floor { position: absolute; left: -8%; bottom: -2px; width: 116%; height: 4px; overflow: visible; color: #18181B; }
+.ds-floor path { stroke-width: 1.5px; }
+.ds-prop-floor { left: var(--x); right: auto; bottom: calc(var(--ground) + var(--d, 0px) - 2px); translate: -50% 0; }
 .ds-prop { overflow: visible; }
 .ds-prop.ds-sky { bottom: auto; }
-.ds-ground { position: absolute; left: 0; bottom: calc(var(--ground) - 8px); width: 100%; height: 32px; overflow: visible; }
-.ds-ground path { stroke-width: 1.5px; }
-.ds-ground .ds-path-far { stroke-width: 1.2px; }
-/* far off: the hills sit on the horizon, the trees on them fainter (the air between) */
+/* far off: the hills sit on the horizon */
 .ds-hills { position: absolute; left: 0; bottom: calc(var(--ground) + var(--horizon) - 2px); width: 100%; height: 26px; overflow: visible; }
-.ds-hills path { stroke-width: 1.2px; opacity: .6; }
-.ds-far { opacity: .7; }
+.ds-hills path { stroke-width: 1.2px; }
+.ds-far .ds-leaves > path:last-child { display: none; } /* leaf marks would only be specks that far off */
 .ds-sitter { bottom: calc(var(--ground) + var(--d, 0px) + var(--tall) * var(--lift, 0)); }
 .ds-pose { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
-.ds-shadow { position: absolute; left: 12%; right: 12%; bottom: -4px; height: 10px; border-radius: 50%; background: radial-gradient(closest-side, rgba(24, 24, 27, .18), rgba(24, 24, 27, 0)); }
-.ds-sitter .ds-shadow { display: none; }
+/* walking in, I've no ground under me till I stop: then it's drawn, out from my feet */
+.ds-me .ds-floor { animation: ds-floor-in .35s 1.45s ease-out both; }
+@keyframes ds-floor-in { from { opacity: 0; scale: .3 1; } }
 /* the park, alive a little: the leaves sway, the clouds and birds drift */
 .ds-leaves { transform-box: fill-box; transform-origin: 50% 100%; animation: ds-sway 8s ease-in-out infinite; }
 @keyframes ds-sway { 0%, 100% { rotate: 0deg; } 50% { rotate: .8deg; } }
