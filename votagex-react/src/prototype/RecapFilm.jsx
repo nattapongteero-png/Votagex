@@ -4,7 +4,7 @@ import { FPS, shotsFor } from './recapShots';
 // A trip's recap cut like a product launch film (Remotion), 9:16 at 1080 wide. Big words land one beat at a
 // time on a pale ground; the photos are rounded cards that spring in and then open out to fill the screen;
 // who went pop in as faces, the route draws itself on a card with its stops as chips, the numbers count up a
-// beat each on black, and the last line sits over a wall of the trip's photos.
+// beat each on black, and the trip's name closes over a wall of its photos.
 
 const FONT = "'IBM Plex Sans Thai', sans-serif";
 const INK = '#111318';
@@ -195,7 +195,7 @@ function Numbers({ d, f }) {
   );
 }
 
-// the photos as a tilted wall, pulling back, then the last line over a pale veil
+// the photos as a tilted wall, pulling back, then the trip's name over a pale veil
 function End({ d, f, H }) {
   const pics = d.photos.length ? d.photos.map((p) => p.src) : [d.cover].filter(Boolean);
   const pull = lerp(f, 0, 60, 1.7, 1, Easing.out(Easing.cubic));
@@ -211,9 +211,11 @@ function End({ d, f, H }) {
       </div>
       <AbsoluteFill style={{ background: PALE, opacity: veil }} />
       <AbsoluteFill style={{ alignItems: 'center', justifyContent: 'center', gap: 6, padding: '0 70px' }}>
-        <Beat f={f} from={48} size={130}>ไว้ไปด้วยกัน</Beat>
-        <Beat f={f} from={56} size={130} color={ACCENT}>อีกนะ</Beat>
-        <Beat f={f} from={70} size={40} weight={500} color="rgba(17,19,24,.55)" style={{ marginTop: 30 }}>{d.title} · {d.ago}</Beat>
+        <Beat f={f} from={48} size={Math.min(150, 1400 / Math.max(5, [...d.title].length))}>{d.title}</Beat>
+        <Beat f={f} from={56} size={44} weight={500} color="rgba(17,19,24,.55)" style={{ marginTop: 16 }}>{d.dateFull} · {d.ago}</Beat>
+        <div style={{ position: 'absolute', bottom: 420 }}>
+          <Beat f={f} from={68} size={34} weight={700} color="rgba(17,19,24,.4)" style={{ fontFamily: "'Anton', sans-serif", letterSpacing: 10 }}>VOTAGEX</Beat>
+        </div>
       </AbsoluteFill>
     </AbsoluteFill>
   );
