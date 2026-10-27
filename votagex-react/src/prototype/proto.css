@@ -2046,9 +2046,6 @@ button.pt-pick-later { width: 100%; font: inherit; color: inherit; text-align: l
 .pt-story-top .pt-strong, .pt-story-top .pt-muted { color: #fff; text-shadow: 0 1px 4px rgba(0, 0, 0, .4); }
 .pt-story-close { width: 44px; height: 44px; display: grid; place-items: center; border: none; background: none; color: #fff; cursor: pointer; pointer-events: auto; }
 .pt-story-bars, .pt-story-top, .pt-story-foot { z-index: 2; }
-.pt-story.on-paper .pt-story-bar { background: rgba(34, 55, 126, .18); }
-.pt-story.on-paper .pt-story-bar i { background: #22377E; }
-.pt-story.on-paper .pt-story-top .pt-strong, .pt-story.on-paper .pt-story-top .pt-muted, .pt-story.on-paper .pt-story-close { color: #22377E; text-shadow: none; }
 .pt-story-bar i, .pt-story-top .pt-strong, .pt-story-top .pt-muted, .pt-story-close { transition: color .3s, background-color .3s; }
 .pt-story-foot { position: absolute; left: 16px; right: 16px; bottom: max(24px, env(safe-area-inset-bottom)); display: flex; gap: 8px; flex-wrap: wrap; }
 .pt-story-foot .pt-story-cta { margin-left: auto; background: #fff; color: var(--tw-text); }
@@ -2094,99 +2091,3 @@ body::after { content: ''; position: fixed; inset: 0; z-index: 9998; pointer-eve
 .pt-station-band { display: flex; align-self: stretch; justify-content: space-between; margin-top: 10px; background: var(--line, #2E7D6B); }
 .pt-station-band button { display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; border: none; background: none; color: #fff;
   font-family: var(--font); font-size: 13px; line-height: 20px; font-weight: 600; cursor: pointer; }
-
-/* ===== Recap: the trip developed again in a darkroom (Darkroom.jsx) ===== */
-.dk { position: fixed; inset: 0; z-index: 200; width: min(100%, 430px); margin: 0 auto; overflow: hidden; color: #fff; user-select: none;
-  -webkit-user-select: none; background: #1A1311; transition: background 1.4s ease, color 1.4s ease; }
-.dk.is-lit { background: #EFEAE1; color: var(--tw-text); }
-.dk-room { position: absolute; inset: 0; touch-action: none; background: #1A1311; transition: background 1.4s ease; }
-.is-lit .dk-room { background: #EFEAE1; }
-.is-dark .dk-room { animation: dk-on 2.2s steps(1, end) both; }
-@keyframes dk-on { 0% { filter: brightness(0); } 22% { filter: brightness(.55); } 27% { filter: brightness(.08); } 34% { filter: brightness(.8); }
-  39% { filter: brightness(.3); } 46%, 100% { filter: brightness(1); } }
-.is-lit .dk-room { touch-action: auto; }
-.dk-scroll { position: absolute; inset: 0; overflow: hidden; }
-.is-lit .dk-scroll { overflow-y: auto; -webkit-overflow-scrolling: touch; }
-.dk-stage { position: relative; }
-/* the safelight: everything is seen through it, red with dark corners; it drains away when the light goes on */
-.dk-red { position: absolute; inset: 0; pointer-events: none; mix-blend-mode: multiply; transition: opacity 1.6s ease .15s;
-  background: radial-gradient(100% 80% at 70% 8%, #FF5A30, #E8301A 50%, #8A160A 100%); }
-.is-lit .dk-red { opacity: 0; }
-.dk-flash { position: absolute; inset: 0; pointer-events: none; background: #FFF8EC; opacity: 0; }
-.is-lit .dk-flash { animation: dk-flash .9s ease-out; }
-@keyframes dk-flash { 0% { opacity: 0; } 12% { opacity: .85; } 100% { opacity: 0; } }
-.dk-bulb { position: absolute; right: -60px; top: -80px; width: 260px; height: 260px; border-radius: 50%; pointer-events: none;
-  background: radial-gradient(circle, rgba(255,255,255,.55), rgba(255,255,255,.12) 40%, transparent 70%); animation: dk-hum 4s ease-in-out infinite alternate; }
-@keyframes dk-hum { from { opacity: .8; } to { opacity: 1; } }
-/* the drying line, sagging a little */
-.dk-line { position: absolute; left: -10%; width: 120%; top: 40px; height: 26px; pointer-events: none;
-  border-bottom: 1.5px solid rgba(255,255,255,.55); border-radius: 0 0 50% 50% / 0 0 100% 100%; }
-.is-lit .dk-line { border-color: rgba(27,42,74,.35); height: 14px; }
-.dk-edge { font-family: 'Oswald', var(--font); font-size: 11px; line-height: 16px; letter-spacing: .16em; opacity: .75; }
-.dk-intro { position: absolute; left: 24px; right: 24px; top: 17%; display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center;
-  transition: opacity .8s ease, transform .8s ease; }
-.dk-intro h2 { margin: 0; font-family: 'Noto Serif Thai', var(--font); font-size: 28px; line-height: 40px; font-weight: 600; }
-.dk-intro > span:last-child { font-size: 13px; line-height: 20px; opacity: .7; }
-.is-dev .dk-intro { opacity: 0; transform: translateY(-16px); }
-/* the developer tray: a dark rim, liquid with a slow sheen across it */
-.dk-tray { position: absolute; border-radius: 16px; background: #2B2320; transition: opacity .9s ease;
-  box-shadow: inset 0 0 0 7px #3D322D, inset 0 14px 30px rgba(0,0,0,.6), 0 34px 60px rgba(0,0,0,.6); }
-.is-dark .dk-tray { opacity: 0; }
-.dk-liquid { position: absolute; inset: 9px; border-radius: 10px; overflow: hidden; opacity: .9;
-  background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,.14) 44%, transparent 58%) 0 0 / 300% 300%, rgba(120,100,90,.18);
-  animation: dk-sheen 7s ease-in-out infinite alternate; }
-@keyframes dk-sheen { from { background-position: 0 0, 0 0; } to { background-position: 100% 100%, 0 0; } }
-.dk-ripple { position: absolute; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; pointer-events: none; z-index: 3;
-  border: 1.5px solid rgba(255,255,255,.55); animation: dk-ripple 1s ease-out forwards; }
-@keyframes dk-ripple { to { transform: scale(7); opacity: 0; } }
-/* a print: photo paper with its white border. It comes up shadows first: washed-out and pale, then deep */
-.dk-print { position: absolute; left: 0; top: 0; padding: 7%; padding-bottom: 12%; border: 0; border-radius: 2px; background: #F4F1EA; cursor: pointer;
-  transform-origin: 0 0; box-shadow: 0 14px 28px rgba(0,0,0,.45); transition: transform 1s cubic-bezier(.55,0,.2,1), opacity .5s ease, box-shadow .6s ease; }
-.dk-print.away { opacity: 0; transition: none; }
-.dk-print.cur { box-shadow: 0 4px 12px rgba(0,0,0,.35); }
-.dk-print.cur .dk-img { animation: dk-float 3.2s ease-in-out infinite alternate; }
-@keyframes dk-float { from { transform: translate(-1px, 0) rotate(-.3deg); } to { transform: translate(1.5px, 1px) rotate(.4deg); } }
-.dk-img { display: block; width: 100%; height: 100%; background: center / cover no-repeat; opacity: calc(.04 + .96 * var(--p));
-  filter: grayscale(1) brightness(calc(2.6 - 1.6 * var(--p))) contrast(calc(.5 + .5 * var(--p))); transition: filter 1.6s ease .2s; }
-.is-lit .dk-img { filter: none; }
-.is-lit .dk-print { box-shadow: 0 10px 22px rgba(27,42,74,.18); }
-.dk-peg { position: absolute; left: 50%; top: -24px; width: 26px; height: 64px; margin-left: -13px; border-radius: 4px; opacity: 0; transition: opacity .3s ease .7s;
-  background: linear-gradient(90deg, #B8946A, #D9BC94 45%, #A9845B); box-shadow: 0 2px 4px rgba(0,0,0,.3); }
-.dk-print.on .dk-peg { opacity: 1; }
-.dk-cap { position: absolute; left: 24px; right: 24px; display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center;
-  animation: dk-cap .8s ease 1.2s both; }
-.dk-cap p { margin: 0; font-family: 'Noto Serif Thai', var(--font); font-size: 15px; line-height: 24px; opacity: .85;
-  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-@keyframes dk-cap { from { opacity: 0; transform: translateY(6px); } }
-.dk-bar { position: absolute; left: 12px; right: 12px; z-index: 5; display: flex; justify-content: space-between; align-items: center; pointer-events: none; }
-.dk-bar > * { pointer-events: auto; }
-.dk-btn { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 50%; border: 1.5px solid rgba(255,255,255,.25);
-  background: rgba(0,0,0,.25); color: #FF8A70; cursor: pointer; transition: color 1s, border-color 1s, background 1s; }
-.is-lit .dk-btn { color: var(--tw-text); border-color: rgba(27,42,74,.15); background: rgba(255,255,255,.6); }
-/* the light switch on the wall: flick it to skip to the lights on */
-.dk-switch { position: relative; width: 30px; height: 44px; border-radius: 6px; border: 1.5px solid rgba(255,138,112,.45); background: rgba(255,90,60,.08); cursor: pointer; }
-.dk-switch i { position: absolute; left: 8px; right: 8px; bottom: 7px; height: 16px; border-radius: 3px; background: rgba(255,138,112,.7); transition: bottom .2s; }
-.dk-switch:active i { bottom: 18px; }
-/* lights on: the line becomes the trip's gallery, the summary underneath */
-.dk-lit-head { position: absolute; left: 64px; right: 64px; top: 10px; display: flex; flex-direction: column; align-items: center; text-align: center;
-  animation: dk-cap .8s ease .6s both; }
-.dk-lit-head h2 { margin: 2px 0 0; font-family: 'Noto Serif Thai', var(--font); font-size: 24px; line-height: 36px; font-weight: 600;
-  max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.dk-sum { position: absolute; left: 16px; right: 16px; padding: 8px 0 calc(40px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column;
-  align-items: center; gap: 14px; text-align: center; animation: dk-cap .8s ease 1s both; }
-.dk-faces { display: flex; }
-.dk-faces img { width: 40px; height: 40px; border-radius: 50%; border: 2px solid #EFEAE1; margin-left: -8px; background: #fff; }
-.dk-faces img:first-child { margin-left: 0; }
-.dk-tally { display: flex; gap: 22px; }
-.dk-tally span { display: flex; flex-direction: column; font-size: 12px; line-height: 18px; color: var(--tw-text-2); }
-.dk-tally b { font-family: var(--font-display); font-size: 22px; line-height: 30px; color: var(--tw-text); }
-.dk-spend { margin: 0; font-size: 14px; line-height: 22px; color: var(--tw-text-2); }
-.dk-spend b { color: var(--tw-text); }
-.dk-sum h3 { margin: 6px 0 0; font-family: 'Noto Serif Thai', var(--font); font-size: 24px; line-height: 36px; font-weight: 600; }
-.dk-plan { display: inline-flex; align-items: center; gap: 6px; padding: 10px 18px; border: 0; border-radius: 999px; background: var(--tw-text); color: #fff;
-  font: inherit; font-size: 14px; line-height: 20px; font-weight: 600; cursor: pointer; }
-.dk-look { position: absolute; inset: 0; z-index: 6; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 24px;
-  background: rgba(26,19,17,.92); color: #fff; text-align: center; animation: dk-cap .3s ease both; }
-.dk-look img { max-width: 100%; max-height: 62vh; border: 10px solid #F4F1EA; border-bottom-width: 26px; box-shadow: 0 20px 40px rgba(0,0,0,.5); }
-.dk-look p { margin: 0; font-family: 'Noto Serif Thai', var(--font); font-size: 16px; line-height: 26px; }
-@media (prefers-reduced-motion: reduce) { .dk-room, .dk-bulb, .dk-liquid, .dk-print.cur .dk-img { animation: none !important; } }
