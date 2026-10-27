@@ -1,7 +1,7 @@
 import { useLayoutEffect, useRef, useState } from 'react';
 import Icon, { Flag } from './icons';
 
-// Notes from the profile character, Instagram-notes style: a small bubble floating above the avatar
+// Notes I say, Instagram-notes style: a small bubble floating over my head in the day scene (DayScene)
 // with two little dots trailing down to it. Each note starts with typing dots, then the words; after a
 // few seconds it fades for the next one (the cycle follows the animation itself). Tap to open it.
 export default function SpeechNotes({ notes }) {
@@ -10,7 +10,7 @@ export default function SpeechNotes({ notes }) {
   const note = notes.length ? notes[tick % notes.length] : null;
   const id = note ? `${note.key}-${tick}` : '';
 
-  // the bubble ends by the "กลุ่มใหม่" button, wrapping onto a second line; only a note that would need a
+  // the bubble wraps onto a second line; only a note that would need a
   // third line gets wider (the bubble grows upward and has room for two). Then the box shrinks to its longest line.
   useLayoutEffect(() => {
     const el = btn.current;

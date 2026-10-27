@@ -5,7 +5,6 @@ import Icon, { Flag } from '../icons';
 import { Avatars, CatIcon, Cover, Progress, SectionTitle } from '../ui';
 import MonthCalendar from '../MonthCalendar';
 import useSheetSnap from '../../hooks/useSheetSnap';
-import SpeechNotes from '../SpeechNotes';
 import WeatherCard from '../WeatherCard';
 import { MonthPiggyTile } from '../MonthMoney';
 import StopRow from '../StopRow';
@@ -237,7 +236,7 @@ export default function TodayPage() {
     return { key: 'wx', icon: k.icon, text: `วันนี้${k.label} ${wxToday.min}–${wxToday.max}°` };
   })();
 
-  // notes the profile character says in a speech bubble (what used to be the stage chips)
+  // notes I say in a speech bubble in the day scene (what used to be the stage chips, then over my picture)
   const notes = [...(live ? [
     { key: 'day', flag: country.code, text: `Day ${diffDays(plan.startDate, today) + 1} ที่${keepThai(country.name)}แล้วน้า`, onClick: () => navigate(`/proto/plan/${plan.id}`) },
     { key: 'time', icon: 'clock', text: `ที่นั่นตอนนี้ ${nowHM} (${country.utc - 7 >= 0 ? '+' : ''}${country.utc - 7} ชม.)` },
@@ -347,14 +346,10 @@ export default function TodayPage() {
         {/* + to make something, the name, the bell for what came in */}
         <HomeBar onRecap={(id) => setRecapOf(id)} />
         <div className="hp-header-top pt-talk">
-          {/* Instagram-style note floating above the avatar */}
-          <div className="pt-avatar-note">
-            <SpeechNotes notes={notes} />
-            {/* me: my own calendar (every trip I'm on); the groups sit beside me, same size */}
-            <button aria-pressed={!group} className={`pt-scope-btn${!group ? ' active' : ''}`} onClick={() => actions.setSetting('scope', 'me')}>
-              <span className="pt-group-badge pt-scope-me"><img src={avatarOf(ME)} alt="" /></span><span>{PEOPLE[ME].name}</span>
-            </button>
-          </div>
+          {/* me: my own calendar (every trip I'm on); the groups sit beside me, same size */}
+          <button aria-pressed={!group} className={`pt-scope-btn${!group ? ' active' : ''}`} onClick={() => actions.setSetting('scope', 'me')}>
+            <span className="pt-group-badge pt-scope-me"><img src={avatarOf(ME)} alt="" /></span><span>{PEOPLE[ME].name}</span>
+          </button>
           {/* new group stays put; only the list of groups scrolls sideways */}
           <button className="pt-scope-btn pt-scope-add" onClick={() => openSheet('newGroup')}>
             <span className="pt-group-badge add"><Icon name="plus" size={22} /></span><span>กลุ่มใหม่</span>
@@ -371,7 +366,7 @@ export default function TodayPage() {
         <span className="hp-pill-row pt-snap-stop" aria-hidden="true" style={sheet ? { height: FOLD_TOP + sheet.folded } : undefined} />
       </div>
 
-      <div className="hp-stage" ref={stageRef} style={sheet?.clip && atRest ? { clipPath: `inset(0 0 ${sheet.clip}px 0)` } : undefined}>
+      <div className="hp-stage" ref={stageRef} style={sheet?.clip && atRest ? { clipPath: `polygon(-40px -100vh, calc(100% + 40px) -100vh, calc(100% + 40px) calc(100% - ${sheet.clip}px), -40px calc(100% - ${sheet.clip}px))` } : undefined}>
         {/* the calendar sits where the 3D piggy used to be; the sheet folds it to one week as it rises.
             Put aside for now (SHOW_CALENDAR): today's scene takes its place, and the sheet rises over it */}
         {SHOW_CALENDAR ? (
@@ -379,7 +374,7 @@ export default function TodayPage() {
             <MonthCalendar selected={selected} today={today} onSelect={setSelected} stopsOn={stopsOn} eventsOn={eventsOn} groupsOn={groupsOn} plans={plans} />
           </div>
         ) : (
-          <DayScene scene={scene} onTap={() => (scene.kind === 'meet' ? navigate(`/proto/plan/${scene.planId}`)
+          <DayScene scene={scene} notes={notes} onTap={() => (scene.kind === 'meet' ? navigate(`/proto/plan/${scene.planId}`)
             : openSheet(canShuffle ? 'shuffle' : 'createPlan', { date: selected }))} />
         )}
       </div>
