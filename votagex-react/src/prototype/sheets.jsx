@@ -14,6 +14,7 @@ import { NewGroupSheet, GroupSheet } from './GroupSheet';
 import { PlanMenuSheet, EditPlanSheet, StopSheet } from './PlanSheets';
 import { MonthSheet } from './MonthMoney';
 import { PostcardSheet } from './Postcard';
+import { ActivitySheet, CreateSheet } from './HomeBar';
 import {
   ME, PEOPLE, CURRENCIES, EXPENSE_CATS, MOODS, KINDS, DEMO_PROMPTPAY, PLACE_CATS, compressImage, eventEnded,
   countryOf, fmtMoney, thaiShort, thaiRange, planStatus,
@@ -392,6 +393,8 @@ const SHEETS = {
   editPlan: EditPlanSheet,
   stop: StopSheet,
   postcard: PostcardSheet,
+  create: CreateSheet,
+  activity: ActivitySheet,
 };
 
 export default function ProtoSheets() {

@@ -1622,13 +1622,13 @@ button.pt-exp:active { background: var(--tw-sunken); }
 
 /* ===== Today: calendar on the stage under the greeting; the other cards are a sheet that rests below it
    (step 1), rises over it up to the top (step 2), then scrolls (step 3) ===== */
-.homepage.pt-today { --hp-stage-top: 165px; --hp-sheet-top: 620px; } /* 16px under the profile row (photo + name) */
+.homepage.pt-today { --hp-stage-top: 217px; --hp-sheet-top: 620px; } /* 16px under the profile row (photo + name), under the top bar */
 .homepage.pt-today .hp-stage { height: auto; }
 .homepage.pt-today.header-collapsed .hp-stage { opacity: 1; }
 .pt-snap-stop { position: absolute; top: 0; left: 0; height: 6px; padding: 0; margin: 0; pointer-events: none; }
 /* the greeting goes up with the calendar, as if scrolled away (so the calendar never slides over it), fading as it goes */
 /* (the row only: the header also holds the sheet's stop marker, which must stay put) */
-.homepage.pt-today .hp-header-top.pt-talk {
+.homepage.pt-today :is(.hp-header-top.pt-talk, .pt-topbar) {
   opacity: clamp(0, calc(1 - var(--sheet-p, 0) * 2.5), 1);
   transform: translateY(calc(var(--sheet-p, 0) * (var(--fold-top, 12px) - var(--hp-stage-top))));
 }
@@ -2287,4 +2287,35 @@ body::after { content: ''; position: fixed; inset: 0; z-index: 9998; pointer-eve
 .pt-pc-tile:focus-visible .pt-pc-face { box-shadow: 0 0 0 3px var(--tw-brand); }
 /* the sheet that writes one */
 .pt-pc-compose { position: relative; padding: 6px 0 10px; }
+
+/* ===== Home top bar (HomeBar.jsx), as Instagram's: + / the name / the bell with a red dot for what's new ===== */
+/* a short screen (iPhone SE) wins back the bar's height, so today's week stays clear of the resting sheet */
+@media (max-height: 719px) {
+  .homepage.pt-today { --hp-stage-top: 199px; }
+  .homepage.pt-today .hp-header { padding-top: 8px; gap: 6px; }
+  .homepage.pt-today .hp-header-top.pt-talk { padding-top: 60px; }
+}
+.pt-topbar { display: flex; align-items: center; justify-content: space-between; height: 40px; margin: -4px -10px 0; pointer-events: auto; }
+.pt-topbar-btn { position: relative; width: 44px; height: 44px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--tw-text); cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.pt-topbar-btn:active { background: var(--tw-sunken); }
+.pt-topbar-btn .tone { fill-opacity: 0; }
+.pt-topbar-logo { font-family: 'Oswald', var(--font); font-size: 24px; font-weight: 700; letter-spacing: 2px; line-height: 1; color: var(--tw-text); }
+.pt-topbar-dot { position: absolute; top: 9px; right: 10px; width: 9px; height: 9px; border-radius: 50%; background: #FF3B30; box-shadow: 0 0 0 2px var(--page, #F9FAFB); }
+/* the bell's sheet: a row per thing that came in, the new ones tinted */
+.pt-act { display: flex; flex-direction: column; gap: 14px; }
+.pt-act section { display: flex; flex-direction: column; gap: 2px; }
+.pt-act .pt-label { margin: 0 0 4px; }
+.pt-act-row { display: flex; align-items: center; gap: 12px; width: 100%; padding: 8px; margin: 0 -8px; width: calc(100% + 16px); border: 0; border-radius: 14px; background: none;
+  font-family: var(--font); color: var(--tw-text); text-align: left; cursor: pointer; }
+.pt-act-row:active { background: var(--tw-sunken); }
+.pt-act-row.new { background: rgba(43, 120, 197, .07); }
+.pt-act-row .pt-grow { display: flex; flex-direction: column; min-width: 0; }
+.pt-act-who { position: relative; width: 44px; height: 44px; flex-shrink: 0; display: grid; place-items: center; border-radius: 50%; background: var(--tw-sunken); color: var(--tw-text); }
+.pt-act-who img { width: 100%; height: 100%; border-radius: 50%; background: #fff; }
+.pt-act-badge { position: absolute; right: -3px; bottom: -3px; width: 20px; height: 20px; display: grid; place-items: center; border-radius: 50%; background: var(--tw-text); color: #fff; box-shadow: 0 0 0 2px var(--tw-surface, #fff); }
+.pt-act-badge .tone { fill-opacity: 0; }
+.pt-act-text { font-size: 14px; line-height: 1.45; }
+.pt-act-text b { font-weight: 700; }
+.pt-act-thumb { width: 44px; height: 44px; flex-shrink: 0; border-radius: 8px; background: var(--tw-sunken) center / cover; }
+.pt-act-row .pt-pill-btn { flex-shrink: 0; }
 

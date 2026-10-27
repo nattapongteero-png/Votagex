@@ -12,6 +12,7 @@ import StopRow from '../StopRow';
 import MapView from '../MapView';
 import RecapViewer from '../RecapViewer';
 import PostcardTile from '../Postcard';
+import HomeBar from '../HomeBar';
 import { postcardOf, stampOfTrip, useStamps } from '../stamps';
 import { pm25Level, useWeather, weatherKind } from '../weather';
 import HOLIDAYS from '../thHolidays.json';
@@ -96,11 +97,11 @@ export default function TodayPage() {
     const stage = stageRef.current, page = pageRef.current;
     if (!stage || !page) return undefined;
     // the sheet's top edge lands 14px under the calendar (cards start 24px below that edge); on a short screen
-    // it stops higher and the calendar's bottom is cut off where the sheet covers it
+    // it stops higher (showing a little less of itself) and the calendar's bottom is cut off where it covers it
     const fit = () => {
       if (page.querySelector('.hp-content')?.scrollTop > 0) return; // folding: the open sizes stay as measured
       const bottom = stage.offsetTop + stage.offsetHeight;
-      const top = Math.round(Math.min(bottom + 38, page.clientHeight - 126));
+      const top = Math.round(Math.min(bottom + 38, page.clientHeight - (page.clientHeight < 720 ? 100 : 126)));
       // what's left of the calendar when folded (header bar, weekdays, one week)
       const away = [...stage.querySelectorAll('.pt-riso-stack > :first-child .pt-fold-away')].reduce((h, el) => h + el.offsetHeight, 0);
       setSheet({ top, clip: Math.max(0, bottom - (top - 24)), folded: stage.offsetHeight - away });
@@ -327,6 +328,8 @@ export default function TodayPage() {
   return (
     <div ref={pageRef} className={`homepage pt-today${collapsed ? ' header-collapsed' : ''}${atRest ? ' at-rest' : ''}`} style={sheet ? { '--hp-sheet-top': `${sheet.top}px`, '--fold-top': `${FOLD_TOP}px` } : undefined}>
       <div className="hp-header">
+        {/* + to make something, the name, the bell for what came in */}
+        <HomeBar onRecap={(id) => setRecapOf(id)} />
         <div className="hp-header-top pt-talk">
           {/* Instagram-style note floating above the avatar */}
           <div className="pt-avatar-note">
