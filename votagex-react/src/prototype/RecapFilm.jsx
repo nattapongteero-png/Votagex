@@ -1,14 +1,10 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { AbsoluteFill, Easing, Html5Audio, Img, interpolate, spring, useCurrentFrame, useVideoConfig } from 'remotion';
 import { TransitionSeries, springTiming } from '@remotion/transitions';
 import { iris } from '@remotion/transitions/iris';
 import * as maplibregl from 'maplibre-gl';
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { lineString } from '@turf/helpers';
-import bezierSpline from '@turf/bezier-spline';
-import length from '@turf/length';
-import lineSliceAlong from '@turf/line-slice-along';
 import { BEAT, CUT, FPS, T, blocksFor, queryOf, quotesOf, shotsFor } from './recapShots';
 
 // A trip's recap cut like a launch film (after mtioon's), 9:16 at 1080 wide, every beat on the sound's grid
@@ -202,15 +198,24 @@ function Say({ d, f, H }) {
   );
 }
 
+// one lane of the conveyor: its photos and pills, drawn once (it never changes), only moved
+const Lane = memo(function Lane({ items }) {
+  return [...items, ...items, ...items, ...items].map((t, j) => (t.src
+    ? <Img key={j} src={t.src} style={{ width: 300, height: 220, objectFit: 'cover', borderRadius: 30, boxShadow: '0 6px 0 #fff, 0 22px 34px rgba(27,42,74,.2)', flexShrink: 0 }} />
+    : <Pill key={j} bg={t.bg} fg={t.fg} avatar={t.avatar} size={44}>{t.t}</Pill>));
+});
+
 // a white card with the trip's name over a tilted conveyor of its photos and pills; the mascot peeks in
 function Brief({ d, f, H }) {
   const card = sp(f, T.brief.card, { damping: 18, stiffness: 120 });
-  const tokens = [
-    ...d.photos.map((p) => ({ src: p.src })),
-    ...d.stops.map((s, i) => ({ t: s.name, bg: [C.blue, C.purple, C.pink, C.orange][i % 4] })),
-    ...d.crew.map((c) => ({ t: c.name, avatar: c.avatar, bg: C.white, fg: INK })),
-  ];
-  const lane = (k) => tokens.filter((_, j) => j % 3 === k);
+  const lanes = useMemo(() => {
+    const tokens = [
+      ...d.photos.map((p) => ({ src: p.src })),
+      ...d.stops.map((s, i) => ({ t: s.name, bg: [C.blue, C.purple, C.pink, C.orange][i % 4] })),
+      ...d.crew.map((c) => ({ t: c.name, avatar: c.avatar, bg: C.white, fg: INK })),
+    ];
+    return [0, 1, 2].map((k) => tokens.filter((_, j) => j % 3 === k));
+  }, [d]);
   return (
     <AbsoluteFill style={{ overflow: 'hidden' }}>
       <Pastel f={f + 192} />
@@ -218,9 +223,7 @@ function Brief({ d, f, H }) {
         <div style={{ position: 'absolute', inset: 0, transform: 'rotateX(52deg) rotateZ(-24deg)', transformOrigin: '50% 30%' }}>
           {[0, 1, 2].map((k) => (
             <div key={k} style={{ position: 'absolute', left: 0, top: k * 300, display: 'flex', gap: 44, alignItems: 'center', translate: `${-600 + ((f * (5 + k)) % 600) - k * 180}px 0px` }}>
-              {[...lane(k), ...lane(k), ...lane(k), ...lane(k)].map((t, j) => (t.src
-                ? <Img key={j} src={t.src} style={{ width: 300, height: 220, objectFit: 'cover', borderRadius: 30, boxShadow: '0 6px 0 #fff, 0 22px 34px rgba(27,42,74,.2)', flexShrink: 0 }} />
-                : <Pill key={j} bg={t.bg} fg={t.fg} avatar={t.avatar} size={44}>{t.t}</Pill>))}
+              <Lane items={lanes[k]} />
             </div>
           ))}
         </div>
@@ -265,41 +268,43 @@ function placeCallouts(pins, names, H) {
 function RouteMap({ d, f, H, dur }) {
   const M = T.map;
   const box = useRef(null);
-  const [map, setMap] = useState(null);
   const [pins, setPins] = useState(null);
+  const [route, setRoute] = useState(null); // the route through the stops, on screen: points and the length along it
   const [ready, setReady] = useState(false); // the first frame of tiles has drawn
-  const route = useMemo(() => {
-    const coords = d.stops.map((s) => [s.lng, s.lat]);
-    if (coords.length < 2) return null;
-    const line = bezierSpline(lineString(coords), { resolution: 10000, sharpness: 0.3 });
-    return { line, km: length(line) };
-  }, [d.stops]);
   useEffect(() => {
     const lng = d.stops.map((s) => s.lng); const lat = d.stops.map((s) => s.lat);
     const m = new maplibregl.Map({
-      container: box.current, style: MAP_STYLE, interactive: false, attributionControl: false, fadeDuration: 0, pixelRatio: 1,
+      // the player shows this 1080-wide frame at phone size, so the map draws at under half its CSS size
+      container: box.current, style: MAP_STYLE, interactive: false, attributionControl: false, fadeDuration: 0, pixelRatio: 0.6,
       bounds: [[Math.min(...lng), Math.min(...lat)], [Math.max(...lng), Math.max(...lat)]],
       fitBoundsOptions: { padding: { top: H * 0.3, bottom: H * 0.32, left: 230, right: 230 }, maxZoom: 15 },
-      canvasContextAttributes: { preserveDrawingBuffer: true },
     });
+    // the camera never moves, so the route is projected to the screen once and drawn over the map as SVG;
+    // each frame only reveals more of it (projecting and re-uploading a line every frame was too slow on phones)
     m.on('load', () => {
-      m.addSource('route', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
-      m.addLayer({ id: 'route-casing', type: 'line', source: 'route', paint: { 'line-color': '#fff', 'line-width': 24 }, layout: { 'line-cap': 'round', 'line-join': 'round' } });
-      m.addLayer({ id: 'route', type: 'line', source: 'route', paint: { 'line-color': C.orange, 'line-width': 12 }, layout: { 'line-cap': 'round', 'line-join': 'round' } });
-      setPins(d.stops.map((s) => m.project([s.lng, s.lat])));
-      setMap(m);
+      const projected = d.stops.map((s) => m.project([s.lng, s.lat]));
+      setPins(projected);
+      if (d.stops.length > 1) {
+        // straight legs from stop to stop with rounded joins: a curve overshoots where the trip doubles back
+        const pts = projected;
+        const at = [0];
+        pts.slice(1).forEach((q, i) => at.push(at[i] + Math.hypot(q.x - pts[i].x, q.y - pts[i].y)));
+        setRoute({ pts, at, d: `M${pts.map((q) => `${q.x.toFixed(1)},${q.y.toFixed(1)}`).join(' L')}` });
+      }
       m.once('idle', () => setReady(true));
     });
     return () => m.remove(); // in the app the player unmounts this shot; free the WebGL context
   }, [d.stops, H]);
   const last = M.start + Math.max(0, d.stops.length - 1) * M.per;
   const drawn = lerp(f, M.start, Math.max(M.start + 1, last), 0, 1, IN_OUT);
-  const head = useMemo(() => (route && drawn > 0.001 ? lineSliceAlong(route.line, 0, route.km * drawn) : null), [route, drawn]);
-  useEffect(() => {
-    if (!map) return;
-    map.getSource('route')?.setData(head || { type: 'FeatureCollection', features: [] });
-  }, [map, head]);
-  const tip = map && head ? map.project(head.geometry.coordinates[head.geometry.coordinates.length - 1]) : pins?.[0];
+  // the mascot rides the head of the line: the point that far along the route
+  const tip = (() => {
+    if (!route) return pins?.[0];
+    const want = drawn * route.at[route.at.length - 1];
+    const k = Math.max(1, route.at.findIndex((v) => v >= want));
+    const u = (want - route.at[k - 1]) / Math.max(1e-6, route.at[k] - route.at[k - 1]);
+    return { x: route.pts[k - 1].x + (route.pts[k].x - route.pts[k - 1].x) * u, y: route.pts[k - 1].y + (route.pts[k].y - route.pts[k - 1].y) * u };
+  })();
   const calls = useMemo(() => (pins ? placeCallouts(pins, d.stops.map((s) => `${s.name} ${s.time || ''}`), H) : []), [pins, d.stops, H]);
   return (
     <AbsoluteFill style={{ overflow: 'hidden' }}>
@@ -307,6 +312,12 @@ function RouteMap({ d, f, H, dur }) {
       <div style={{ position: 'absolute', inset: 0, scale: lerp(f, 0, dur, 1, 1.06, Easing.linear) }}>
         <div ref={box} style={{ position: 'absolute', inset: 0, width: 1080, height: H, opacity: ready ? 1 : 0 }} />
         <AbsoluteFill style={{ background: 'linear-gradient(180deg, rgba(251,249,251,.96), rgba(251,249,251,0) 22%, rgba(251,249,251,0) 74%, rgba(251,249,251,.96))' }} />
+        {route && (
+          <svg width="1080" height={H} style={{ position: 'absolute', inset: 0, opacity: ready ? 1 : 0 }}>
+            <path d={route.d} pathLength="1" fill="none" stroke="#fff" strokeWidth="24" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="1" strokeDashoffset={1 - drawn} />
+            <path d={route.d} pathLength="1" fill="none" stroke={C.orange} strokeWidth="12" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="1" strokeDashoffset={1 - drawn} />
+          </svg>
+        )}
         {pins && (
           <svg width="1080" height={H} style={{ position: 'absolute', inset: 0 }}>
             {calls.map((c) => {
@@ -378,8 +389,21 @@ function PhotoShot({ d, f, dur, i, H }) {
   );
 }
 
+// the tilted field of the trip's words behind a colour block: drawn once (it never changes), only moved
+const WordField = memo(function WordField({ words, H }) {
+  return Array.from({ length: Math.ceil((H + 800) / 86) }, (_, row) => (
+    <div key={row} style={{ display: 'flex', gap: 22, marginLeft: (row % 2) * -120 }}>
+      {Array.from({ length: 10 }, (_, j) => (
+        <span key={j} style={{ padding: '10px 24px', borderRadius: 999, fontFamily: UI, fontWeight: 600, fontSize: 28, whiteSpace: 'nowrap',
+          color: 'rgba(0,0,0,.32)', background: 'rgba(255,255,255,.16)' }}>{words[(row * 5 + j) % words.length]}</span>
+      ))}
+    </div>
+  ));
+});
+
 // the numbers as full-screen colour blocks, each opening out of the last in a circle on its beat, over a
-// tilted field of the trip's words; the number lands with a punch
+// tilted field of the trip's words; the number lands with a punch. Only the open block and the one it is
+// opening over are drawn.
 function Blocks({ d, f, H }) {
   const each = d.spend.total / Math.max(1, d.crew.length);
   const rows = [
@@ -388,28 +412,22 @@ function Blocks({ d, f, H }) {
     { bg: C.blue, big: `${Math.max(1, d.crew.length)} คน.` },
     { bg: C.yellow, fg: INK, big: baht(each), small: d.crew.length > 1 ? 'ต่อคน' : 'ที่ใช้ไป' },
   ].slice(0, blocksFor(d));
-  const words = [d.title, ...d.stops.map((s) => s.name), ...d.crew.map((c) => c.name), d.dateCode, `${d.stats.km.toFixed(1)} กม.`];
+  const words = useMemo(() => [d.title, ...d.stops.map((s) => s.name), ...d.crew.map((c) => c.name), d.dateCode, `${d.stats.km.toFixed(1)} กม.`], [d]);
   const R = Math.hypot(540, H / 2);
+  const cur = Math.min(rows.length - 1, Math.floor((f + 6) / T.blocks.step));
   return (
     <AbsoluteFill style={{ overflow: 'hidden' }}>
       {rows.map((r, k) => {
         const t = f - k * T.blocks.step;
-        if (t < 0) return null;
+        if (t < -6 || k < cur - 1) return null;
         const open = k === 0 ? 1 : lerp(t, -6, 6, 0, 1, Easing.bezier(0.5, 0, 0.2, 1)); // fully open on the beat
         return (
-          <AbsoluteFill key={k} style={{ background: r.bg, clipPath: `circle(${open * R}px at 540px ${H / 2}px)`, overflow: 'hidden' }}>
+          <AbsoluteFill key={k} style={{ background: r.bg, clipPath: open < 1 ? `circle(${open * R}px at 540px ${H / 2}px)` : 'none', overflow: 'hidden' }}>
             <div style={{ position: 'absolute', left: -600, top: -400, width: 2400, rotate: '-18deg', display: 'flex', flexDirection: 'column', gap: 26, translate: `${-(f * 3) % 400}px 0px` }}>
-              {Array.from({ length: Math.ceil((H + 800) / 86) }, (_, row) => (
-                <div key={row} style={{ display: 'flex', gap: 22, marginLeft: (row % 2) * -120 }}>
-                  {Array.from({ length: 14 }, (_, j) => (
-                    <span key={j} style={{ padding: '10px 24px', borderRadius: 999, fontFamily: UI, fontWeight: 600, fontSize: 28, whiteSpace: 'nowrap',
-                      color: `color-mix(in srgb, ${r.bg} 55%, black)`, background: `color-mix(in srgb, ${r.bg} 88%, white)`, opacity: 0.5 }}>{words[(row * 5 + j) % words.length]}</span>
-                  ))}
-                </div>
-              ))}
+              <WordField words={words} H={H} />
             </div>
             <AbsoluteFill style={{ alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 10 }}>
-              <Ink size={r.big.length > 7 ? 190 : 230} color={r.fg || '#fff'} style={{ transform: `scale(${1.3 - 0.3 * sp(t, 0, { damping: 13, stiffness: 220 })})`, textShadow: '0 10px 30px rgba(0,0,0,.18)' }}>{r.big}</Ink>
+              <Ink size={r.big.length > 7 ? 190 : 230} color={r.fg || '#fff'} style={{ transform: `scale(${1.3 - 0.3 * sp(Math.max(0, t), 0, { damping: 13, stiffness: 220 })})`, textShadow: '0 10px 30px rgba(0,0,0,.18)' }}>{r.big}</Ink>
               {r.small && <Ink size={70} weight={700} color={r.fg || '#fff'}>{r.small}</Ink>}
             </AbsoluteFill>
           </AbsoluteFill>

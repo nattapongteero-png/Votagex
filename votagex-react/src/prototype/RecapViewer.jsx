@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Player } from '@remotion/player';
 import Icon from './icons';
 import RecapFilm from './RecapFilm';
-import { FPS, lengthOf, shotsFor } from './recapShots';
+import { CUT, FPS, lengthOf, shotsFor } from './recapShots';
 import { buildSound } from './recapSound';
 import { PEOPLE, EXPENSE_CATS, byOrder, diffDays, distanceKm, parseISO, thaiShort, toTHB } from './data';
 
@@ -62,7 +62,7 @@ export default function RecapViewer({ plan, memories, expenses, label, onClose }
   const inputProps = useMemo(() => ({ ...film, sound: sound?.url }), [film, sound]);
   const W = 1080;
   const H = Math.round(Math.min(2400, Math.max(1600, (W * size.h) / size.w)));
-  const at = shots.reduce((k, s, i) => (frame >= s.from + 7 ? i : k), 0);
+  const at = shots.reduce((k, s, i) => (frame >= s.from + (s.cut ? CUT : 0) ? i : k), 0);
   const done = frame >= total - 1;
 
   const jump = (by) => {
@@ -70,9 +70,11 @@ export default function RecapViewer({ plan, memories, expenses, label, onClose }
     if (!p) return;
     // back: to the start of this shot, or the one before when it has only just begun
     const k = by < 0 && frame - shots[at].from > 30 ? at : Math.max(0, Math.min(shots.length - 1, at + by));
+    // land just after the shot's cut, not halfway through it with the shot before still on screen
+    const to = shots[k].from + (shots[k].cut ? CUT : 0) + 2;
     // a seek while playing resumes by itself; calling play too leaves a resume pending that restarts the film at its end
     const playing = p.isPlaying();
-    p.seekTo(shots[k].from + 7);
+    p.seekTo(to);
     if (!playing) p.play();
   };
   useEffect(() => {
@@ -133,6 +135,9 @@ export default function RecapViewer({ plan, memories, expenses, label, onClose }
       <Player ref={player} component={RecapFilm} inputProps={inputProps} durationInFrames={total} fps={FPS}
         compositionWidth={W} compositionHeight={H} loop={false} moveToBeginningWhenEnded={false} acknowledgeRemotionLicense
         clickToPlay={false} doubleClickToFullscreen={false} spaceKeyToPlayOrPause={false}
+        errorFallback={({ error }) => (
+          <div className="pt-story-error"><b>เล่นต่อไม่ได้</b><span>{error?.message}</span></div>
+        )}
         style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} />
       <div className="pt-story-tap" onPointerDown={down} onPointerUp={up} onPointerCancel={() => clearTimeout(hold.current.timer)} />
       <div className="pt-story-bars">
