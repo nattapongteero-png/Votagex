@@ -4,7 +4,7 @@ import { COUNTRIES, diffDays, parseISO, planStatus } from './data';
 
 // The stamp book (StampBook): a postage stamp for every province and country collected, the same collection
 // the me page counts (useCollection). Each stamp carries the trip that earned it, its date and a photo from
-// there; the rest of the 77 provinces wait as empty outlines.
+// there; the book has a space for each of the 77 provinces, region by region.
 
 export const PROVINCES = [
   ['กรุงเทพมหานคร', 'Bangkok'], ['กระบี่', 'Krabi'], ['กาญจนบุรี', 'Kanchanaburi'], ['กาฬสินธุ์', 'Kalasin'],
@@ -28,6 +28,18 @@ export const PROVINCES = [
   ['อุทัยธานี', 'Uthai Thani'], ['อุบลราชธานี', 'Ubon Ratchathani'],
 ];
 const EN = Object.fromEntries(PROVINCES);
+
+// the six regions (as the Royal Society divides them), each a page of the book with a space for every province
+export const REGIONS = [
+  ['north', 'ภาคเหนือ', ['เชียงราย', 'เชียงใหม่', 'น่าน', 'พะเยา', 'แพร่', 'แม่ฮ่องสอน', 'ลำปาง', 'ลำพูน', 'อุตรดิตถ์']],
+  ['isan', 'ภาคอีสาน', ['กาฬสินธุ์', 'ขอนแก่น', 'ชัยภูมิ', 'นครพนม', 'นครราชสีมา', 'บึงกาฬ', 'บุรีรัมย์', 'มหาสารคาม', 'มุกดาหาร', 'ยโสธร',
+    'ร้อยเอ็ด', 'เลย', 'ศรีสะเกษ', 'สกลนคร', 'สุรินทร์', 'หนองคาย', 'หนองบัวลำภู', 'อำนาจเจริญ', 'อุดรธานี', 'อุบลราชธานี']],
+  ['central', 'ภาคกลาง', ['กรุงเทพมหานคร', 'กำแพงเพชร', 'ชัยนาท', 'นครนายก', 'นครปฐม', 'นครสวรรค์', 'นนทบุรี', 'ปทุมธานี', 'พระนครศรีอยุธยา', 'พิจิตร',
+    'พิษณุโลก', 'เพชรบูรณ์', 'ลพบุรี', 'สมุทรปราการ', 'สมุทรสงคราม', 'สมุทรสาคร', 'สิงห์บุรี', 'สุโขทัย', 'สุพรรณบุรี', 'สระบุรี', 'อ่างทอง', 'อุทัยธานี']],
+  ['east', 'ภาคตะวันออก', ['จันทบุรี', 'ฉะเชิงเทรา', 'ชลบุรี', 'ตราด', 'ปราจีนบุรี', 'ระยอง', 'สระแก้ว']],
+  ['west', 'ภาคตะวันตก', ['กาญจนบุรี', 'ตาก', 'ประจวบคีรีขันธ์', 'เพชรบุรี', 'ราชบุรี']],
+  ['south', 'ภาคใต้', ['กระบี่', 'ชุมพร', 'ตรัง', 'นครศรีธรรมราช', 'นราธิวาส', 'ปัตตานี', 'พังงา', 'พัทลุง', 'ภูเก็ต', 'ระนอง', 'สตูล', 'สงขลา', 'สุราษฎร์ธานี', 'ยะลา']],
+];
 const COUNTRY_EN = { TH: 'Thailand', JP: 'Japan', KR: 'Korea', TW: 'Taiwan', SG: 'Singapore', HK: 'Hong Kong', VN: 'Vietnam', FR: 'France', US: 'United States' };
 
 const checkedIn = (s) => Object.keys(s.checkIns || {}).length > 0;
@@ -65,10 +77,17 @@ export function useStamps() {
     // countries a trip is booked for: their stamp is on its way
     const soon = plans.filter((p) => p.country && p.country !== 'TH' && !countries.includes(p.country) && planStatus(p, today) !== 'past' && p.startDate)
       .map((p) => ({ code: p.country, name: COUNTRIES[p.country]?.name || p.country, days: diffDays(today, p.startDate) }));
+    const stamps = number(prov);
     return {
-      provinces: number(prov),
+      provinces: stamps,
       countries: number(abroad),
       missing: PROVINCES.filter(([th]) => !got.has(th)).map(([th, en]) => ({ name: th, en })),
+      // each region's spaces: the stamps in it first, then the provinces still to go
+      regions: REGIONS.map(([key, name, list]) => ({
+        key, name, total: list.length,
+        stamps: stamps.filter((s) => list.includes(s.name)),
+        missing: list.filter((th) => !got.has(th)).map((th) => ({ name: th, en: EN[th] })),
+      })),
       soon,
     };
   }, [plans, memories, places, today, provinces, countries]);

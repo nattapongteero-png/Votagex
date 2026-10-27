@@ -3,74 +3,99 @@ import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import Icon from './icons';
 import { perforated, seeded, useStamps } from './stamps';
-import { strike } from './stampShader';
 import { thaiShort } from './data';
 
 // The stamp book: a postage stamp for each province and country you've been to (stamps.js). On the plans
-// page a strip of the latest stamps opens it; in it the stamps are pressed in one after another, each with a
-// postmark struck over its corner, and the provinces still to go wait as empty outlines. A stamp opens on a
-// dark ground and turns to black metal (stampShader), lit by the finger.
+// page a strip of the latest stamps opens it; in it each region is a page with a space for every province,
+// the stamps you've collected pressed into theirs one after another, each with a postmark struck over its
+// corner. A stamp opens large, tilting under the finger as paper would in the light.
+//
+// The stamps are made to read as printed paper, not drawings: fibrous off-white stock with close
+// perforations, the photo printed (a little muted, a halftone screen over it, a keyline round it), a band of
+// printer's ink with the name, the country and a value like a real issue, and a postmark of uneven ink.
 
 const W = 148; const H = 184; // a stamp's own size; others are this scaled
-const PALETTE = ['#FF6B2C', '#2F7BF5', '#8B5CF6', '#EC5FA0', '#22B07D', '#F6C531'];
+// printer's inks, one per stamp by its name: duller than the app's colours, as inks on paper are
+const INKS = ['#B5412F', '#1F3D6E', '#2D6A4F', '#B07A1E', '#5A3F8C', '#1E6C78', '#8C2F55'];
 const graphemes = (s) => [...new Intl.Segmenter('th', { granularity: 'grapheme' }).segment(s)].length;
 
-// a stamp with no photo: rings and bands in two of the palette's colours, picked by its name
-function Pattern({ stamp }) {
-  const a = PALETTE[Math.floor(seeded(stamp.key, 1) * PALETTE.length)];
-  const b = PALETTE[(PALETTE.indexOf(a) + 2 + Math.floor(seeded(stamp.key, 2) * 3)) % PALETTE.length];
+// the shared ink filter: a postmark's lines broken where the ink didn't take, and a little wobbly
+function InkDefs() {
   return (
-    <svg className="pt-stamp-photo" viewBox="0 0 130 135" preserveAspectRatio="xMidYMid slice">
-      <rect width="130" height="135" fill={a} />
-      {[0, 1, 2, 3, 4].map((i) => <rect key={i} x="0" y={78 + i * 12} width="130" height="6" fill={b} opacity={0.35 + i * 0.12} />)}
-      <circle cx="84" cy="56" r="30" fill="#FFF6E8" />
-      <circle cx="84" cy="56" r="30" fill="none" stroke={b} strokeWidth="5" strokeDasharray="3 5" />
+    <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true">
+      <filter id="pt-ink" x="-10%" y="-10%" width="120%" height="120%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="4" result="grain" />
+        <feDisplacementMap in="SourceGraphic" in2="grain" scale="1.4" xChannelSelector="R" yChannelSelector="G" result="wobbly" />
+        <feColorMatrix in="grain" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -2.4 1.75" result="took" />
+        <feComposite in="wobbly" in2="took" operator="in" />
+      </filter>
     </svg>
   );
 }
 
-// a cancellation mark: a double ring with the place and date, and wavy lines running off it
+// a stamp with no photo: a printed sun and bands in its ink on the paper
+function Pattern({ ink }) {
+  return (
+    <svg className="pt-stamp-photo" viewBox="0 0 130 124" preserveAspectRatio="xMidYMid slice">
+      <rect width="130" height="124" fill="#F1E8D6" />
+      {Array.from({ length: 18 }, (_, k) => (
+        <path key={k} d={`M70,56 L${70 + Math.cos((k / 18) * Math.PI * 2) * 120},${56 + Math.sin((k / 18) * Math.PI * 2) * 120}`} stroke={ink} strokeWidth="5" opacity=".14" />
+      ))}
+      <circle cx="70" cy="56" r="26" fill={ink} opacity=".85" />
+      <circle cx="70" cy="56" r="34" fill="none" stroke={ink} strokeWidth="1.5" strokeDasharray="2 3" />
+      {[0, 1, 2].map((i) => <rect key={i} x="0" y={92 + i * 11} width="130" height="5" fill={ink} opacity={0.3 + i * 0.25} />)}
+    </svg>
+  );
+}
+
+// a cancellation: a double ring with the place and date, and wavy lines running off it, in uneven ink
 function Postmark({ stamp, id }) {
   const d = new Date(`${stamp.date}T00:00:00`);
   const date = `${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(stamp.year).slice(2)}`;
   return (
-    <svg className="pt-postmark" viewBox="0 0 120 60" aria-hidden="true">
+    <svg className="pt-postmark" viewBox="0 0 108 60" aria-hidden="true">
       <defs><path id={id} d="M30,30 m-21,0 a21,21 0 1,1 42,0 a21,21 0 1,1 -42,0" /></defs>
-      <circle cx="30" cy="30" r="26" /><circle cx="30" cy="30" r="16" />
-      <text className="ring"><textPath href={`#${id}`} startOffset="2%">{`${stamp.en.toUpperCase()} · VOTAGEX`}</textPath></text>
-      <text className="mid" x="30" y="33" textAnchor="middle">{date}</text>
-      {[22, 30, 38].map((y) => <path key={y} d={`M57,${y} q6,-4 12,0 t12,0 t12,0`} />)}
+      <g filter="url(#pt-ink)">
+        <circle cx="30" cy="30" r="26" /><circle cx="30" cy="30" r="16" />
+        <text className="ring"><textPath href={`#${id}`} startOffset="2%">{`${stamp.en.toUpperCase()} · VOTAGEX`}</textPath></text>
+        <text className="mid" x="30" y="33" textAnchor="middle">{date}</text>
+        {[22, 30, 38].map((y) => <path key={y} d={`M57,${y} q6,-4 12,0 t12,0 t12,0 t12,0`} />)}
+      </g>
     </svg>
   );
 }
 
-// a stamp, `w` wide: its photo (or pattern) in a white perforated frame, its names, number and year
-export function Stamp({ stamp, w = W, i = 0, press = false }) {
+// a stamp, `w` wide
+export function Stamp({ stamp, w = W, i = 0, press = false, mark = true }) {
   const h = (w * H) / W;
-  const path = useMemo(() => perforated(w, h, (4 * w) / W, (13 * w) / W), [w, h]);
-  const rot = (seeded(stamp.key) - 0.5) * 12;
+  const path = useMemo(() => perforated(w, h, (3.3 * w) / W, (10.6 * w) / W), [w, h]);
+  const ink = INKS[Math.floor(seeded(stamp.key, 1) * INKS.length)];
+  const rot = (seeded(stamp.key) - 0.5) * 8;
   return (
-    <div className={`pt-stamp${press ? ' press' : ''}`} style={{ width: w, height: h, fontSize: w / 14.8, '--rot': `${rot.toFixed(1)}deg`, '--i': i, '--prot': `${(-18 + seeded(stamp.key, 3) * 22).toFixed(1)}deg` }}>
+    <div className={`pt-stamp${press ? ' press' : ''}`} style={{ width: w, height: h, fontSize: w / 14.8, '--rot': `${rot.toFixed(1)}deg`, '--i': i, '--ink': ink,
+      '--prot': `${(-20 + seeded(stamp.key, 3) * 24).toFixed(1)}deg` }}>
       <div className="pt-stamp-paper" style={{ clipPath: `path('${path}')` }}>
-        <div className="pt-stamp-art">
-          {stamp.photo ? <img className="pt-stamp-photo" src={stamp.photo} alt="" draggable="false" /> : <Pattern stamp={stamp} />}
-          <span className="pt-stamp-en">{stamp.en}</span>
-          <span className="pt-stamp-no">No.{String(stamp.no).padStart(2, '0')}</span>
+        <div className="pt-stamp-print">
+          <div className="pt-stamp-art">
+            {stamp.photo ? <img className="pt-stamp-photo" src={stamp.photo} alt="" draggable="false" /> : <Pattern ink={ink} />}
+            <span className="pt-stamp-country">{stamp.kind === 'country' ? stamp.en : 'Thailand'}</span>
+            <span className="pt-stamp-value"><b>{String(stamp.no).padStart(2, '0')}</b>{stamp.kind === 'prov' ? '/77' : ''}</span>
+          </div>
+          <div className="pt-stamp-band">
+            <b style={{ fontSize: `${Math.min(1.6, 14 / graphemes(stamp.name)).toFixed(2)}em` }}>{stamp.name}</b>
+            <span>{stamp.kind === 'prov' ? stamp.en : ''}{stamp.kind === 'prov' ? ' · ' : ''}{stamp.year}</span>
+          </div>
         </div>
-        <div className="pt-stamp-foot"><b style={{ fontSize: `${Math.min(1.7, 15 / graphemes(stamp.name)).toFixed(2)}em` }}>{stamp.name}</b><span>{stamp.year}</span></div>
       </div>
-      <Postmark stamp={stamp} id={`pm-${stamp.key}-${Math.round(w)}`} />
+      {mark && <Postmark stamp={stamp} id={`pm-${stamp.key}-${Math.round(w)}`} />}
     </div>
   );
 }
 
-// a province not yet been to: the perforated outline, dashed, with its name
-function Missing({ name, w = 72, note }) {
-  const h = (w * H) / W;
-  const path = useMemo(() => perforated(w - 2, h - 2, (4 * w) / W, (13 * w) / W), [w, h]);
+// an empty space in the book for a province not yet been to
+function Space({ name, note }) {
   return (
-    <div className={`pt-stamp-missing${note ? ' soon' : ''}`} style={{ width: w, height: h }}>
-      <svg width={w} height={h}><path d={path} transform="translate(1 1)" /></svg>
+    <div className={`pt-stamp-space${note ? ' soon' : ''}`}>
       <span>{name}</span>
       {note && <em>{note}</em>}
     </div>
@@ -83,21 +108,22 @@ export function StampStrip({ onOpen }) {
   const latest = [...provinces, ...countries].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 4).reverse();
   return (
     <button className="pt-stampstrip" onClick={onOpen}>
+      <InkDefs />
       <span className="pt-stampstrip-text">
         <span className="pt-strong">สมุดแสตมป์ <Icon name="next" size={16} /></span>
         <span className="pt-stampstrip-count"><b>{provinces.length}</b>/77</span>
         <span className="pt-muted sm">จังหวัด{countries.length ? ` · ${countries.length} ประเทศ` : ''}</span>
       </span>
       <span className="pt-stampstrip-pile">
-        {latest.map((s, i) => <span key={s.key} style={{ left: `${i * 24}%`, top: `${(seeded(s.key, 5) - 0.5) * 14}px` }}><Stamp stamp={s} w={70} i={i} press /></span>)}
+        {latest.map((s, i) => <span key={s.key} style={{ top: `${(seeded(s.key, 5) - 0.5) * 14}px` }}><Stamp stamp={s} w={70} i={i} press /></span>)}
       </span>
     </button>
   );
 }
 
-// the book, over everything: the count, the stamps collected, the provinces still to go, abroad
+// the book, over everything: the count, then a page per region with a space for each province, then abroad
 export function StampBook({ onClose }) {
-  const { provinces, countries, missing, soon } = useStamps();
+  const { provinces, countries, regions, soon } = useStamps();
   const [open, setOpen] = useState(null); // { stamp, from: DOMRect }
   useEffect(() => {
     const onKey = (e) => { if (e.key === 'Escape' && !open) onClose(); };
@@ -105,18 +131,17 @@ export function StampBook({ onClose }) {
     return () => window.removeEventListener('keydown', onKey);
   }, [open, onClose]);
   const pick = (stamp) => (e) => setOpen({ stamp, from: e.currentTarget.getBoundingClientRect() });
-  const page = (list, offset = 0) => (
-    <div className="pt-book-page">
-      {list.map((s, i) => (
-        <button key={s.key} className="pt-book-slot" onClick={pick(s)} aria-label={s.name}
-          style={{ translate: `${((seeded(s.key, 7) - 0.5) * 18).toFixed(0)}px ${((seeded(s.key, 8) - 0.5) * 16).toFixed(0)}px` }}>
-          <Stamp stamp={s} w={136} i={i + offset} press />
-        </button>
-      ))}
-    </div>
+  const newest = [...provinces, ...countries].sort((a, b) => b.date.localeCompare(a.date))[0];
+  // stamps press in in the order they appear down the book (after the newest, up top)
+  const order = new Map([...regions.flatMap((r) => r.stamps), ...countries].map((s, k) => [s.key, k + 1]));
+  const slot = (s) => (
+    <button key={s.key} className="pt-book-slot" onClick={pick(s)} aria-label={s.name}>
+      <Stamp stamp={s} w={100} i={order.get(s.key)} press />
+    </button>
   );
   return createPortal(
     <div className="pt-book" role="dialog" aria-label="สมุดแสตมป์">
+      <InkDefs />
       <div className="pt-book-head">
         <button className="pt-round-btn" aria-label="ปิด" onClick={onClose}><Icon name="close" size={20} /></button>
         <span className="pt-book-title">สมุดแสตมป์</span>
@@ -124,19 +149,31 @@ export function StampBook({ onClose }) {
       </div>
       <div className="pt-scroll pt-book-scroll">
         <div className="pt-book-hero">
-          <b>{provinces.length}</b><span>/77</span>
-          <div>จังหวัดที่ไปมาแล้ว{countries.length ? <><br />และอีก {countries.length} ประเทศ</> : null}</div>
+          <div className="pt-book-count">
+            <div><b>{provinces.length}</b><span>/77</span></div>
+            <div className="pt-book-sub">จังหวัด{countries.length ? ` · ${countries.length} ประเทศ` : ''}</div>
+            <div className="pt-book-bar"><i style={{ width: `${(provinces.length / 77) * 100}%` }} /></div>
+          </div>
+          {newest && <button className="pt-book-newest" onClick={pick(newest)} aria-label={newest.name}><Stamp stamp={newest} w={124} press /></button>}
         </div>
-        {page(provinces)}
-        {countries.length > 0 && <><div className="pt-book-label">ต่างประเทศ</div>{page(countries, provinces.length)}</>}
-        {soon.length > 0 && (
-          <>
-            <div className="pt-book-label">รอปั๊ม</div>
-            <div className="pt-book-missing">{soon.map((c) => <Missing key={c.code} name={c.name} w={96} note={`อีก ${c.days} วัน`} />)}</div>
-          </>
+        {regions.map((r) => (
+          <section key={r.key} className="pt-book-region">
+            <div className="pt-book-label"><span>{r.name}</span><span className="pt-muted">{r.stamps.length}/{r.total}</span></div>
+            <div className="pt-book-grid">
+              {r.stamps.map(slot)}
+              {r.missing.map((m) => <Space key={m.name} name={m.name} />)}
+            </div>
+          </section>
+        ))}
+        {(countries.length > 0 || soon.length > 0) && (
+          <section className="pt-book-region">
+            <div className="pt-book-label"><span>ต่างประเทศ</span><span className="pt-muted">{countries.length}</span></div>
+            <div className="pt-book-grid">
+              {countries.map(slot)}
+              {soon.map((c) => <Space key={c.code} name={c.name} note={`อีก ${c.days} วัน`} />)}
+            </div>
+          </section>
         )}
-        <div className="pt-book-label">ยังไม่ได้ไป · {missing.length}</div>
-        <div className="pt-book-missing">{missing.map((m) => <Missing key={m.name} name={m.name} />)}</div>
       </div>
       {open && <StampView {...open} onClose={() => setOpen(null)} onLeave={onClose} />}
     </div>,
@@ -144,43 +181,34 @@ export function StampBook({ onClose }) {
   );
 }
 
-// one stamp on a dark ground: it flies up from where it was tapped as paper, then turns to black metal
+// one stamp, large: it lifts from where it was tapped and tilts under the finger, the light on its paper
+// moving with it
 function StampView({ stamp, from, onClose, onLeave }) {
   const navigate = useNavigate();
   const stage = useRef(null);
-  const canvas = useRef(null);
-  const light = useRef(null);
-  const [struck, setStruck] = useState(false);
   const [leaving, setLeaving] = useState(false);
   useLayoutEffect(() => {
     const el = stage.current; const to = el.getBoundingClientRect();
-    const k = from.width / to.width;
     el.animate([
-      { transform: `translate(${from.left + from.width / 2 - (to.left + to.width / 2)}px, ${from.top + from.height / 2 - (to.top + to.height / 2)}px) scale(${k}) rotate(${(seeded(stamp.key) - 0.5) * 12}deg)` },
+      { transform: `translate(${from.left + from.width / 2 - (to.left + to.width / 2)}px, ${from.top + from.height / 2 - (to.top + to.height / 2)}px) scale(${from.width / to.width})` },
       { transform: 'none' },
-    ], { duration: 560, easing: 'cubic-bezier(.2, 1.15, .35, 1)' });
-  }, [from, stamp.key]);
-  useEffect(() => {
-    const s = strike(canvas.current, stamp);
-    light.current = s;
-    let live = true;
-    // the metal strikes once the stamp has landed (and its relief is worked out)
-    Promise.all([s.ready, new Promise((ok) => { setTimeout(ok, 620); })]).then(() => live && setStruck(true)).catch(() => {});
-    return () => { live = false; s.stop(); };
-  }, [stamp]);
-  const move = (e) => {
-    const r = canvas.current.getBoundingClientRect();
-    light.current?.setLight((e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height);
+    ], { duration: 520, easing: 'cubic-bezier(.2, 1.1, .35, 1)' });
+  }, [from]);
+  const tilt = (e) => {
+    const r = stage.current.getBoundingClientRect();
+    const x = Math.max(-1, Math.min(1, ((e.clientX - r.left) / r.width) * 2 - 1));
+    const y = Math.max(-1, Math.min(1, ((e.clientY - r.top) / r.height) * 2 - 1));
+    stage.current.style.setProperty('--tx', x.toFixed(3));
+    stage.current.style.setProperty('--ty', y.toFixed(3));
   };
   const close = () => { setLeaving(true); setTimeout(onClose, 200); };
   return (
-    <div className={`pt-stampview${leaving ? ' leaving' : ''}`} onPointerMove={move} onPointerDown={move}>
+    <div className={`pt-stampview${leaving ? ' leaving' : ''}`} onPointerMove={tilt} onPointerDown={tilt} onClick={(e) => { if (e.target === e.currentTarget) close(); }}>
       <div className="pt-stampview-head">
-        <button className="pt-round-btn dark" aria-label="ปิด" onClick={close}><Icon name="back" size={20} /></button>
+        <button className="pt-round-btn" aria-label="ปิด" onClick={close}><Icon name="close" size={20} /></button>
       </div>
-      <div className={`pt-stampview-stage${struck ? ' struck' : ''}`} ref={stage}>
-        <Stamp stamp={stamp} w={Math.min(280, window.innerWidth - 110)} />
-        <canvas ref={canvas} className="pt-stampview-metal" />
+      <div className="pt-stampview-stage" ref={stage}>
+        <Stamp stamp={stamp} w={Math.min(250, window.innerWidth - 130)} />
       </div>
       <div className="pt-stampview-info">
         <div className="pt-stampview-en">{stamp.en} · No.{String(stamp.no).padStart(2, '0')}</div>
