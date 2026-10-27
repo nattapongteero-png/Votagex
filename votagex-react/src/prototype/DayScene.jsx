@@ -116,10 +116,11 @@ export default function DayScene({ scene, notes = [], weather = { kind: 'partly'
   const meAt = kind === 'free' ? 40 : [50, 33, 30, 27][n];
   const at = (i) => [[], [67], [60, 71], [56, 65, 74]][n][i];
   const back = (i) => i * 11;
-  // a wet day's shelter over us all (centred on us), and my thoughts go up over its roof
+  // a wet day's shelter over us all (centred on us)
   const shelterAt = kind === 'free' ? 40 : 50;
-  const head = headOf(cast[0][1]) + (wet ? 0.32 : 0);
-  // my thoughts, one at a time: { i: which, k: a count to start each afresh, on: showing }. The first comes once
+  const head = headOf(cast[0][1]);
+  // my thoughts, one at a time, out from the side of my head (towards the friends, a little up over the gap
+  // between our heads; on a free day the other way, the signpost's there): { i: which, k: a count to start each afresh, on: showing }. The first comes once
   // the hellos are done (straight away with reduced motion); a tap on me brings the next
   const said = kind === 'free' ? [{ key: 'ask', text: scene.ask, onClick: onTap }, ...notes] : notes;
   const [thought, setThought] = useState({ i: -1, k: 0, on: false });
@@ -166,7 +167,7 @@ export default function DayScene({ scene, notes = [], weather = { kind: 'partly'
         <Person look={me} poses={cast[0][1]} onTap={think} label="ความคิดของฉัน" gear={gear} className="ds-wonder" style={{ '--x': `${meAt}%`, '--blink': '1.6s' }} />
       )}
       {ready && shown && (
-        <div key={thought.k} className="ds-note" style={{ '--x': `${meAt}%`, '--head': head }}
+        <div key={thought.k} className={`ds-note ${kind === 'free' ? 'left' : `right${n ? ' up' : ''}`}`} style={{ '--x': `${meAt}%`, '--head': head }}
           onAnimationEnd={(e) => e.target === e.currentTarget && setThought((x) => ({ ...x, on: false }))}>
           <SpeechNotes notes={[shown]} />
         </div>

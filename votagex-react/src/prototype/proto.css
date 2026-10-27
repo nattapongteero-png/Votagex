@@ -2374,28 +2374,35 @@ body::after { content: ''; position: fixed; inset: 0; z-index: 9998; pointer-eve
 /* a free day: on the bench, the head tilting now and then */
 .ds-wonder .pp-head { transform-box: fill-box; transform-origin: 50% 85%; animation: ds-tilt 6s ease-in-out infinite; }
 @keyframes ds-tilt { 0%, 100% { transform: rotate(0deg); } 30% { transform: rotate(-4deg); } 60% { transform: rotate(2deg); } }
-/* what I say (SpeechNotes, once the hellos are done): a small bubble over my head, two dots trailing down to it */
-.ds-note { position: absolute; left: calc(var(--x) - 14px); bottom: calc(var(--ground) + var(--tall) * var(--head) + 18px); z-index: 1;
-  animation: ds-note-life 5.2s both; }
+/* my thoughts (SpeechNotes, once the hellos are done): a small bubble out from the side of my head, where
+   there's room (towards the friends, or on a free day the other way), two dots trailing back to my head */
+.ds-note { position: absolute; bottom: calc(var(--ground) + var(--tall) * var(--head) - 26px); z-index: 1; animation: ds-note-life 5.2s both; }
+.ds-note.right { left: calc(var(--x) + 26px); }
+.ds-note.left { left: calc(var(--x) - 34px); translate: -100% 0; }
 /* a thought stays a while, then goes */
 @keyframes ds-note-life { 0%, 90% { opacity: 1; } 100% { opacity: 0; } }
-.ds-note .pt-speech-wrap { display: block; width: max-content; max-width: 210px; padding: 0; }
+.ds-note .pt-speech-wrap { display: block; width: max-content; max-width: 170px; padding: 0; }
 .ds-note .pt-speech {
-  display: block; min-width: 72px; max-width: 150px; min-height: 0; padding: 7px 13px; border-radius: 18px;
-  font-size: 12px; font-weight: 500; line-height: 1.35; color: var(--tw-text-2); text-align: center;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, .05), 0 4px 14px rgba(15, 23, 42, .08); transform-origin: 20px 130%;
+  display: block; min-width: 0; max-width: 132px; min-height: 0; padding: 5px 10px; border-radius: 14px;
+  font-size: 11px; font-weight: 500; line-height: 1.35; color: var(--tw-text-2); text-align: center;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, .05), 0 3px 10px rgba(15, 23, 42, .08); transform-origin: -14px 85%;
 }
+.ds-note.left .pt-speech { transform-origin: calc(100% + 14px) 85%; }
 /* never clipped: Thai vowels and tone marks sit above and below the line, so no line clamp, room between lines */
-.ds-note .pt-speech-text { white-space: normal; display: block; overflow: visible; line-height: 1.55; padding: 1px 0; text-wrap: balance; }
-.ds-note .pt-speech-dots { left: 50%; margin-left: -14px; }
-.ds-note .pt-speech::before {
-  content: ''; position: absolute; left: 12px; bottom: -8px; width: 10px; height: 10px; border-radius: 50%; background: #fff;
-  clip-path: none; box-shadow: 0 2px 4px rgba(15, 23, 42, .06);
-}
-.ds-note .pt-speech::after {
-  content: ''; position: absolute; left: 10px; bottom: -16px; width: 5px; height: 5px; border-radius: 50%; background: #fff;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, .08);
-}
+.ds-note .pt-speech-text { white-space: normal; display: block; overflow: visible; line-height: 1.5; padding: 1px 0; text-wrap: balance; }
+.ds-note .pt-speech-dots { left: 50%; margin-left: -12px; }
+.ds-note .pt-speech-dots i { width: 5px; height: 5px; }
+.ds-note .pt-speech::before, .ds-note .pt-speech::after {
+  content: ''; position: absolute; border-radius: 50%; background: #fff; clip-path: none; box-shadow: 0 1px 3px rgba(15, 23, 42, .08); }
+.ds-note .pt-speech::before { left: -10px; bottom: 3px; width: 7px; height: 7px; }
+.ds-note .pt-speech::after { left: -18px; bottom: -3px; width: 4px; height: 4px; }
+.ds-note.left .pt-speech::before { left: auto; right: -10px; }
+.ds-note.left .pt-speech::after { left: auto; right: -18px; }
+/* with friends there, it rises a little, out over the gap between our heads, clear of their faces */
+.ds-note.up { bottom: calc(var(--ground) + var(--tall) * var(--head) + 4px); left: calc(var(--x) + 16px); }
+.ds-note.up .pt-speech { transform-origin: -8px 140%; }
+.ds-note.up .pt-speech::before { left: -5px; bottom: -8px; }
+.ds-note.up .pt-speech::after { left: -12px; bottom: -15px; }
 /* ===== the day's weather on the scene: the sky and land take its colour (lines stay ink), the sun's rays
    turn, a storm shakes the trees; the rain, heat and fog are SceneWeather.jsx; what we have on for it ===== */
 .ds { --sky: transparent; }

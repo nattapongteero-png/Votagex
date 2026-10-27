@@ -1,7 +1,7 @@
 import { useLayoutEffect, useRef, useState } from 'react';
 import Icon, { Flag } from './icons';
 
-// Notes I say, Instagram-notes style: a small bubble floating over my head in the day scene (DayScene)
+// Notes I think, Instagram-notes style: a small bubble out from my head in the day scene (DayScene)
 // with two little dots trailing down to it. Each note starts with typing dots, then the words; after a
 // few seconds it fades for the next one (the cycle follows the animation itself). Tap to open it.
 export default function SpeechNotes({ notes }) {
@@ -18,7 +18,7 @@ export default function SpeechNotes({ notes }) {
     el.style.width = '';
     el.style.maxWidth = '';
     const text = el.querySelector('.pt-speech-text');
-    if (text.offsetHeight / parseFloat(getComputedStyle(text).lineHeight) > 2.5) el.style.maxWidth = '210px';
+    if (text.offsetHeight / parseFloat(getComputedStyle(text).lineHeight) > 2.5) el.style.maxWidth = '170px';
     const range = document.createRange();
     range.selectNodeContents(el.querySelector('.pt-speech-text'));
     const scale = el.getBoundingClientRect().width / el.offsetWidth || 1; // the pop animation scales the bubble
