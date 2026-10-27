@@ -25,6 +25,9 @@ export default function useSheetSnap(pageRef, { cssDriven = false } = {}) {
     const { range } = s.current;
     if (!page) return;
     page.classList.toggle('sheet-open', range > 0 && y >= range - 2);
+    // how far the list has scrolled on past open, up to 48px: the prototype's fade under the handle grows with it
+    const fade = Math.round(Math.min(48, Math.max(0, y - range)));
+    if (s.current.fade !== fade) { s.current.fade = fade; page.style.setProperty('--hp-fade', `${fade}px`); }
     if (byCss) return;
     const p = Math.min(Math.max(y, 0), range);
     const frame = page.querySelector('.hp-sheet-frame');

@@ -1725,9 +1725,15 @@ button.pt-exp:active { background: var(--tw-sunken); }
   .homepage.pt-today .hp-sheet-frame { animation-name: pt-sheet-rise; }
   .homepage.pt-today .hp-sheet-bg { animation-name: pt-sheet-solid; }
 }
-/* open: cards fade out over 16px right under the handle */
+/* open: cards fade out right under the handle, over a band that grows with the first 48px of scroll past open
+   (--hp-fade, useSheetSnap), eased (smoothstep) like the other pages' lists, so the fade never shows an edge */
 .homepage.pt-today.sheet-open .hp-content {
-  --fade: linear-gradient(180deg, transparent 0, transparent calc(var(--hp-mask-top, 150px) - 6px), #000 calc(var(--hp-mask-top, 150px) + 10px));
+  --fade-at: calc(var(--hp-mask-top, 150px) - 6px); --fade-len: var(--hp-fade, 0px);
+  --fade: linear-gradient(180deg, transparent 0, transparent var(--fade-at), rgba(0, 0, 0, .04) calc(var(--fade-at) + var(--fade-len) * .125),
+    rgba(0, 0, 0, .16) calc(var(--fade-at) + var(--fade-len) * .25), rgba(0, 0, 0, .32) calc(var(--fade-at) + var(--fade-len) * .375),
+    rgba(0, 0, 0, .5) calc(var(--fade-at) + var(--fade-len) * .5), rgba(0, 0, 0, .68) calc(var(--fade-at) + var(--fade-len) * .625),
+    rgba(0, 0, 0, .84) calc(var(--fade-at) + var(--fade-len) * .75), rgba(0, 0, 0, .96) calc(var(--fade-at) + var(--fade-len) * .875),
+    #000 calc(var(--fade-at) + var(--fade-len)));
   -webkit-mask-image: var(--fade); mask-image: var(--fade);
 }
 /* the dock's fade, eased over its whole height instead of jumping to 75% in the first few px */
