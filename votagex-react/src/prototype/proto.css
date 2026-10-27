@@ -778,12 +778,21 @@ button.pt-exp:active { background: var(--tw-sunken); }
 .pt-mem-meta { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--tw-text-3); }
 
 /* recap */
+/* the photo stays put while the page slides up over it (the hero's text and buttons go with the page); its
+   negative margin is its height and the scroll's 14px gap, so the hero sits on top of it */
+.pt-recap-cover {
+  position: sticky;
+  top: 0;
+  height: 340px;
+  margin-bottom: -354px;
+  background-size: cover;
+  background-position: center;
+  transform-origin: 50% 100%;
+}
 .pt-recap-hero {
   position: relative;
   height: 340px;
   flex-shrink: 0;
-  background-size: cover;
-  background-position: center;
   display: flex;
   flex-direction: column;
   justify-content: space-between;

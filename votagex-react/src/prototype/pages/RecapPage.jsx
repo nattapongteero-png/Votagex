@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { useProto } from '../useProto';
 import Icon, { Flag } from '../icons';
@@ -10,6 +11,7 @@ export default function RecapPage() {
   const { planId } = useParams();
   const navigate = useNavigate();
   const { plans, memories, expenses, showToast } = useProto();
+  const cover = useRef(null);
   const plan = plans.find((p) => p.id === planId);
   if (!plan) return <Navigate to="/proto/plans" replace />;
 
@@ -25,6 +27,12 @@ export default function RecapPage() {
   const hero = photos[0]?.photos[0] || plan.cover?.img;
   const c = countryOf(plan.country);
 
+  // pulled down past the top (iOS lets the page overscroll), the photo stretches up from its foot to fill the gap
+  const stretch = (e) => {
+    const y = e.currentTarget.scrollTop;
+    if (cover.current) cover.current.style.transform = y < 0 ? `scale(${1 - y / 340})` : '';
+  };
+
   const share = async () => {
     const text = `${plan.name} · ${days.length} วัน ${stops.length} ที่ ${fmtKm(km)} — สรุปจาก VOTAGEX`;
     try {
@@ -35,8 +43,9 @@ export default function RecapPage() {
 
   return (
     <div className="pt-page">
-      <div className="pt-scroll flush">
-        <div className="pt-recap-hero" style={hero ? { backgroundImage: `url(${hero})` } : { background: plan.cover?.tint }}>
+      <div className="pt-scroll flush" onScroll={stretch}>
+        <div ref={cover} className="pt-recap-cover" style={hero ? { backgroundImage: `url(${hero})` } : { background: plan.cover?.tint }} />
+        <div className="pt-recap-hero">
           <div className="pt-recap-hero-top">
             <button className="pt-round-btn" aria-label="ย้อนกลับ" onClick={() => navigate(-1)}><Icon name="back" size={20} /></button>
             <button className="pt-round-btn" aria-label="แชร์" onClick={share}><Icon name="share" size={18} /></button>
