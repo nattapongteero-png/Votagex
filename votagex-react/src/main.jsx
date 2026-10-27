@@ -21,6 +21,15 @@ import './styles/trip-detail.css';
 
 import App from './App';
 
+// a page opened before a deploy asks for code files the deploy replaced: load the new page instead (once)
+window.addEventListener('vite:preloadError', (e) => {
+  if (sessionStorage.getItem('votagex.reloaded')) return;
+  e.preventDefault();
+  sessionStorage.setItem('votagex.reloaded', '1');
+  window.location.reload();
+});
+window.addEventListener('load', () => setTimeout(() => sessionStorage.removeItem('votagex.reloaded'), 10000));
+
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <App />
