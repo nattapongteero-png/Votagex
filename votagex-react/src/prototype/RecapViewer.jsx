@@ -24,7 +24,7 @@ export default function RecapViewer({ plan, memories, expenses, label, onClose }
     const photos = memories.filter((m) => m.photos?.length)
       .flatMap((m) => m.photos.map((src) => {
         const t = parseISO(m.date);
-        return { src, text: m.text, by: PEOPLE[m.by]?.name, date: `${thaiShort(m.date)} ${t.getFullYear() + 543}` };
+        return { src, text: m.text, by: PEOPLE[m.by]?.name, byAvatar: PEOPLE[m.by]?.avatar, date: `${thaiShort(m.date)} ${t.getFullYear() + 543}` };
       }));
     const total = expenses.reduce((t, e) => t + toTHB(e), 0);
     const cats = Object.entries(expenses.reduce((o, e) => ({ ...o, [e.cat]: (o[e.cat] || 0) + toTHB(e) }), {}))
@@ -68,6 +68,12 @@ export default function RecapViewer({ plan, memories, expenses, label, onClose }
     p.play(); // not autoPlay: that plays again on the last frame, which sends the film back to the start
     return () => p.removeEventListener('frameupdate', onFrame);
   }, []);
+  // dev only: seek to any frame for contact sheets (the film is a pure function of its frame)
+  useEffect(() => {
+    if (!import.meta.env.DEV) return undefined;
+    window.__recap = { seek: (fr) => { player.current?.pause(); player.current?.seekTo(fr); }, shots, total };
+    return () => { delete window.__recap; };
+  }, [shots, total]);
   useEffect(() => {
     const onKey = (e) => {
       if (e.key === 'Escape') onClose();
