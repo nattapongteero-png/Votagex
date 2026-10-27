@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { avatarOf } from './peeps';
 import { useProto } from './useProto';
 import Icon from './icons';
 import { Sheet } from './ui';
@@ -40,7 +41,7 @@ export function Postcard({ card, w, flip = 0, press = false, mark = true, write,
             ) : card.note ? (
               <>
                 <p className="pt-pc-text">{card.note.text}</p>
-                <div className="pt-pc-by">{card.note.avatar && <img src={card.note.avatar} alt="" />}<span>{card.note.name} · {card.note.on}</span></div>
+                <div className="pt-pc-by"><img src={avatarOf(card.note.by)} alt="" /><span>{card.note.name} · {card.note.on}</span></div>
               </>
             ) : (
               <div className="pt-pc-numbers">

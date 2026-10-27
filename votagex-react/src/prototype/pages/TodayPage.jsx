@@ -14,7 +14,7 @@ import RecapViewer from '../RecapViewer';
 import PostcardTile from '../Postcard';
 import HomeBar from '../HomeBar';
 import DayScene from '../DayScene';
-import { lookOf } from '../peeps';
+import { avatarOf, lookOf } from '../peeps';
 import { postcardOf, stampOfTrip, useStamps } from '../stamps';
 import { pm25Level, useWeather, weatherKind } from '../weather';
 import HOLIDAYS from '../thHolidays.json';
@@ -352,7 +352,7 @@ export default function TodayPage() {
             <SpeechNotes notes={notes} />
             {/* me: my own calendar (every trip I'm on); the groups sit beside me, same size */}
             <button aria-pressed={!group} className={`pt-scope-btn${!group ? ' active' : ''}`} onClick={() => actions.setSetting('scope', 'me')}>
-              <span className="pt-group-badge pt-scope-me"><img src={PEOPLE[ME].avatar} alt="" /></span><span>{PEOPLE[ME].name}</span>
+              <span className="pt-group-badge pt-scope-me"><img src={avatarOf(ME)} alt="" /></span><span>{PEOPLE[ME].name}</span>
             </button>
           </div>
           {/* new group stays put; only the list of groups scrolls sideways */}

@@ -5,6 +5,7 @@ import Icon from '../icons';
 import { Seg, SectionTitle, Progress, Avatars } from '../ui';
 import { ME, PEOPLE, EXPENSE_CATS, parseISO, myShare, fmtMoney, planStatus, jarStats } from '../data';
 import { StampBook } from '../StampBook';
+import { avatarOf } from '../peeps';
 
 const CAL_THEME_KEY = 'votagex.proto.calTheme'; // read by the home calendar
 const CAL_THEMES = [['riso', 'Riso'], ['poster', 'โปสเตอร์ 1969']];
@@ -41,12 +42,15 @@ export default function MePage() {
     <div className="me-page pt-me" style={{ display: 'flex' }}>
       <div className="me-header"><div className="me-header-top"><span className="me-title">ฉัน</span></div></div>
       <div className="me-content">
-        <div className="me-panel me-profile">
-          <span className="me-profile-avatar"><img src={PEOPLE[ME].avatar} alt="" /></span>
+        {/* my character: the picture everywhere, and me in the day scene on home */}
+        <button className="me-panel me-profile pt-profile-btn" onClick={() => openSheet('look')}>
+          <span className="me-profile-avatar"><img src={avatarOf(ME)} alt="" /></span>
           <span className="me-profile-text">
             <span className="me-menu-label">{PEOPLE[ME].name}</span>
+            <span className="me-profile-hint">แต่งตัวละคร</span>
           </span>
-        </div>
+          <Icon name="edit" size={18} className="me-chevron" />
+        </button>
 
         <div className="me-stats">
           <div className="me-stat"><span className="me-stat-label">เที่ยวมาแล้ว</span><span className="me-stat-value">{pastPlans}</span><span className="me-stat-unit">แผน</span></div>

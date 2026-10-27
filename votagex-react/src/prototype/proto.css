@@ -2323,14 +2323,27 @@ body::after { content: ''; position: fixed; inset: 0; z-index: 9998; pointer-eve
    it shows, then only breathes and blinks. People are sized off --tall (a standing person's height) and stand
    on one line; movement uses translate / rotate / scale on their own, so a person's flip (an inline transform)
    is kept ===== */
-.ds { position: relative; display: block; width: 100%; height: 280px; padding: 0; border: 0; border-radius: 28px; overflow: hidden; cursor: pointer;
-  container-type: size; --tall: 70cqh; font-family: var(--font); color: var(--tw-text); text-align: left; -webkit-tap-highlight-color: transparent;
-  background: radial-gradient(120% 80% at 72% 0%, #FFF9EF, rgba(255, 249, 239, 0) 62%), linear-gradient(#F6F1E7, #EEE6D6); }
-.ds::before { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 16%; background: #E8DECC; box-shadow: 0 -1px 0 rgba(60, 45, 25, .07); }
+/* no card: the park is drawn on the page itself, edge to edge (out past the stage's 20px sides) */
+.ds { position: relative; display: block; width: calc(100% + 40px); height: 280px; margin: 0 -20px; padding: 0; border: 0; overflow: hidden; cursor: pointer;
+  container-type: size; --tall: 70cqh; font-family: var(--font); color: var(--tw-text); text-align: left; -webkit-tap-highlight-color: transparent; background: none; }
 .homepage.pt-today .ds { opacity: clamp(0, calc(1 - var(--sheet-p, 0) * 1.6), 1); }
-.ds-person { position: absolute; left: var(--x); bottom: 11%; translate: -50% 0; }
+.ds-person, .ds-prop { position: absolute; left: var(--x); bottom: 11%; translate: -50% 0; }
+.ds-prop { overflow: visible; }
+.ds-prop.ds-sky { bottom: auto; }
+.ds-ground { position: absolute; left: 0; bottom: calc(11% - 3px); width: 100%; height: 6px; overflow: visible; }
+.ds-ground path { stroke-width: 1.5px; }
+.ds-hills { position: absolute; left: 0; bottom: 11%; width: 100%; height: 24%; overflow: visible; }
+.ds-hills path { stroke-width: 1.2px; opacity: .22; }
+.ds-sitter { bottom: calc(11% + var(--tall) * var(--lift, 0)); }
 .ds-pose { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
-.ds-shadow { position: absolute; left: 12%; right: 12%; bottom: -2.5%; height: 5%; border-radius: 50%; background: radial-gradient(closest-side, rgba(60, 45, 25, .24), rgba(60, 45, 25, 0)); }
+.ds-shadow { position: absolute; left: 12%; right: 12%; bottom: -2.5%; height: 5%; border-radius: 50%; background: radial-gradient(closest-side, rgba(24, 24, 27, .16), rgba(24, 24, 27, 0)); }
+.ds-sitter .ds-shadow { display: none; }
+/* the park, alive a little: the leaves sway, the clouds and birds drift */
+.ds-leaves { transform-box: fill-box; transform-origin: 50% 100%; animation: ds-sway 7s ease-in-out infinite; }
+@keyframes ds-sway { 0%, 100% { rotate: 0deg; } 50% { rotate: 1.2deg; } }
+.ds-cloud { animation: ds-drift 24s ease-in-out infinite alternate; }
+.ds-birds { animation: ds-drift 16s ease-in-out infinite alternate-reverse; }
+@keyframes ds-drift { to { translate: calc(-50% + 5cqw) 0; } }
 /* breathing, and a blink every few seconds (--blink sets each person apart) */
 .ds-pose > g { transform-box: fill-box; transform-origin: 50% 100%; animation: ds-breathe 3.6s ease-in-out infinite; }
 .ds .pp-face { animation: ds-open 4.4s var(--blink, 0s) infinite; }
@@ -2361,7 +2374,7 @@ body::after { content: ''; position: fixed; inset: 0; z-index: 9998; pointer-eve
 @keyframes ds-say { 0% { opacity: 0; scale: .4; } 14% { opacity: 1; scale: 1.08; } 22%, 84% { opacity: 1; scale: 1; } 100% { opacity: 0; scale: .92; } }
 /* the day's stops pop up over us, one after another */
 /* one row, over the heads: on a narrow card the names give way first */
-.ds-stops { position: absolute; top: 12px; left: 12px; right: 12px; display: flex; justify-content: center; gap: 6px; pointer-events: none; }
+.ds-stops { position: absolute; top: 12px; left: 16px; right: 16px; display: flex; justify-content: center; gap: 6px; pointer-events: none; }
 .ds-stop { display: inline-flex; align-items: center; gap: 5px; min-width: 0; height: 28px; padding: 0 11px 0 4px; border-radius: 999px; background: #fff; white-space: nowrap;
   font-size: 12px; font-weight: 500; box-shadow: 0 1px 2px rgba(15, 23, 42, .06), 0 4px 12px rgba(15, 23, 42, .08);
   opacity: 0; transform-origin: 50% 100%; animation: ds-chip .55s calc(2.1s + var(--i) * .14s) cubic-bezier(.3, 1.5, .5, 1) both; }
@@ -2389,3 +2402,16 @@ body::after { content: ''; position: fixed; inset: 0; z-index: 9998; pointer-eve
   .ds-stop, .ds-think { opacity: 1; }
 }
 
+
+/* ===== My character (LookSheet.jsx): me as I'll be on home, and each choice as my picture would be ===== */
+.pt-profile-btn { font: inherit; color: inherit; }
+.pt-look-stage { position: relative; height: 232px; display: flex; align-items: flex-end; justify-content: center; border-radius: 20px; background: var(--tw-sunken); overflow: hidden; margin-bottom: 12px; }
+.pt-look-stage svg { height: 208px; aspect-ratio: 1400 / 3000; margin-bottom: 8px; overflow: visible; }
+.pt-look-shuffle { position: absolute; top: 10px; right: 10px; }
+.pt-look-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 14px; }
+.pt-look-tile { position: relative; aspect-ratio: 1; padding: 0; border: 0; border-radius: 50%; background: var(--tw-sunken); overflow: hidden; cursor: pointer;
+  transition: box-shadow .15s; -webkit-tap-highlight-color: transparent; }
+.pt-look-tile svg { display: block; width: 100%; height: 100%; }
+.pt-look-tile.on { box-shadow: 0 0 0 2.5px var(--tw-surface), 0 0 0 4.5px var(--tw-text); }
+.pt-look-tile span { position: absolute; left: 50%; bottom: 10%; translate: -50% 0; padding: 1px 8px; border-radius: 999px; background: var(--tw-surface);
+  font-size: 11px; font-weight: 600; line-height: 18px; white-space: nowrap; color: var(--tw-text); box-shadow: 0 1px 3px rgba(15, 23, 42, .12); }

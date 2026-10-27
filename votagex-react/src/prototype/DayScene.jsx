@@ -1,13 +1,16 @@
 import Peep from './Peep';
 import Icon from './icons';
+import { Ground, Hills, Prop } from './scenery';
 import { POSE_BOX, piecesOf, usePeeps } from './peeps';
 import { PLACE_CATS } from './data';
 
-// The home page's stage: today as a little scene of Open Peeps (Peep.jsx), in place of the calendar.
+// The home page's stage: today as a little scene of Open Peeps (Peep.jsx), in place of the calendar, drawn
+// straight on the page (no card) with a park round it in the same line (scenery.jsx).
 // A day out: the friends going wait on the left, I walk in from the right (a step bounce), stop and turn to
 // them, the first of them holds out a hand and says hi, and the day's stops pop up over us with their times.
-// A day with nothing on: I'm sitting about, my head tilting now and then, wondering where to go.
-// It plays once as it shows (CSS, under three seconds) and then only breathes and blinks; tap it for the plan,
+// A day with nothing on: I'm sitting on a bench under the tree hugging my knees, my head tilting now and
+// then, wondering where to go.
+// It plays once as it shows (CSS, under four seconds) and then only breathes and blinks; tap it for the plan,
 // or for ideas on a free day.
 
 const FULL = 3000; // a standing person's height in the library's units, feet to above the hair
@@ -38,19 +41,35 @@ function Person({ look, poses, flip, className = '', style }) {
 
 const pose = (look, kind) => `${kind}${look.tone || 'BW'}`;
 
+// the park round us: [prop, centre, size (a person's = 1), height off the top for things in the sky].
+// A day out: a tree and a bush on the left behind the friends, the bench behind where I stop.
+// A free day: the tree with the bench under it (I sit on it), a signpost pointing two ways
+const BENCH_AT = ['50%', 1];
+const BACKDROP = {
+  meet: [['hills', '50%'], ['birds', '48%', 0.42, '24%'], ['cloud', '87%', 0.3, '25%'],
+    ['tree', '6%', 0.82], ['bench', '93%', 0.82], ['bush', '21%', 0.5], ['tuft', '47%', 0.9], ['tuft', '81%', 0.8]],
+  free: [['hills', '50%'], ['cloud', '15%', 0.4, '9%'], ['birds', '40%', 0.42, '12%'],
+    ['tree', '22%', 0.82], ['sign', '89%', 0.62], ['bench', ...BENCH_AT], ['bush', '74%', 0.42], ['tuft', '5%', 0.9], ['tuft', '96%', 0.8]],
+};
+
 // scene: { kind: 'meet', me, friends: [look], stops: [{ cat, time, name }], label } or { kind: 'free', me, ask, label }
 export default function DayScene({ scene, onTap }) {
   const { me } = scene;
   const cast = scene.kind === 'meet'
     ? [[me, [pose(me, 'standing/Walking'), pose(me, 'standing/RoboDance'), pose(me, 'standing/Resting')]],
       ...scene.friends.map((f, i) => [f, i ? [pose(f, 'standing/Resting')] : [pose(f, 'standing/Resting'), pose(f, 'standing/RoboDance')]])]
-    : [[me, [pose(me, 'sitting/OneLegUp')]]];
+    : [[me, [pose(me, 'sitting/ClosedLeg')]]];
   const ready = usePeeps(['face/EyesClosed', ...cast.flatMap(([look, poses]) => poses.flatMap((p) => piecesOf(look, p)))]);
   const n = scene.kind === 'meet' ? scene.friends.length : 0;
   // where people stand (centres): the friends together on the left, me on the right, close enough to meet
   const at = (i) => (n === 1 ? 30 : n === 2 ? 22 + i * 18 : 14 + i * 14);
+  // the bench's seat, off the ground (600 in its own units, scenery.jsx), for sitting on it
+  const seat = (600 * BENCH_AT[1]) / FULL;
   return (
     <button className={`ds ds-${scene.kind}${ready ? ' ready' : ''}`} onClick={onTap} aria-label={scene.label}>
+      {BACKDROP[scene.kind].map(([kind, x, size, top], i) => (kind === 'hills' ? <Hills key={i} />
+        : <Prop key={i} kind={kind} x={x} size={size} className={top ? 'ds-sky' : ''} style={top ? { top } : undefined} />))}
+      <Ground />
       {ready && scene.kind === 'meet' && (
         <>
           {scene.friends.map((look, i) => (
@@ -72,7 +91,7 @@ export default function DayScene({ scene, onTap }) {
       )}
       {ready && scene.kind === 'free' && (
         <>
-          <Person look={me} poses={cast[0][1]} className="ds-sitter" style={{ '--x': '42%', '--blink': '1.6s' }} />
+          <Person look={me} poses={cast[0][1]} className="ds-sitter" style={{ '--x': '47%', '--lift': seat, '--blink': '1.6s' }} />
           <span className="ds-think">{scene.ask}</span>
         </>
       )}

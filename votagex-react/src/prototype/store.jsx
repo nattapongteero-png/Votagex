@@ -6,12 +6,13 @@ import {
 } from './data';
 
 import * as cloud from './cloud';
+import { avatarOf, onAvatars, setLooks } from './peeps';
 
 // The app's data. Demo: sample data in memory + localStorage. Signed in: groups, trips with their stops,
 // expenses and transfers, settings and saved places (events too) live in Firestore; the rest (memories, savings
 // piggies) moves there piece by piece (docs/ROADMAP.md, phase 3) and until then is kept on this device, per account.
 const KEY = 'votagex.proto.v1';
-const emptyData = () => ({ v: 1, seededOn: TODAY, simMode: 'normal', plans: [], places: [], expenses: [], payments: [], memories: [], postcards: [], jars: [], piggyLog: [], groups: [], settings: {} });
+const emptyData = () => ({ v: 1, seededOn: TODAY, simMode: 'normal', plans: [], places: [], expenses: [], payments: [], memories: [], postcards: [], looks: {}, jars: [], piggyLog: [], groups: [], settings: {} });
 
 // data saved while moods and piggies still used emoji
 const OLD_MOODS = { '😍': 'moodLove', '😊': 'moodHappy', '🙂': 'moodSmile', '😐': 'moodMeh', '😮‍💨': 'moodTired' };
@@ -84,7 +85,13 @@ export function ProtoProvider({ children, user = null, exit }) {
   const [cloudPlans, setCloudPlans] = useState([]);
   const [plansReadyFor, setPlansReadyFor] = useState(null); // the groups whose trips have all answered once
   const [pendingPlans, setPendingPlans] = useState([]); // just created, until Firestore sends them back
-  const [, setPeopleVersion] = useState(0);
+  const [peopleVersion, setPeopleVersion] = useState(0);
+  // people's pictures are drawn from their looks (peeps.js): everyone's made up front (a film may want
+  // them), and drawn again as each is ready
+  const [, setAvatarsMade] = useState(0);
+  useEffect(() => onAvatars(() => setAvatarsMade((v) => v + 1)), []);
+  setLooks(data.looks);
+  useEffect(() => { Object.keys(PEOPLE).forEach(avatarOf); }, [data.looks, peopleVersion]);
   const [sheet, setSheet] = useState(null);
   const [toast, setToast] = useState(null);
   const toastTimer = useRef(null);
@@ -249,6 +256,8 @@ export function ProtoProvider({ children, user = null, exit }) {
       settings: d.settings?.scope === id ? { ...d.settings, scope: 'me' } : d.settings,
     }))),
     reset: () => setData(user ? emptyData() : seedData()),
+    // how I'm drawn, picked in LookSheet (kept on this phone)
+    setLook: (look) => setData((d) => ({ ...d, looks: { ...d.looks, [ME]: look } })),
 
     // places, events included (they have dates); groupId: shared with that group
     addPlace: (place) => {

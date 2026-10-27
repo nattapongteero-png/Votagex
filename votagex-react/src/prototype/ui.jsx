@@ -1,6 +1,7 @@
 import useModalClose from '../hooks/useModalClose';
 import Icon from './icons';
 import { PEOPLE, PLACE_CATS } from './data';
+import { avatarOf } from './peeps';
 
 const COVER_ICON_COLOR = { globe: '#2563EB', plans: 'var(--tw-brand)' };
 
@@ -28,7 +29,7 @@ export function Avatar({ id, size = 28 }) {
   const p = PEOPLE[id];
   return (
     <span className="pt-avatar" style={{ width: size, height: size }} title={p?.name}>
-      {p ? <img src={p.avatar} alt={p.name} /> : null}
+      {p ? <img src={avatarOf(id)} alt={p.name} /> : null}
     </span>
   );
 }

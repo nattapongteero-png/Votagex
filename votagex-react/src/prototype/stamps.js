@@ -133,7 +133,7 @@ export function postcardOf({ plan, memories, postcards, stamp, label, today }) {
     date: `${thaiShort(plan.startDate)} ${thaiYear(plan.startDate)}`,
     where: stamp ? (stamp.kind === 'prov' ? `${stamp.en} · Thailand` : stamp.en) : plan.destination?.name || '',
     photo: plan.cover?.img || photos[0] || null,
-    note: arrived ? { text: sent.text, name: PEOPLE[sent.by]?.name, avatar: PEOPLE[sent.by]?.avatar, on: `${thaiShort(sent.on)} ${thaiYear(sent.on)}` } : null,
+    note: arrived ? { text: sent.text, by: sent.by, name: PEOPLE[sent.by]?.name, on: `${thaiShort(sent.on)} ${thaiYear(sent.on)}` } : null,
     numbers: [
       [stops.length, 'ที่'],
       [Math.round(pins.reduce((t, s, i) => (i ? t + distanceKm(pins[i - 1], s) : 0), 0)), 'กม.'],

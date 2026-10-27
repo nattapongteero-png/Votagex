@@ -7,6 +7,7 @@ import RecapFilm from './RecapFilm';
 import { CUT, FPS, lengthOf, shotsFor } from './recapShots';
 import { buildSound } from './recapSound';
 import { PEOPLE, EXPENSE_CATS, byOrder, diffDays, distanceKm, parseISO, thaiShort, toTHB } from './data';
+import { avatarOf } from './peeps';
 
 const pad = (n) => String(n).padStart(2, '0');
 
@@ -30,7 +31,7 @@ export default function RecapViewer({ plan, memories, expenses, label, stamp, po
     const photos = memories.filter((m) => m.photos?.length)
       .flatMap((m) => m.photos.map((src) => {
         const t = parseISO(m.date);
-        return { src, text: m.text, by: PEOPLE[m.by]?.name, byAvatar: PEOPLE[m.by]?.avatar, date: `${thaiShort(m.date)} ${t.getFullYear() + 543}` };
+        return { src, text: m.text, by: PEOPLE[m.by]?.name, byAvatar: avatarOf(m.by), date: `${thaiShort(m.date)} ${t.getFullYear() + 543}` };
       }));
     const total = expenses.reduce((t, e) => t + toTHB(e), 0);
     const cats = Object.entries(expenses.reduce((o, e) => ({ ...o, [e.cat]: (o[e.cat] || 0) + toTHB(e) }), {}))
@@ -42,7 +43,7 @@ export default function RecapViewer({ plan, memories, expenses, label, stamp, po
       ago: label,
       dateFull: `${thaiShort(plan.startDate)} ${start.getFullYear() + 543}`,
       dateCode: `${pad(start.getDate())}.${pad(start.getMonth() + 1)}.${start.getFullYear() + 543}`,
-      crew: plan.members.map((id) => ({ id, name: PEOPLE[id]?.name, avatar: PEOPLE[id]?.avatar })).filter((c) => c.avatar),
+      crew: plan.members.map((id) => ({ id, name: PEOPLE[id]?.name, avatar: avatarOf(id) })).filter((c) => c.name),
       stops: stops.map((s) => ({ id: s.id, name: s.name, time: s.time, lat: s.lat, lng: s.lng })),
       photos,
       spend: { total, cats },

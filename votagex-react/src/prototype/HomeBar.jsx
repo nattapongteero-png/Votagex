@@ -5,6 +5,7 @@ import Icon from './icons';
 import { Empty, Sheet } from './ui';
 import { useActivity } from './activity';
 import { ME, PEOPLE, diffDays } from './data';
+import { avatarOf } from './peeps';
 
 // The home page's top bar, as Instagram's: + (make something) on the left, the name in the middle, and a
 // bell on the right for what came in (activity.js), with a red dot while something there is unseen. What's
@@ -96,7 +97,7 @@ export function ActivitySheet({ onClose, fresh = [], onRecap }) {
               {list.map((it) => (
                 <button key={it.id} className={`pt-act-row${fresh.includes(it.id) ? ' new' : ''}`} onClick={() => go(close, it)}>
                   <span className="pt-act-who">
-                    {it.who ? <img src={PEOPLE[it.who]?.avatar} alt="" /> : <Icon name={it.icon} size={22} />}
+                    {it.who ? <img src={avatarOf(it.who)} alt="" /> : <Icon name={it.icon} size={22} />}
                     {it.who && <i className="pt-act-badge"><Icon name={it.icon} size={12} stroke={2.2} /></i>}
                   </span>
                   <span className="pt-grow">
