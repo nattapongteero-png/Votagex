@@ -45,17 +45,23 @@ function Person({ look, poses, flip, className = '', style }) {
 
 const pose = (look, kind) => `${kind}${look.tone || 'BW'}`;
 
-// the park round us, all on the one ground line: { p: prop, x: centre, size: of life size } or, in the sky,
-// { p, x, top: off the top of the whole backdrop (header and all), size }. Nothing may reach past the top of
-// the page (a crop there clashes with the browser's bar), so the tree is a young one, about 4 m. A day out:
-// the tree behind me on the left, the bench behind the friends. A free day: the bench (I sit on it) under
+// Seen as the people are drawn, from eye height: the horizon (the hills) is at a standing person's eye level,
+// HORIZON px over the ground line, which is why the bench shows its seat's top (it's below our eyes). Everyone
+// and everything near stands on the one ground line; only the little trees on the hills are far off, smaller by
+// as much as they're nearer the horizon.
+const HORIZON = 185;
+// the park round us: { p: prop, x: centre, size: of life size, far: px up the page towards the horizon } or,
+// in the sky, { p, x, top: off the top of the whole backdrop (header and all), size }. Nothing may reach past the
+// top of the page (a crop there clashes with the browser's bar), so the tree is a young one, about 4 m. A day
+// out: the tree behind me on the left, the bench behind the friends. A free day: the bench (I sit on it) under
 // the tree, a signpost pointing two ways
+const FAR_TREES = [{ p: 'tree', x: '58%', far: 166, size: 0.9 }, { p: 'tree', x: '63%', far: 168, size: 0.7 }];
 const BENCH_AT = { p: 'bench', x: '40%' };
 const SEAT = 960; // the middle of the bench's seat, off its front legs' ground, in its units (scenery.jsx)
 const BACKDROP = {
-  meet: [{ p: 'hills' }, { p: 'cloud', x: '88%', top: '44%', size: 0.4 }, { p: 'birds', x: '50%', top: '50%', size: 0.42 },
+  meet: [{ p: 'hills' }, ...FAR_TREES, { p: 'cloud', x: '88%', top: '44%', size: 0.4 }, { p: 'birds', x: '50%', top: '50%', size: 0.42 },
     { p: 'tree', x: '8%', size: 0.88 }, { p: 'bush', x: '20%', size: 0.6 }, { p: 'bench', x: '86%' }, { p: 'tuft', x: '48%' }, { p: 'tuft', x: '97%', size: 0.8 }],
-  free: [{ p: 'hills' }, { p: 'cloud', x: '80%', top: '44%', size: 0.4 }, { p: 'birds', x: '64%', top: '50%', size: 0.42 },
+  free: [{ p: 'hills' }, ...FAR_TREES, { p: 'cloud', x: '80%', top: '44%', size: 0.4 }, { p: 'birds', x: '64%', top: '50%', size: 0.42 },
     { p: 'tree', x: '13%', size: 0.88 }, { p: 'sign', x: '88%' }, { p: 'bush', x: '70%', size: 0.75 }, { p: 'tuft', x: '58%' },
     { p: 'tuft', x: '4%' }, BENCH_AT],
 };
@@ -86,10 +92,12 @@ export default function DayScene({ scene, notes = [], onTap }) {
   const said = kind === 'free' ? [{ key: 'ask', text: scene.ask, onClick: onTap }, ...notes] : notes;
 
   return (
-    <div className={`ds ds-${kind}${ready ? ' ready' : ''}`}>
+    <div className={`ds ds-${kind}${ready ? ' ready' : ''}`} style={{ '--horizon': `${HORIZON}px` }}>
       <div className="ds-world" aria-hidden="true">
-        {BACKDROP[kind].map(({ p, x, size = 1, top }, i) => (p === 'hills' ? <Hills key={i} />
-          : <Prop key={i} kind={p} x={x} size={size} className={top ? 'ds-sky' : ''} style={top ? { top } : undefined} />))}
+        {BACKDROP[kind].map(({ p, x, size = 1, top, far }, i) => (p === 'hills' ? <Hills key={i} />
+          : top ? <Prop key={i} kind={p} x={x} size={size} className="ds-sky" style={{ top }} />
+            : far ? <Prop key={i} kind={p} x={x} size={size * (1 - far / HORIZON)} className="ds-far" style={{ '--far': `${far}px` }} />
+              : <Prop key={i} kind={p} x={x} size={size} />))}
         <Ground />
       </div>
       <button className="ds-tap" onClick={onTap} aria-label={scene.label} />

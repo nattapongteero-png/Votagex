@@ -132,7 +132,7 @@ export function Prop({ kind, x, size = 1, className = '', style }) {
   );
 }
 
-// far off behind it all: low hills
+// far off, on the horizon at our eye level: low hills
 export function Hills() {
   return (
     <svg className="ds-hills" viewBox="0 0 1000 60" preserveAspectRatio="none" aria-hidden="true">
