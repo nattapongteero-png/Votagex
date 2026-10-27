@@ -5,11 +5,13 @@ import { Player } from '@remotion/player';
 import Icon from './icons';
 import RecapFilm from './RecapFilm';
 import { FPS, lengthOf, shotsFor } from './recapShots';
+import { buildSound } from './recapSound';
 import { PEOPLE, EXPENSE_CATS, byOrder, diffDays, distanceKm, parseISO, thaiShort, toTHB } from './data';
 
 const pad = (n) => String(n).padStart(2, '0');
 
-// A past trip played back as a trailer (RecapFilm). A bar per shot up top; tap the left third for the shot
+// A past trip played back as a film (RecapFilm) with its synthesized sound (recapSound), built when it opens;
+// a speaker button mutes it. A bar per shot up top; tap the left third for the shot
 // before, elsewhere for the next; hold to pause. "ดูทริปนี้" opens the plan any time; at the end, the full recap.
 export default function RecapViewer({ plan, memories, expenses, label, onClose }) {
   const navigate = useNavigate();
@@ -17,6 +19,9 @@ export default function RecapViewer({ plan, memories, expenses, label, onClose }
   const [frame, setFrame] = useState(0);
   const [size, setSize] = useState(() => ({ w: Math.min(430, window.innerWidth), h: window.innerHeight }));
   const hold = useRef({ timer: null, held: false });
+  const [sound, setSound] = useState(null); // the synthesized track, once it's built
+  const [muted, setMuted] = useState(false);
+  const unlocked = useRef(false); // phones let sound play only after a tap reaches the player
 
   const film = useMemo(() => {
     const stops = plan.stops.filter((s) => s.date && s.lat != null && !s.skip).sort((a, b) => a.date.localeCompare(b.date) || byOrder(a, b));
@@ -45,6 +50,16 @@ export default function RecapViewer({ plan, memories, expenses, label, onClose }
   }, [plan, memories, expenses, label]);
   const shots = useMemo(() => shotsFor(film), [film]);
   const total = lengthOf(shots);
+  useEffect(() => {
+    let url = null; let live = true;
+    buildSound(film, shots, total).then((r) => {
+      url = r.url;
+      if (live) setSound(r);
+      else URL.revokeObjectURL(url);
+    });
+    return () => { live = false; if (url) URL.revokeObjectURL(url); };
+  }, [film, shots, total]);
+  const inputProps = useMemo(() => ({ ...film, sound: sound?.url }), [film, sound]);
   const W = 1080;
   const H = Math.round(Math.min(2400, Math.max(1600, (W * size.h) / size.w)));
   const at = shots.reduce((k, s, i) => (frame >= s.from + 7 ? i : k), 0);
@@ -71,9 +86,9 @@ export default function RecapViewer({ plan, memories, expenses, label, onClose }
   // dev only: seek to any frame for contact sheets (the film is a pure function of its frame)
   useEffect(() => {
     if (!import.meta.env.DEV) return undefined;
-    window.__recap = { seek: (fr) => { player.current?.pause(); player.current?.seekTo(fr); }, shots, total };
+    window.__recap = { seek: (fr) => { player.current?.pause(); player.current?.seekTo(fr); }, shots, total, sound };
     return () => { delete window.__recap; };
-  }, [shots, total]);
+  }, [shots, total, sound]);
   useEffect(() => {
     const onKey = (e) => {
       if (e.key === 'Escape') onClose();
@@ -90,8 +105,23 @@ export default function RecapViewer({ plan, memories, expenses, label, onClose }
     hold.current.held = false;
     hold.current.timer = setTimeout(() => { hold.current.held = true; player.current?.pause(); }, 220);
   };
+  // the first tap that reaches the player starts it again from inside that tap, which lets phones play its sound
+  const unlock = (e) => {
+    if (unlocked.current || !player.current) return;
+    unlocked.current = true;
+    player.current.pause();
+    player.current.play(e);
+  };
+  const toggleSound = (e) => {
+    unlock(e);
+    const p = player.current;
+    if (!p) return;
+    if (muted) p.unmute(); else p.mute();
+    setMuted(!muted);
+  };
   const up = (e) => {
     clearTimeout(hold.current.timer);
+    unlock(e);
     if (hold.current.held) { player.current?.play(); return; }
     const r = e.currentTarget.getBoundingClientRect();
     jump(e.clientX - r.left < r.width / 3 ? -1 : 1);
@@ -100,7 +130,7 @@ export default function RecapViewer({ plan, memories, expenses, label, onClose }
 
   return createPortal(
     <div className={`pt-story${shots[at]?.light ? ' on-light' : ''}`} role="dialog" aria-label={`สรุปทริป ${plan.name}`}>
-      <Player ref={player} component={RecapFilm} inputProps={film} durationInFrames={total} fps={FPS}
+      <Player ref={player} component={RecapFilm} inputProps={inputProps} durationInFrames={total} fps={FPS}
         compositionWidth={W} compositionHeight={H} loop={false} moveToBeginningWhenEnded={false} acknowledgeRemotionLicense
         clickToPlay={false} doubleClickToFullscreen={false} spaceKeyToPlayOrPause={false}
         style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} />
@@ -117,6 +147,11 @@ export default function RecapViewer({ plan, memories, expenses, label, onClose }
           <span className="pt-strong ellipsis">{plan.name}</span>
           <span className="pt-muted sm ellipsis">{label}</span>
         </span>
+        <button className="pt-story-close" aria-label={muted ? 'เปิดเสียง' : 'ปิดเสียง'} onClick={toggleSound}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M11 5 6 9H3v6h3l5 4V5z" />{muted ? <path d="m22 9-6 6M16 9l6 6" /> : <path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13" />}
+          </svg>
+        </button>
         <button className="pt-story-close" aria-label="ปิด" onClick={onClose}><Icon name="close" size={22} /></button>
       </div>
       <div className="pt-story-foot">
