@@ -272,7 +272,8 @@ export default function TodayPage() {
     if (!next) return { kind: 'free', me, ask: 'ว่างนะ ไปไหนดี?', label: 'วันนี้ว่าง ไปไหนดี' };
     return {
       kind: 'meet', me, label: next.p.name, planId: next.p.id,
-      friends: next.p.members.filter((id) => id !== ME).slice(0, 3).map(lookOf),
+      // on my own page it's only me; with a group picked, whoever's going with me
+      friends: group ? next.p.members.filter((id) => id !== ME).slice(0, 3).map(lookOf) : [],
     };
   })();
 

@@ -2358,6 +2358,12 @@ body::after { content: ''; position: fixed; inset: 0; z-index: 9998; pointer-eve
 @keyframes ds-me-a { 0%, 41.6% { opacity: 1; } 41.7%, 100% { opacity: 0; } }
 @keyframes ds-me-b { 0%, 41.6% { opacity: 0; } 41.7%, 99.8% { opacity: 1; } 100% { opacity: 0; } }
 @keyframes ds-me-c { 0%, 99.8% { opacity: 0; } 100% { opacity: 1; } }
+/* on my own: I walk in to the middle and just stand there (no hand out, no hop) */
+.ds-me.ds-alone .ds-pose-1 { opacity: 0; animation: ds-alone-b 1.5s both; }
+@keyframes ds-alone-b { 0%, 99.8% { opacity: 0; } 100% { opacity: 1; } }
+/* I'm the one to tap: my thoughts */
+.ds-person.ds-tappable { pointer-events: auto; cursor: pointer; -webkit-tap-highlight-color: transparent; outline: none; }
+.ds-person.ds-tappable:active .ds-pose { scale: .98; transform-origin: 50% 100%; }
 /* the first friend holds out a hand as I arrive, says hi (from their side, to me), and stands back easy */
 .ds-greeter .ds-pose-0 { animation: ds-greet-a 3.6s both; }
 .ds-greeter .ds-pose-1 { opacity: 0; animation: ds-greet-b 3.6s both; }
@@ -2371,7 +2377,10 @@ body::after { content: ''; position: fixed; inset: 0; z-index: 9998; pointer-eve
 .ds-sitter .pp-head { transform-box: fill-box; transform-origin: 50% 85%; animation: ds-tilt 6s ease-in-out infinite; }
 @keyframes ds-tilt { 0%, 100% { transform: rotate(0deg); } 30% { transform: rotate(-4deg); } 60% { transform: rotate(2deg); } }
 /* what I say (SpeechNotes, once the hellos are done): a small bubble over my head, two dots trailing down to it */
-.ds-note { position: absolute; left: calc(var(--x) - 14px); bottom: calc(var(--ground) + var(--tall) * var(--head) + 18px); z-index: 1; }
+.ds-note { position: absolute; left: calc(var(--x) - 14px); bottom: calc(var(--ground) + var(--tall) * var(--head) + 18px); z-index: 1;
+  animation: ds-note-life 5.2s both; }
+/* a thought stays a while, then goes */
+@keyframes ds-note-life { 0%, 90% { opacity: 1; } 100% { opacity: 0; } }
 .ds-note .pt-speech-wrap { display: block; width: max-content; max-width: 210px; padding: 0; }
 .ds-note .pt-speech {
   display: block; min-width: 72px; max-width: 150px; min-height: 0; padding: 7px 13px; border-radius: 18px;

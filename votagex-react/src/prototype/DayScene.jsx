@@ -6,12 +6,14 @@ import { POSE_BOX, piecesOf, usePeeps } from './peeps';
 
 // The home page's stage: today as a little scene of Open Peeps (Peep.jsx), in place of the calendar, drawn
 // straight on the page (no card) in a park at life size (scenery.jsx), which reaches on up behind the header.
-// I'm always the one on the left, and my notes (what used to float over my picture) are what I say.
+// I'm always the one on the left; my notes (what used to float over my picture) are my thoughts, one at a time
+// in a bubble over my head: the first comes by itself once the hellos are done, then each tap on me brings
+// the next, and each goes again after a few seconds.
 // A day out: the friends going wait on the right, I walk in from the left (a step bounce), stop by them, the
-// first of them holds out a hand and says hi, then I say my notes (where we're off to and when is in the
-// cards below).
-// A day with nothing on: I'm sitting on a bench under the tree hugging my knees, my head tilting now and
-// then, wondering where to go (and then my notes).
+// first of them holds out a hand and says hi (where we're off to and when is in the cards below). On my own
+// page (no group picked) it's only me: I walk in to the middle and stand there.
+// A day with nothing on: I'm sitting on the bench in the middle hugging my knees, my head tilting now and
+// then, wondering where to go.
 // It plays once as it shows (CSS, about four seconds) and then only breathes and blinks; tap it for the plan,
 // or for ideas on a free day.
 
@@ -28,11 +30,12 @@ const boxOf = (poses) => {
 // how high a person's head comes, off the ground, in --tall (the top of every pose's hair is at 62)
 const headOf = (poses) => (footOf(poses) - 62) / FULL;
 
-// a person, in one pose or swapping between `poses` (CSS); looking left with `flip`
-function Person({ look, poses, flip, className = '', style }) {
+// a person, in one pose or swapping between `poses` (CSS); looking left with `flip`; with `onTap`, one to tap
+function Person({ look, poses, flip, onTap, label, className = '', style }) {
   const [x, y, w, h] = boxOf(poses);
+  const tap = onTap ? { role: 'button', tabIndex: 0, 'aria-label': label, onClick: onTap, onKeyDown: (e) => (e.key === 'Enter' || e.key === ' ') && onTap() } : {};
   return (
-    <div className={`ds-person ${className}`} style={{ aspectRatio: `${w} / ${h}`, height: `calc(var(--tall) * ${h / FULL})`, ...style }}>
+    <div className={`ds-person ${className}${onTap ? ' ds-tappable' : ''}`} style={{ aspectRatio: `${w} / ${h}`, height: `calc(var(--tall) * ${h / FULL})`, ...style }} {...tap}>
       {poses.map((pose, i) => (
         <svg key={pose} className={poses.length > 1 ? `ds-pose ds-pose-${i}` : 'ds-pose'} viewBox={`${x} ${y} ${w} ${h}`}
           style={flip ? { transform: 'scaleX(-1)' } : undefined}>
@@ -50,21 +53,22 @@ const pose = (look, kind) => `${kind}${look.tone || 'BW'}`;
 // a line) spreads out round us and the bench shows its seat's top. We stand level, at the front; the park is
 // further back, each thing `far` px up the land and smaller by as much as that's nearer the horizon.
 const HORIZON = 240;
-// the park round us: { p: prop, x: centre, size: of life size, far: px back up the land } or, in the sky,
+// the park round us, a stage framed by two trees, the big one on the left, a smaller one on the right (the
+// same tree turned round); a bush at the foot of each, the little trees far off on the hills in the middle,
+// between us. { p: prop, x: centre, size: of life size, far: px back up the land, flip } or, in the sky,
 // { p, x, top: off the top of the whole backdrop (header and all), size }. Nothing may reach past the top of the
-// page (a crop there clashes with the browser's bar). A day out: the tree behind me on the left, the bench
-// behind the friends. A free day: the bench (I sit on it, level with us) under the tree, a signpost pointing two
-// ways. Little trees far off on the hills, grass about the land nearer and further
-const FAR_TREES = [{ p: 'tree', x: '58%', far: 222, size: 0.9 }, { p: 'tree', x: '63%', far: 225, size: 0.7 }];
-const GRASS = [{ p: 'tuft', x: '8%', far: -26 }, { p: 'tuft', x: '52%', far: -14 }, { p: 'tuft', x: '36%', far: 30 }, { p: 'tuft', x: '76%', far: 62 },
-  { p: 'tuft', x: '24%', far: 96 }, { p: 'tuft', x: '92%', far: 128 }, { p: 'tuft', x: '46%', far: 168 }];
-const BENCH_AT = { p: 'bench', x: '40%' };
+// page (a crop there clashes with the browser's bar). A free day: the bench in the middle (I sit on it, level
+// with us), a signpost between it and the right-hand tree
+const FRAME = [{ p: 'tree', x: '47%', far: 222, size: 0.9 }, { p: 'tree', x: '53%', far: 225, size: 0.7, flip: true },
+  { p: 'cloud', x: '64%', top: '31%', size: 0.4 }, { p: 'birds', x: '36%', top: '27%', size: 0.42 },
+  { p: 'tuft', x: '9%', far: -24 }, { p: 'tuft', x: '91%', far: -20 }, { p: 'tuft', x: '50%', far: -30, size: 0.9 }, { p: 'tuft', x: '30%', far: 40 },
+  { p: 'tuft', x: '70%', far: 36 }, { p: 'tuft', x: '40%', far: 120, size: 0.8 }, { p: 'tuft', x: '62%', far: 150 },
+  { p: 'tree', x: '3%', far: 60 }, { p: 'tree', x: '97%', far: 74, size: 0.82, flip: true }];
+const BENCH_AT = { p: 'bench', x: '50%' };
 const SEAT = 960; // the middle of the bench's seat, off its front legs' ground, in its units (scenery.jsx)
 const BACKDROP = {
-  meet: [...FAR_TREES, ...GRASS, { p: 'cloud', x: '86%', top: '34%', size: 0.4 }, { p: 'birds', x: '52%', top: '30%', size: 0.42 },
-    { p: 'tree', x: '10%', far: 56 }, { p: 'bush', x: '24%', far: 40, size: 0.7 }, { p: 'bench', x: '86%', far: 34 }],
-  free: [...FAR_TREES, ...GRASS, { p: 'cloud', x: '80%', top: '34%', size: 0.4 }, { p: 'birds', x: '64%', top: '30%', size: 0.42 },
-    { p: 'tree', x: '13%', far: 56 }, { p: 'sign', x: '88%', far: 44 }, { p: 'bush', x: '70%', far: 40, size: 0.8 }, BENCH_AT],
+  meet: [...FRAME, { p: 'bush', x: '17%', far: 44, size: 0.7 }, { p: 'bush', x: '84%', far: 50, size: 0.55, flip: true }],
+  free: [...FRAME, { p: 'bush', x: '18%', far: 44, size: 0.7 }, { p: 'sign', x: '77%', far: 46 }, BENCH_AT],
 };
 const reduced = () => typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
@@ -78,27 +82,30 @@ export default function DayScene({ scene, notes = [], onTap }) {
       ...scene.friends.map((f, i) => [f, i ? [pose(f, 'standing/Resting')] : [pose(f, 'standing/Resting'), pose(f, 'standing/RoboDance')]])]
     : [[me, [pose(me, 'sitting/ClosedLeg')]]];
   const ready = usePeeps(['face/EyesClosed', ...cast.flatMap(([look, poses]) => poses.flatMap((p) => piecesOf(look, p)))]);
-  // where people stand (centres), all on the one line, face to face: me on the left, the friends together
-  // on the right, close enough to meet; on a free day, on the bench
-  const meAt = kind === 'free' ? 37 : !n ? 46 : n === 1 ? 30 : n === 2 ? 24 : 18;
-  const at = (i) => (n === 1 ? 66 : n === 2 ? 58 + i * 18 : 48 + i * 16);
+  // where people stand (centres), all on the one line, spread evenly about the middle, face to face: me on
+  // the left, the friends on the right; on my own, in the middle; on a free day, on the bench
+  const meAt = kind === 'free' ? 47 : [50, 33, 25, 20][n];
+  const at = (i) => [0, 67, 50, 40][n] + i * [0, 0, 25, 20][n];
   const lift = kind === 'free' ? SEAT / FULL : 0;
   const head = lift + headOf(cast[0][1]);
-  // I speak once the hellos are done (straight away with reduced motion)
-  const [talk, setTalk] = useState(false);
+  // my thoughts, one at a time: { i: which, k: a count to start each afresh, on: showing }. The first comes once
+  // the hellos are done (straight away with reduced motion); a tap on me brings the next
+  const said = kind === 'free' ? [{ key: 'ask', text: scene.ask, onClick: onTap }, ...notes] : notes;
+  const [thought, setThought] = useState({ i: -1, k: 0, on: false });
   useEffect(() => {
-    const t = setTimeout(() => setTalk(true), reduced() ? 0 : kind === 'meet' && n ? 4100 : 900);
+    const t = setTimeout(() => setThought((x) => (x.i < 0 ? { i: 0, k: 1, on: true } : x)), reduced() ? 0 : kind === 'meet' && n ? 4100 : 900);
     return () => clearTimeout(t);
   }, [kind, n]);
-  const said = kind === 'free' ? [{ key: 'ask', text: scene.ask, onClick: onTap }, ...notes] : notes;
+  const think = () => said.length && setThought((x) => ({ i: (x.i + 1) % said.length, k: x.k + 1, on: true }));
+  const shown = thought.on && said[thought.i % said.length];
 
   return (
     <div className={`ds ds-${kind}${ready ? ' ready' : ''}`} style={{ '--horizon': `${HORIZON}px` }}>
       <Land />
       <div className="ds-world" aria-hidden="true">
-        {BACKDROP[kind].map(({ p, x, size = 1, top, far }, i) => (top ? <Prop key={i} kind={p} x={x} size={size} className="ds-sky" style={{ top }} />
-          : far ? <Prop key={i} kind={p} x={x} size={size * (1 - far / HORIZON)} className={far > 150 ? 'ds-far' : ''} style={{ '--far': `${far}px` }} />
-            : <Prop key={i} kind={p} x={x} size={size} />))}
+        {BACKDROP[kind].map(({ p, x, size = 1, top, far, flip }, i) => (top ? <Prop key={i} kind={p} x={x} size={size} className="ds-sky" style={{ top }} />
+          : <Prop key={i} kind={p} x={x} size={size * (1 - (far || 0) / HORIZON)} className={far > 150 ? 'ds-far' : ''}
+            style={{ '--far': `${far || 0}px`, transform: flip ? 'scaleX(-1)' : undefined }} />))}
       </div>
       <button className="ds-tap" onClick={onTap} aria-label={scene.label} />
       {ready && kind === 'meet' && (
@@ -107,16 +114,20 @@ export default function DayScene({ scene, notes = [], onTap }) {
             <Person key={i} look={look} poses={cast[i + 1][1]} flip className={`ds-friend${i ? '' : ' ds-greeter'}`}
               style={{ '--x': `${at(i)}%`, '--blink': `${1.1 + 0.9 * i}s` }} />
           ))}
-          {/* walking in facing right, then a hand out to say hi, then standing easy */}
-          <Person look={me} poses={cast[0][1]} className="ds-me" style={{ '--x': `${meAt}%`, '--blink': '2.4s' }} />
+          {/* walking in facing right, then a hand out to say hi, then standing easy (on my own: just standing) */}
+          <Person look={me} poses={n ? cast[0][1] : [cast[0][1][0], cast[0][1][2]]} onTap={think} label="ความคิดของฉัน"
+            className={`ds-me${n ? '' : ' ds-alone'}`} style={{ '--x': `${meAt}%`, '--blink': '2.4s' }} />
           {n > 0 && <span className="ds-say" style={{ '--x': `${at(0)}%` }}>หวัดดี!</span>}
         </>
       )}
       {ready && kind === 'free' && (
-        <Person look={me} poses={cast[0][1]} className="ds-sitter" style={{ '--x': `${meAt}%`, '--lift': lift, '--blink': '1.6s' }} />
+        <Person look={me} poses={cast[0][1]} onTap={think} label="ความคิดของฉัน" className="ds-sitter" style={{ '--x': `${meAt}%`, '--lift': lift, '--blink': '1.6s' }} />
       )}
-      {ready && talk && said.length > 0 && (
-        <div className="ds-note" style={{ '--x': `${meAt}%`, '--head': head }}><SpeechNotes notes={said} /></div>
+      {ready && shown && (
+        <div key={thought.k} className="ds-note" style={{ '--x': `${meAt}%`, '--head': head }}
+          onAnimationEnd={(e) => e.target === e.currentTarget && setThought((x) => ({ ...x, on: false }))}>
+          <SpeechNotes notes={[shown]} />
+        </div>
       )}
     </div>
   );
