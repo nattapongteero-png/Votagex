@@ -11,7 +11,6 @@ import { MonthPiggyTile } from '../MonthMoney';
 import StopRow from '../StopRow';
 import MapView from '../MapView';
 import RecapViewer from '../RecapViewer';
-import SunWall from '../SunWall';
 import { pm25Level, useWeather, weatherKind } from '../weather';
 import HOLIDAYS from '../thHolidays.json';
 import {
@@ -313,7 +312,6 @@ export default function TodayPage() {
 
   return (
     <div ref={pageRef} className={`homepage pt-today${collapsed ? ' header-collapsed' : ''}${atRest ? ' at-rest' : ''}`} style={sheet ? { '--hp-sheet-top': `${sheet.top}px`, '--fold-top': `${FOLD_TOP}px` } : undefined}>
-      <SunWall />
       <div className="hp-header">
         <div className="hp-header-top pt-talk">
           {/* Instagram-style note floating above the avatar */}
