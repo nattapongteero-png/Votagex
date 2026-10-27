@@ -32,10 +32,14 @@
 .pt-scroll > *, .pt-sheet-body > * { flex-shrink: 0; }
 .pt-scroll.flush { padding: 0 0 48px; }
 /* page lists fade out under their header as they scroll, like the home page's cards under the sheet's handle;
-   the band grows with the first 16px of scroll (ProtoApp), and there's no mask at all at rest */
+   the band grows with the first 48px of scroll (ProtoApp), and there's no mask at all at rest. It eases in and
+   out (smoothstep), so there's no line where the fade starts or ends */
 :is(.pt-scroll, .pt-me .me-content)[data-fade]:not([data-fade="0"]) {
-  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 var(--fade-top));
-  mask-image: linear-gradient(180deg, transparent 0, #000 var(--fade-top));
+  --fade: linear-gradient(180deg, transparent 0, rgba(0, 0, 0, .04) calc(var(--fade-top) * .125), rgba(0, 0, 0, .16) calc(var(--fade-top) * .25),
+    rgba(0, 0, 0, .32) calc(var(--fade-top) * .375), rgba(0, 0, 0, .5) calc(var(--fade-top) * .5), rgba(0, 0, 0, .68) calc(var(--fade-top) * .625),
+    rgba(0, 0, 0, .84) calc(var(--fade-top) * .75), rgba(0, 0, 0, .96) calc(var(--fade-top) * .875), #000 var(--fade-top));
+  -webkit-mask-image: var(--fade);
+  mask-image: var(--fade);
 }
 .pt-pad { padding: 0 20px 12px; }
 .pt-pad-x { padding: 0 16px 12px; display: flex; flex-direction: column; gap: 8px; }
@@ -811,9 +815,15 @@ button.pt-exp:active { background: var(--tw-sunken); }
   padding: 16px 20px 12px;
   pointer-events: none;
 }
-/* solid, it runs on 16px below itself fading out, so the page fades away under it as the home page's cards
-   do under the sheet's handle (a mask on this page's scroll would fade the photo too) */
-.pt-recap-bar::before { content: ''; position: absolute; inset: 0 0 -16px; background: linear-gradient(180deg, var(--tw-canvas) calc(100% - 16px), transparent); opacity: var(--solid); }
+/* solid, it runs on 48px below itself fading out (smoothstep, as the lists' fade), so the page fades away
+   under it as the home page's cards do under the sheet's handle (a mask on this page's scroll would fade the
+   photo too) */
+.pt-recap-bar::before {
+  content: ''; position: absolute; inset: 0 0 -48px; opacity: var(--solid);
+  background: linear-gradient(180deg, #F9FAFB calc(100% - 48px), rgba(249, 250, 251, .96) calc(100% - 42px), rgba(249, 250, 251, .84) calc(100% - 36px),
+    rgba(249, 250, 251, .68) calc(100% - 30px), rgba(249, 250, 251, .5) calc(100% - 24px), rgba(249, 250, 251, .32) calc(100% - 18px),
+    rgba(249, 250, 251, .16) calc(100% - 12px), rgba(249, 250, 251, .04) calc(100% - 6px), rgba(249, 250, 251, 0));
+}
 .pt-recap-bar > * { position: relative; pointer-events: auto; }
 .pt-recap-bar-title { flex: 1; min-width: 0; text-align: center; font-size: 15px; font-weight: 600; color: var(--tw-text); opacity: var(--solid); }
 .pt-recap-hero {

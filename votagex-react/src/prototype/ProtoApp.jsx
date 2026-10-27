@@ -64,7 +64,7 @@ function Toast() {
 }
 
 // page lists fade out under their header as they scroll, as the home page's cards fade under the sheet's
-// handle: the band grows with the first 16px of scroll (data-fade, --fade-top in proto.css), so nothing fades
+// handle: the band grows with the first 48px of scroll (data-fade, --fade-top in proto.css), so nothing fades
 // at rest. One listener for every page; the home page's list has its own.
 const FADES = '.pt-scroll:not(.flush), .pt-me .me-content';
 function useScrollFade() {
@@ -72,7 +72,7 @@ function useScrollFade() {
     const onScroll = (e) => {
       const el = e.target;
       if (!(el instanceof Element) || !el.matches(FADES)) return;
-      const v = String(Math.round(Math.min(16, Math.max(0, el.scrollTop))));
+      const v = String(Math.round(Math.min(48, Math.max(0, el.scrollTop))));
       if (el.dataset.fade === v) return;
       el.dataset.fade = v;
       el.style.setProperty('--fade-top', `${v}px`);
