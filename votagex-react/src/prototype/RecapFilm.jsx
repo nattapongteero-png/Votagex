@@ -2,7 +2,7 @@ import { AbsoluteFill, Easing, Img, interpolate, spring, useCurrentFrame, useVid
 import { FPS, shotsFor } from './recapShots';
 
 // A trip's recap cut like a product launch film (Remotion), 9:16 at 1080 wide. Big words land one beat at a
-// time on a pale ground; the photos are rounded cards that spring in and then open out to fill the screen;
+// time on a pale ground, the trip's name fills with its cover and the camera pushes through it; the photos are rounded cards that spring in and then open out to fill the screen;
 // who went pop in as faces, the route draws itself on a card with its stops as chips, the numbers count up a
 // beat each on black, and the trip's name closes over a wall of its photos.
 
@@ -40,33 +40,34 @@ const Card = ({ src, x, y, w, h, r = 0, radius = 44, o = 1, z = 0, drift = 1 }) 
 
 /* ---------------- shots ---------------- */
 
-// "one year ago" / "we went" / the trip's name, then its photos fly in around the name and the cover opens up
+// "one year ago" / "we went" / the trip's name in ink; the cover photo fills the letters, then the camera
+// pushes through them until the photo is the whole frame, carrying straight on into the cover shot
 function Intro({ d, f, H }) {
-  const pics = [d.cover, ...d.photos.map((p) => p.src).filter((s) => s !== d.cover)].filter(Boolean).slice(0, 5);
-  const spots = [[0, 0, 0], [-300, -560, -9], [310, -500, 8], [-320, 560, 7], [300, 600, -8]];
-  const open = lerp(f, 84, 110, 0, 1, Easing.bezier(0.65, 0, 0.35, 1));
   const cy = H / 2;
-  const size = Math.min(170, 1500 / Math.max(5, [...d.title].length));
+  const size = Math.min(230, 1800 / Math.max(5, [...d.title].length));
+  const inP = sp(f, 46, POP);
+  const fill = lerp(f, 60, 74, 0, 1, Easing.inOut(Easing.quad));
+  const zoom = interpolate(f, [78, 108], [1, 30], { ...clamp, easing: Easing.in(Easing.cubic) });
+  const full = lerp(f, 94, 108, 0, 1, Easing.linear);
+  const at = `translate(540 ${cy + (1 - inP) * 80}) scale(${(0.92 + 0.08 * Math.min(1.05, inP)) * zoom}) translate(-540 ${-cy})`;
+  const text = (props) => (
+    <text x="540" y={cy} textAnchor="middle" dominantBaseline="central" transform={at}
+      style={{ fontFamily: FONT, fontSize: size, fontWeight: 700, letterSpacing: -size * 0.03 }} {...props}>{d.title}</text>
+  );
   return (
     <AbsoluteFill style={{ background: PALE, overflow: 'hidden' }}>
-      {pics.map((src, i) => {
-        const [dx, dy, r] = spots[i];
-        const p = sp(f, 50 + i * 4, POP);
-        if (i === 0) {
-          // the cover sits behind the name, then opens out to the whole frame
-          const w = lerp(f, 50, 66, 300, 400) + (1080 - 400) * open; const h = lerp(f, 50, 66, 380, 500) + (H - 500) * open;
-          return <Card key={i} src={src} x={540} y={cy} w={w} h={h} r={(1 - open) * -3} radius={44 * (1 - open)} o={Math.min(1, p * 1.5)} />;
-        }
-        const away = lerp(f, 80, 96, 0, 1, Easing.in(Easing.cubic));
-        return <Card key={i} src={src} x={540 + dx * (1.6 - 0.6 * p) * (1 + away)} y={cy + dy * (1.6 - 0.6 * p) * (1 + away)} w={300} h={380} r={r * p} o={Math.min(1, p * 1.5) * (1 - away)} />;
-      })}
-      <AbsoluteFill style={{ alignItems: 'center', justifyContent: 'center', padding: '0 70px', zIndex: 2 }}>
+      <AbsoluteFill style={{ alignItems: 'center', justifyContent: 'center', padding: '0 70px' }}>
         <Beat f={f} from={2} to={20} size={150}>{d.ago}</Beat>
         <div style={{ position: 'absolute' }}><Beat f={f} from={28} to={40} size={170}>เราไป</Beat></div>
-        <div style={{ position: 'absolute', left: 70, right: 70 }}>
-          <Beat f={f} from={50} to={80} size={size} color={f > 52 ? '#fff' : INK} style={{ textShadow: f > 52 ? '0 6px 30px rgba(0,0,0,.35)' : 'none' }}>{d.title}</Beat>
-        </div>
       </AbsoluteFill>
+      {f >= 45 && (
+        <svg width="1080" height={H} style={{ position: 'absolute', inset: 0 }}>
+          <defs><clipPath id="rc-title">{text({})}</clipPath></defs>
+          {text({ fill: INK, opacity: Math.min(1, inP * 1.4) * (1 - fill) })}
+          {d.cover && <image href={d.cover} width="1080" height={H} preserveAspectRatio="xMidYMid slice" clipPath="url(#rc-title)" opacity={fill} />}
+        </svg>
+      )}
+      {d.cover && full > 0 && <Img src={d.cover} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: full }} />}
     </AbsoluteFill>
   );
 }
