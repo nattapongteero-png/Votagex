@@ -2268,7 +2268,7 @@ body::after { content: ''; position: fixed; inset: 0; z-index: 9998; pointer-eve
 /* ===== Home top bar (HomeBar.jsx), as Instagram's: + / the name / the bell with a red dot for what's new ===== */
 /* a short screen (iPhone SE) wins back the bar's height, so today's week stays clear of the resting sheet */
 @media (max-height: 719px) {
-  .homepage.pt-today { --hp-stage-top: 143px; --ds-h: 336px; }
+  .homepage.pt-today { --hp-stage-top: 143px; --ds-h: 352px; }
   .homepage.pt-today .hp-header { padding-top: 8px; gap: 6px; }
   .homepage.pt-today .hp-header-top.pt-talk { padding-top: 4px; }
 }
@@ -2302,23 +2302,39 @@ body::after { content: ''; position: fixed; inset: 0; z-index: 9998; pointer-eve
    (an inline transform) is kept. No card: it's drawn on the page, edge to edge (out past the stage's 20px
    sides), and the park behind (.ds-world) goes on up behind the header, lighter than the people, and
    lighter again under the header so its buttons stay clear ===== */
-.ds { position: relative; width: calc(100% + 40px); height: var(--ds-h, 340px); margin: 0 -20px; container-type: size;
-  --tall: 196px; --ground: 31px; font-family: var(--font); color: var(--tw-text); text-align: left; }
-.homepage.pt-today .ds { opacity: clamp(0, calc(1 - var(--sheet-p, 0) * 1.6), 1); }
+.ds { position: relative; width: calc(100% + 40px); height: var(--ds-h, 356px); margin: 0 -20px; container-type: size;
+  --tall: 196px; --ground: 18px; font-family: var(--font); color: var(--tw-text); text-align: left; }
+/* the card sheet comes up over it (solid, its top edge a soft fade, no line) and stops under the profile row,
+   which stays with the top bar; the scene holds still behind it (moving, the tree would go past the top of
+   the page and be cut off there) and dims a little */
+.homepage.pt-today.with-scene .hp-stage { transform: none; }
+.homepage.pt-today.with-scene.sheet-open:not(.at-rest) .hp-stage { z-index: 0; }
+.homepage.pt-today .ds { opacity: calc(1 - var(--sheet-p, 0) * .7); }
+.homepage.pt-today.with-scene .hp-sheet-bg { opacity: 1 !important; animation: none; border-radius: 0; box-shadow: none;
+  background: linear-gradient(to bottom, rgba(249, 250, 251, 0), var(--page) 32px); }
+.homepage.pt-today.with-scene :is(.hp-header-top.pt-talk, .pt-topbar) { opacity: 1; transform: none; }
+.homepage.pt-today.with-scene.header-collapsed .hp-header > :not(.pt-snap-stop),
+.homepage.pt-today.with-scene.header-collapsed .hp-header > * * { pointer-events: auto; }
 .ds-tap { position: absolute; inset: 0; padding: 0; border: 0; background: none; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .ds-world { position: absolute; left: 0; right: 0; bottom: 0; top: calc(-1 * var(--hp-stage-top, 0px)); overflow: hidden; pointer-events: none; color: #BCC2CD;
   --fade: linear-gradient(to bottom, rgba(0, 0, 0, .3), rgba(0, 0, 0, .3) calc(var(--hp-stage-top, 0px) - 30px), #000 calc(var(--hp-stage-top, 0px) + 40px));
   -webkit-mask-image: var(--fade); mask-image: var(--fade); }
-.ds-person, .ds-prop { position: absolute; left: var(--x); bottom: var(--ground); translate: -50% 0; pointer-events: none; }
+.ds-person, .ds-prop { position: absolute; left: var(--x); bottom: calc(var(--ground) + var(--d, 0px)); translate: -50% 0; pointer-events: none; }
+/* everything on the ground casts the same soft shadow, people and park alike */
+.ds-prop-shadow { position: absolute; left: var(--x); bottom: calc(var(--ground) + var(--d, 0px) - 4px); height: 10px; translate: -50% 0; border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(24, 24, 27, .13), rgba(24, 24, 27, 0)); }
 .ds-prop { overflow: visible; }
 .ds-prop.ds-sky { bottom: auto; }
-.ds-ground { position: absolute; left: 0; bottom: calc(var(--ground) - 3px); width: 100%; height: 6px; overflow: visible; }
+.ds-ground { position: absolute; left: 0; bottom: calc(var(--ground) - 8px); width: 100%; height: 32px; overflow: visible; }
 .ds-ground path { stroke-width: 1.5px; }
-.ds-hills { position: absolute; left: 0; bottom: var(--ground); width: 100%; height: 72px; overflow: visible; }
+.ds-ground .ds-path-far { stroke-width: 1.2px; }
+/* far off: the hills sit on the horizon, the trees on them fainter (the air between) */
+.ds-hills { position: absolute; left: 0; bottom: calc(var(--ground) + var(--horizon) - 2px); width: 100%; height: 26px; overflow: visible; }
 .ds-hills path { stroke-width: 1.2px; opacity: .6; }
-.ds-sitter { bottom: calc(var(--ground) + var(--tall) * var(--lift, 0)); }
+.ds-far { opacity: .7; }
+.ds-sitter { bottom: calc(var(--ground) + var(--d, 0px) + var(--tall) * var(--lift, 0)); }
 .ds-pose { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
-.ds-shadow { position: absolute; left: 12%; right: 12%; bottom: -2.5%; height: 5%; border-radius: 50%; background: radial-gradient(closest-side, rgba(24, 24, 27, .16), rgba(24, 24, 27, 0)); }
+.ds-shadow { position: absolute; left: 12%; right: 12%; bottom: -4px; height: 10px; border-radius: 50%; background: radial-gradient(closest-side, rgba(24, 24, 27, .18), rgba(24, 24, 27, 0)); }
 .ds-sitter .ds-shadow { display: none; }
 /* the park, alive a little: the leaves sway, the clouds and birds drift */
 .ds-leaves { transform-box: fill-box; transform-origin: 50% 100%; animation: ds-sway 8s ease-in-out infinite; }
@@ -2350,7 +2366,7 @@ body::after { content: ''; position: fixed; inset: 0; z-index: 9998; pointer-eve
 .ds-greeter .ds-pose-1 { opacity: 0; animation: ds-greet-b 3.6s both; }
 @keyframes ds-greet-a { 0%, 45.8% { opacity: 1; } 46%, 99.8% { opacity: 0; } 100% { opacity: 1; } }
 @keyframes ds-greet-b { 0%, 45.8% { opacity: 0; } 46%, 99.8% { opacity: 1; } 100% { opacity: 0; } }
-.ds-say { position: absolute; left: calc(var(--x) - 8%); bottom: calc(var(--ground) + var(--tall) * .8); translate: -100% 0; padding: 6px 12px;
+.ds-say { position: absolute; left: calc(var(--x) - 8%); bottom: calc(var(--ground) + var(--d, 0px) + var(--tall) * var(--s, 1) * .8); translate: -100% 0; padding: 6px 12px;
   border-radius: 16px 16px 4px 16px; background: #fff; font-size: 13px; font-weight: 700; line-height: 1.4; white-space: nowrap; pointer-events: none;
   box-shadow: 0 4px 14px rgba(15, 23, 42, .1); opacity: 0; transform-origin: 100% 100%; animation: ds-say 2.4s 1.7s both; }
 @keyframes ds-say { 0% { opacity: 0; scale: .4; } 14% { opacity: 1; scale: 1.08; } 22%, 84% { opacity: 1; scale: 1; } 100% { opacity: 0; scale: .92; } }
@@ -2367,7 +2383,7 @@ body::after { content: ''; position: fixed; inset: 0; z-index: 9998; pointer-eve
 .ds-sitter .pp-head { transform-box: fill-box; transform-origin: 50% 85%; animation: ds-tilt 6s ease-in-out infinite; }
 @keyframes ds-tilt { 0%, 100% { transform: rotate(0deg); } 30% { transform: rotate(-4deg); } 60% { transform: rotate(2deg); } }
 /* what I say (SpeechNotes, once the hellos are done): a small bubble over my head, two dots trailing down to it */
-.ds-note { position: absolute; left: calc(var(--x) - 14px); bottom: calc(var(--ground) + var(--tall) * var(--head) + 18px); z-index: 1; }
+.ds-note { position: absolute; left: calc(var(--x) - 14px); bottom: calc(var(--ground) + var(--d, 0px) + var(--tall) * var(--head) + 18px); z-index: 1; }
 .ds-note .pt-speech-wrap { display: block; width: max-content; max-width: 210px; padding: 0; }
 .ds-note .pt-speech {
   display: block; min-width: 72px; max-width: 150px; min-height: 0; padding: 7px 13px; border-radius: 18px;

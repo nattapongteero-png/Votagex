@@ -94,19 +94,24 @@ export default function TodayPage() {
   // the card sheet rests just under the calendar (its height changes with week/month and the day's stops),
   // always leaving a strip of the sheet in view
   const stageRef = useRef(null);
-  const [sheet, setSheet] = useState(null); // { top: --hp-sheet-top, clip: px of calendar under the resting sheet }
+  // { top: --hp-sheet-top, clip: px of calendar under the resting sheet, folded: the folded calendar's height,
+  //   stop: (the day's scene) the profile row's bottom, where the risen sheet stops }
+  const [sheet, setSheet] = useState(null);
   useLayoutEffect(() => {
     const stage = stageRef.current, page = pageRef.current;
     if (!stage || !page) return undefined;
-    // the sheet's top edge lands 14px under the calendar (cards start 24px below that edge); on a short screen
-    // it stops higher (showing a little less of itself) and the calendar's bottom is cut off where it covers it
+    // the sheet's top edge lands 14px under the calendar (cards start 24px below that edge; under the day's
+    // scene, right under its ground); on a short screen it stops higher (showing a little less of itself) and
+    // the calendar's bottom is cut off where it covers it
     const fit = () => {
       if (page.querySelector('.hp-content')?.scrollTop > 0) return; // folding: the open sizes stay as measured
       const bottom = stage.offsetTop + stage.offsetHeight;
-      const top = Math.round(Math.min(bottom + 38, page.clientHeight - (page.clientHeight < 720 ? 100 : 126)));
-      // what's left of the calendar when folded (header bar, weekdays, one week); the day's scene goes entirely
+      const top = Math.round(Math.min(bottom + (SHOW_CALENDAR ? 38 : 22), page.clientHeight - (page.clientHeight < 720 ? 100 : 126)));
+      // what's left of the calendar when folded (header bar, weekdays, one week)
       const away = [...stage.querySelectorAll('.pt-riso-stack > :first-child .pt-fold-away')].reduce((h, el) => h + el.offsetHeight, 0);
-      setSheet({ top, clip: Math.max(0, bottom - (top - 24)), folded: stage.querySelector('.pt-riso-stack') ? stage.offsetHeight - away : 0 });
+      const row = page.querySelector('.hp-header-top.pt-talk');
+      setSheet({ top, clip: Math.max(0, bottom - (top - 24)), folded: stage.querySelector('.pt-riso-stack') ? stage.offsetHeight - away : 0,
+        stop: row ? Math.round(row.getBoundingClientRect().bottom - page.getBoundingClientRect().top) : 0 });
     };
     const ro = new ResizeObserver(fit);
     ro.observe(stage);
@@ -341,7 +346,7 @@ export default function TodayPage() {
   };
 
   return (
-    <div ref={pageRef} className={`homepage pt-today${collapsed ? ' header-collapsed' : ''}${atRest ? ' at-rest' : ''}`} style={sheet ? { '--hp-sheet-top': `${sheet.top}px`, '--fold-top': `${FOLD_TOP}px` } : undefined}>
+    <div ref={pageRef} className={`homepage pt-today${SHOW_CALENDAR ? '' : ' with-scene'}${collapsed ? ' header-collapsed' : ''}${atRest ? ' at-rest' : ''}`} style={sheet ? { '--hp-sheet-top': `${sheet.top}px`, '--fold-top': `${FOLD_TOP}px` } : undefined}>
       <div className="hp-header">
         {/* + to make something, the name, the bell for what came in */}
         <HomeBar onRecap={(id) => setRecapOf(id)} />
@@ -362,8 +367,9 @@ export default function TodayPage() {
             ))}
           </div>
         </div>
-        {/* step 2 stop for the card sheet: it rises over the greeting up to here */}
-        <span className="hp-pill-row pt-snap-stop" aria-hidden="true" style={sheet ? { height: FOLD_TOP + sheet.folded } : undefined} />
+        {/* step 2 stop for the card sheet: it rises over the greeting up to the folded calendar; over the day's
+            scene, up to just under the profile row (the top bar and the row stay) */}
+        <span className="hp-pill-row pt-snap-stop" aria-hidden="true" style={sheet ? { height: SHOW_CALENDAR ? FOLD_TOP + sheet.folded : sheet.stop - 4 } : undefined} />
       </div>
 
       <div className="hp-stage" ref={stageRef} style={sheet?.clip && atRest ? { clipPath: `polygon(-40px -100vh, calc(100% + 40px) -100vh, calc(100% + 40px) calc(100% - ${sheet.clip}px), -40px calc(100% - ${sheet.clip}px))` } : undefined}>

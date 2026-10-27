@@ -30,6 +30,7 @@ const shape = { ...line, fill: '#fff' };
 // a tree as tall as two and a half people: the trunk up past our heads, the leaves in three clumps
 const TREE = {
   box: [0, 0, 5600, 7800],
+  shadow: 0.36,
   art: (
     <>
       <path {...shape} d="M2380 7800 C2560 7740 2640 7520 2660 7200 C2690 6400 2700 5200 2690 4300 L2700 3500 L3000 3500 C2990 4300 3000 5200 3030 6400 C3050 7200 3140 7740 3330 7800" />
@@ -62,22 +63,28 @@ const LAMP = {
   ),
 };
 
+// a park bench seen as the people are, from eye height: the seat's top shows, the back legs stand further
+// back (higher up) than the front ones. Its seat's middle is 960 off the front ground (DayScene sits me there)
 const BENCH = {
-  box: [0, 0, 2800, 1720], // its seat 720 off the ground where one sits (DayScene sits me on it)
+  box: [0, 0, 2800, 1760],
+  shadow: 0.95,
   art: (
     <>
-      {/* the ironwork in solid ink: posts up the back, legs, armrests; the planks white */}
-      <path fill={INK} d="M300 170 h78 l-6 760 h-78 Z M2422 170 h78 l6 760 h-78 Z" />
-      <path fill={INK} d="M300 1000 C292 1240 262 1520 214 1720 L330 1720 C360 1520 386 1240 392 1000 Z M2408 1000 C2414 1240 2440 1520 2470 1720 L2586 1720 C2538 1520 2508 1240 2500 1000 Z" />
-      <path {...shape} d="M200 230 h2400 a50 50 0 0 1 0 160 h-2400 a50 50 0 0 1 0 -160 Z M200 460 h2400 a50 50 0 0 1 0 160 h-2400 a50 50 0 0 1 0 -160 Z" />
-      <path {...line} strokeWidth={46} d="M330 720 C220 720 150 790 140 880 M2470 720 C2580 720 2650 790 2660 880" />
-      <path {...shape} d="M140 860 h2520 a50 50 0 0 1 0 150 h-2520 a50 50 0 0 1 0 -150 Z" />
+      {/* the ironwork in solid ink (back legs and posts, then the front legs), the planks white */}
+      <path fill={INK} d="M318 700 h70 l-8 860 h-62 Z M2412 700 h70 l0 860 h-62 Z" />
+      <path fill={INK} d="M300 80 h78 l-6 640 h-78 Z M2422 80 h78 l6 640 h-78 Z" />
+      <path {...shape} d="M200 140 h2400 a50 50 0 0 1 0 160 h-2400 a50 50 0 0 1 0 -160 Z M200 360 h2400 a50 50 0 0 1 0 160 h-2400 a50 50 0 0 1 0 -160 Z" />
+      <path {...shape} d="M190 700 h2420 a50 50 0 0 1 50 50 v150 h-2520 v-150 a50 50 0 0 1 50 -50 Z" />
+      <path {...line} d="M150 766 H2650 M146 833 H2654" />
+      <path {...shape} d="M140 900 h2520 v40 a40 40 0 0 1 -40 40 h-2440 a40 40 0 0 1 -40 -40 Z" />
+      <path fill={INK} d="M300 980 C292 1240 262 1560 214 1760 L330 1760 C360 1560 386 1240 392 980 Z M2408 980 C2414 1240 2440 1560 2470 1760 L2586 1760 C2538 1560 2508 1240 2500 980 Z" />
     </>
   ),
 };
 
 const BUSH = {
   box: [0, 0, 2400, 1300],
+  shadow: 0.9,
   art: (
     <>
       <path {...shape} d={bumpy(1200, 1300, 1110, 1060, 9, 150, 3, Math.PI, 2 * Math.PI)} />
@@ -104,6 +111,7 @@ const BIRDS = {
 // a signpost, two blank boards pointing different ways
 const SIGN = {
   box: [0, 0, 1400, 3400],
+  shadow: 0.34,
   art: (
     <>
       <path {...shape} d="M640 3400 L654 500 L756 500 L770 3400" />
@@ -116,33 +124,42 @@ const SIGN = {
 
 const PROPS = { tree: TREE, lamp: LAMP, bench: BENCH, bush: BUSH, cloud: CLOUD, tuft: TUFT, birds: BIRDS, sign: SIGN };
 
-// one prop at --x (its centre); `size` scales it from a person's size (far off, say)
-export function Prop({ kind, x, size = 1, className = '', style }) {
-  const { box: [bx, by, w, h], art } = PROPS[kind];
+// one prop at --x (its centre), standing `d` px further back than the front of the ground (higher up the
+// page); `size` scales it from life size (DayScene works out how much smaller further back makes it). Things
+// on the ground cast a soft shadow there, as the people do (not things far off, nor in the sky)
+export function Prop({ kind, x, d = 0, size = 1, className = '', style }) {
+  const { box: [bx, by, w, h], art, shadow } = PROPS[kind];
+  const width = `calc(var(--tall) * ${(w * size) / 3000})`;
   return (
-    <svg className={`ds-prop ds-${kind} ${className}`} viewBox={`${bx} ${by} ${w} ${h}`} aria-hidden="true"
-      style={{ '--x': x, height: `calc(var(--tall) * ${(h * size) / 3000})`, aspectRatio: `${w} / ${h}`, ...style }}>
-      {art}
-    </svg>
+    <>
+      {shadow && d < 100 && <i className="ds-prop-shadow" style={{ '--x': x, '--d': `${d}px`, width: `calc(${width} * ${shadow})` }} />}
+      <svg className={`ds-prop ds-${kind} ${className}`} viewBox={`${bx} ${by} ${w} ${h}`} aria-hidden="true"
+        style={{ '--x': x, '--d': `${d}px`, height: `calc(var(--tall) * ${(h * size) / 3000})`, aspectRatio: `${w} / ${h}`, ...style }}>
+        {art}
+      </svg>
+    </>
   );
 }
 
-// far off behind it all: low hills, in a fainter line
+// far off, on the horizon (at our eye level): low hills, in a fainter line
 export function Hills() {
   return (
     <svg className="ds-hills" viewBox="0 0 1000 60" preserveAspectRatio="none" aria-hidden="true">
       <path fill="none" stroke={INK} strokeLinecap="round" vectorEffect="non-scaling-stroke"
-        d="M-10 52 C80 50 140 22 250 24 C340 26 380 46 470 44 C560 42 600 12 720 14 C820 16 870 48 1010 46" />
+        d="M-10 60 C80 58 140 26 250 28 C340 30 380 52 470 50 C560 48 600 14 720 16 C820 18 870 56 1010 54" />
     </svg>
   );
 }
 
-// the ground: one long line, broken here and there as a pen would leave it
+// the ground: a footpath along the front that we stand on, its near edge and, out at the sides only (never
+// a line behind our legs), its far one with the lawn beyond; broken here and there as a pen would leave it
 export function Ground() {
   return (
-    <svg className="ds-ground" viewBox="0 0 1000 20" preserveAspectRatio="none" aria-hidden="true">
+    <svg className="ds-ground" viewBox="0 0 1000 32" preserveAspectRatio="none" aria-hidden="true">
       <path fill="none" stroke={INK} strokeLinecap="round" vectorEffect="non-scaling-stroke"
-        d="M-10 10 C120 9 230 11 352 10 M378 10 C520 11 640 9 742 10 M766 10 C860 11 930 9 1010 10" />
+        d="M-10 31 C120 30 230 31.5 352 31 M378 31 C520 31.5 640 30 742 31 M766 31 C860 31.5 930 30 1010 31" />
+      <path className="ds-path-far" fill="none" stroke={INK} strokeLinecap="round" vectorEffect="non-scaling-stroke"
+        d="M-10 1 C50 1.4 110 0.6 170 1 M850 1 C910 1.4 960 0.6 1010 1" />
     </svg>
   );
 }
