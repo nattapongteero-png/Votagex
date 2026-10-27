@@ -27,10 +27,11 @@ export default function RecapPage() {
   const hero = photos[0]?.photos[0] || plan.cover?.img;
   const c = countryOf(plan.country);
 
-  // pulled down past the top (iOS lets the page overscroll), the photo stretches up from its foot to fill the gap
+  // pulled down past the top (iOS lets the page overscroll), the photo grows upward into the gap and, being
+  // cover-sized, zooms as it does; only its height changes (a scale spilled it sideways and let the page pan)
   const stretch = (e) => {
     const y = e.currentTarget.scrollTop;
-    if (cover.current) cover.current.style.transform = y < 0 ? `scale(${1 - y / 340})` : '';
+    if (cover.current) cover.current.style.top = y < 0 ? `${y}px` : '';
   };
 
   const share = async () => {
@@ -44,7 +45,7 @@ export default function RecapPage() {
   return (
     <div className="pt-page">
       <div className="pt-scroll flush" onScroll={stretch}>
-        <div ref={cover} className="pt-recap-cover" style={hero ? { backgroundImage: `url(${hero})` } : { background: plan.cover?.tint }} />
+        <div className="pt-recap-cover"><i ref={cover} style={hero ? { backgroundImage: `url(${hero})` } : { background: plan.cover?.tint }} /></div>
         <div className="pt-recap-hero">
           <div className="pt-recap-hero-top">
             <button className="pt-round-btn" aria-label="ย้อนกลับ" onClick={() => navigate(-1)}><Icon name="back" size={20} /></button>

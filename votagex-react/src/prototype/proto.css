@@ -785,10 +785,11 @@ button.pt-exp:active { background: var(--tw-sunken); }
   top: 0;
   height: 340px;
   margin-bottom: -354px;
-  background-size: cover;
-  background-position: center;
-  transform-origin: 50% 100%;
 }
+/* the photo, with the shade the buttons sit on; pulled past the top it grows upward only (RecapPage), so it
+   never spills sideways and the shade stretches with it */
+.pt-recap-cover > i { position: absolute; inset: 0; background-size: cover; background-position: center; }
+.pt-recap-cover > i::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0) 30%); }
 .pt-recap-hero {
   position: relative;
   height: 340px;
@@ -799,7 +800,8 @@ button.pt-exp:active { background: var(--tw-sunken); }
   padding: 16px 20px 20px;
   color: #fff;
 }
-.pt-recap-hero::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0) 30%, rgba(0, 0, 0, 0.7)); }
+/* the shade under the title goes with it; the top of the shade stays on the photo */
+.pt-recap-hero::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0, 0, 0, 0) 30%, rgba(0, 0, 0, 0.7)); }
 .pt-recap-hero > * { position: relative; z-index: 1; }
 .pt-recap-hero-top { display: flex; justify-content: space-between; }
 .pt-recap-hero-text { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; font-size: 14px; }
