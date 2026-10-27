@@ -4,6 +4,7 @@ import { useProto } from '../useProto';
 import Icon, { Flag } from '../icons';
 import { Avatars, Cover, Seg, Empty } from '../ui';
 import { KINDS, countryOf, thaiRange, planStatus, diffDays, fmtMoney, toTHB } from '../data';
+import { StampBook, StampStrip } from '../StampBook';
 
 export function PlanCard({ plan }) {
   const { expenses, memories, today } = useProto();
@@ -58,6 +59,7 @@ export function PlanCard({ plan }) {
 export default function PlansPage() {
   const { plans, openSheet, today } = useProto();
   const [tab, setTab] = useState('next');
+  const [book, setBook] = useState(false); // the stamp book, opened from the top of past trips
   const withStatus = plans.map((p) => ({ p, s: planStatus(p, today) }));
   const next = withStatus.filter((x) => x.s === 'ongoing' || x.s === 'upcoming').sort((a, b) => a.p.startDate.localeCompare(b.p.startDate)).map((x) => x.p);
   const past = withStatus.filter((x) => x.s === 'past').sort((a, b) => b.p.startDate.localeCompare(a.p.startDate)).map((x) => x.p);
@@ -78,12 +80,14 @@ export default function PlansPage() {
         ]} />
       </div>
       <div className="pt-scroll">
+        {tab === 'past' && <StampStrip onOpen={() => setBook(true)} />}
         {list.map((p) => <PlanCard key={p.id} plan={p} />)}
         {!list.length && <Empty>{tab === 'ideas' ? 'ยังไม่มีไอเดีย' : 'ยังไม่มีแผน'}</Empty>}
         {tab === 'ideas' && (
           <button className="pt-dashed-btn" onClick={() => openSheet('createPlan', { type: 'trip', undated: true })}><Icon name="plus" size={18} /> ไอเดียใหม่</button>
         )}
       </div>
+      {book && <StampBook onClose={() => setBook(false)} />}
     </div>
   );
 }

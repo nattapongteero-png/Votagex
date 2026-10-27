@@ -4,6 +4,7 @@ import { useProto, useCollection } from '../useProto';
 import Icon from '../icons';
 import { Seg, SectionTitle, Progress, Avatars } from '../ui';
 import { ME, PEOPLE, EXPENSE_CATS, parseISO, myShare, fmtMoney, planStatus, jarStats } from '../data';
+import { StampBook } from '../StampBook';
 
 const CAL_THEME_KEY = 'votagex.proto.calTheme'; // read by the home calendar
 const CAL_THEMES = [['riso', 'Riso'], ['poster', 'โปสเตอร์ 1969']];
@@ -15,6 +16,7 @@ export default function MePage() {
   const navigate = useNavigate();
   const { provinces, countries } = useCollection();
   const [monthOffset, setMonthOffset] = useState(0);
+  const [book, setBook] = useState(false); // the stamp book, the provinces collected
   const [calTheme, setCalTheme] = useState(() => { try { return localStorage.getItem(CAL_THEME_KEY) || 'riso'; } catch { return 'riso'; } });
   const pickTheme = (k) => { setCalTheme(k); try { localStorage.setItem(CAL_THEME_KEY, k); } catch { /* private mode */ } };
 
@@ -48,7 +50,7 @@ export default function MePage() {
 
         <div className="me-stats">
           <div className="me-stat"><span className="me-stat-label">เที่ยวมาแล้ว</span><span className="me-stat-value">{pastPlans}</span><span className="me-stat-unit">แผน</span></div>
-          <button className="me-stat pt-stat-btn" onClick={() => openSheet('provinces')}><span className="me-stat-label">จังหวัด</span><span className="me-stat-value">{provinces.length}<small>/77</small></span><span className="me-stat-unit">สะสมแล้ว</span></button>
+          <button className="me-stat pt-stat-btn" onClick={() => setBook(true)}><span className="me-stat-label">จังหวัด</span><span className="me-stat-value">{provinces.length}<small>/77</small></span><span className="me-stat-unit">สะสมแล้ว</span></button>
           <div className="me-stat"><span className="me-stat-label">ที่อยากไป</span><span className="me-stat-value">{places.filter((p) => p.status === 'want').length}</span><span className="me-stat-unit">แห่ง · {countries.length} ประเทศ</span></div>
         </div>
 
@@ -191,6 +193,7 @@ export default function MePage() {
           </button>
         </div>
       </div>
+      {book && <StampBook onClose={() => setBook(false)} />}
     </div>
   );
 }
