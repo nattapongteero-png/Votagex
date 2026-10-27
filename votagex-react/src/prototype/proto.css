@@ -784,17 +784,18 @@ button.pt-exp:active { background: var(--tw-sunken); }
 .pt-mem-meta { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--tw-text-3); }
 
 /* recap */
-/* the photo and its shade stay put while the page slides up over them; its negative margin is its height and
-   the scroll's 14px gap, so the hero (the title) sits on top of it */
+/* the photo and its shade stay put while the page slides up over them. It runs 24px past the hero, under the
+   card's rounded top corners (the page's ground showed there); its negative margin is its height and the
+   scroll's 14px gap, so the hero (the title) sits on top of it */
 .pt-recap-cover {
   position: sticky;
   top: 0;
-  height: 340px;
-  margin-bottom: -354px;
+  height: 364px;
+  margin-bottom: -378px;
 }
 /* pulled past the top it grows upward only (RecapPage), so it never spills sideways; the shade stretches with it */
 .pt-recap-cover > i { position: absolute; inset: 0; background-size: cover; background-position: center; }
-.pt-recap-cover > i::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0) 30%, rgba(0, 0, 0, 0.7)); }
+.pt-recap-cover > i::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0) 28%, rgba(0, 0, 0, 0.7) calc(100% - 24px)); }
 /* back and share stay put too, on a bar that turns solid with the trip's name as the page reaches it
    (--solid, 0 to 1, set from the scroll); only the buttons take taps, so a drag on the photo still scrolls */
 .pt-recap-bar {
@@ -810,7 +811,9 @@ button.pt-exp:active { background: var(--tw-sunken); }
   padding: 16px 20px 12px;
   pointer-events: none;
 }
-.pt-recap-bar::before { content: ''; position: absolute; inset: 0; background: var(--tw-canvas); opacity: var(--solid); box-shadow: 0 1px 0 var(--tw-border); }
+/* solid, it runs on 16px below itself fading out, so the page fades away under it as the home page's cards
+   do under the sheet's handle (a mask on this page's scroll would fade the photo too) */
+.pt-recap-bar::before { content: ''; position: absolute; inset: 0 0 -16px; background: linear-gradient(180deg, var(--tw-canvas) calc(100% - 16px), transparent); opacity: var(--solid); }
 .pt-recap-bar > * { position: relative; pointer-events: auto; }
 .pt-recap-bar-title { flex: 1; min-width: 0; text-align: center; font-size: 15px; font-weight: 600; color: var(--tw-text); opacity: var(--solid); }
 .pt-recap-hero {
