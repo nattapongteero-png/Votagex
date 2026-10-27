@@ -110,7 +110,8 @@ export default function TodayPage() {
       // what's left of the calendar when folded (header bar, weekdays, one week)
       const away = [...stage.querySelectorAll('.pt-riso-stack > :first-child .pt-fold-away')].reduce((h, el) => h + el.offsetHeight, 0);
       const row = page.querySelector('.hp-header-top.pt-talk');
-      setSheet({ top, clip: Math.max(0, bottom - (top - 24)), folded: stage.querySelector('.pt-riso-stack') ? stage.offsetHeight - away : 0,
+      // (the day's scene isn't cut: its land runs on under the sheet's soft top edge)
+      setSheet({ top, clip: SHOW_CALENDAR ? Math.max(0, bottom - (top - 24)) : 0, folded: stage.querySelector('.pt-riso-stack') ? stage.offsetHeight - away : 0,
         stop: row ? Math.round(row.getBoundingClientRect().bottom - page.getBoundingClientRect().top) : 0 });
     };
     const ro = new ResizeObserver(fit);

@@ -2,7 +2,7 @@
 // fills, solid for the dark parts, at life size beside them (a standing person is 3000 tall in their units,
 // about 1.75 m: the tree is some 4.5 m, the lamp 3.7 m, the bench's seat 50 cm up), feet on the bottom, so
 // it's sized off --tall like the people and stands on the same ground. It's drawn in currentColor, the
-// people's ink (CSS), all standing on the one ground line with the people; no soft shadows, which made
+// people's ink (CSS), all standing level with the people on the land (Land); no soft shadows, which made
 // everything look as if it floated.
 
 const INK = 'currentColor';
@@ -132,22 +132,18 @@ export function Prop({ kind, x, size = 1, className = '', style }) {
   );
 }
 
-// far off, on the horizon at our eye level: low hills
-export function Hills() {
+// the ground, as the people stand on it: not a line seen edge on but the land itself, seen from our eye height,
+// a light tint running from the horizon (low hills along it) down past our feet, so both feet stand in it
+// wherever the pose puts them. The hills' line is the only line it has
+export function Land() {
   return (
-    <svg className="ds-hills" viewBox="0 0 1000 60" preserveAspectRatio="none" aria-hidden="true">
-      <path fill="none" stroke={INK} strokeLinecap="round" vectorEffect="non-scaling-stroke"
-        d="M-10 60 C80 58 140 26 250 28 C340 30 380 52 470 50 C560 48 600 14 720 16 C820 18 870 56 1010 54" />
-    </svg>
-  );
-}
-
-// the ground: one long line, broken here and there as a pen would leave it
-export function Ground() {
-  return (
-    <svg className="ds-ground" viewBox="0 0 1000 20" preserveAspectRatio="none" aria-hidden="true">
-      <path fill="none" stroke={INK} strokeLinecap="round" vectorEffect="non-scaling-stroke"
-        d="M-10 10 C120 9 230 11 352 10 M378 10 C520 11 640 9 742 10 M766 10 C860 11 930 9 1010 10" />
-    </svg>
+    <>
+      <div className="ds-land" />
+      <svg className="ds-hills" viewBox="0 0 1000 60" preserveAspectRatio="none" aria-hidden="true">
+        <path className="ds-land-fill" d="M-10 61 L-10 60 C80 58 140 26 250 28 C340 30 380 52 470 50 C560 48 600 14 720 16 C820 18 870 56 1010 54 L1010 61 Z" />
+        <path fill="none" stroke={INK} strokeLinecap="round" vectorEffect="non-scaling-stroke"
+          d="M-10 60 C80 58 140 26 250 28 C340 30 380 52 470 50 C560 48 600 14 720 16 C820 18 870 56 1010 54" />
+      </svg>
+    </>
   );
 }

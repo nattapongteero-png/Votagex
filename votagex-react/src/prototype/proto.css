@@ -2320,10 +2320,14 @@ body::after { content: ''; position: fixed; inset: 0; z-index: 9998; pointer-eve
 .ds-person, .ds-prop { position: absolute; left: var(--x); bottom: var(--ground); translate: -50% 0; pointer-events: none; }
 .ds-prop { overflow: visible; }
 .ds-prop.ds-sky { bottom: auto; }
-.ds-ground { position: absolute; left: 0; bottom: calc(var(--ground) - 3px); width: 100%; height: 6px; overflow: visible; }
-.ds-ground path { stroke-width: 1.5px; }
-.ds-hills { position: absolute; left: 0; bottom: calc(var(--ground) + var(--horizon) - 2px); width: 100%; height: 26px; overflow: visible; }
+/* the land (behind the park, under the header's fade): a light tint from the horizon down past our feet, on
+   under the top of the card sheet, fading out there */
+.ds { --land: #ECEEE8; }
+.ds-land { position: absolute; left: 0; right: 0; bottom: -22px; height: calc(22px + var(--ground) + var(--horizon) - 1px); background: var(--land); pointer-events: none;
+  -webkit-mask-image: linear-gradient(to top, transparent, #000 34px); mask-image: linear-gradient(to top, transparent, #000 34px); }
+.ds-hills { position: absolute; left: 0; bottom: calc(var(--ground) + var(--horizon) - 2px); width: 100%; height: 26px; overflow: visible; color: #18181B; pointer-events: none; }
 .ds-hills path { stroke-width: 1.2px; }
+.ds-hills .ds-land-fill { fill: var(--land); stroke: none; }
 /* the little trees far off on the hills (no leaf marks: they'd only be specks) */
 .ds-prop.ds-far { bottom: calc(var(--ground) + var(--far)); }
 .ds-far .ds-leaves > path:last-child { display: none; }
