@@ -2266,7 +2266,8 @@ body::after { content: ''; position: fixed; inset: 0; z-index: 9998; pointer-eve
 /* ===== Home top bar (HomeBar.jsx), as Instagram's: + / the name / the bell with a red dot for what's new ===== */
 /* a short screen (iPhone SE) wins back the bar's height, so today's week stays clear of the resting sheet */
 @media (max-height: 719px) {
-  .homepage.pt-today { --hp-stage-top: 143px; --ds-h: 352px; }
+  .homepage.pt-today { --hp-stage-top: 143px; --ds-h: 380px; }
+  .homepage.pt-today .ds { --ground: 40px; }
   .homepage.pt-today .hp-header { padding-top: 8px; gap: 6px; }
   .homepage.pt-today .hp-header-top.pt-talk { padding-top: 4px; }
 }
@@ -2300,8 +2301,8 @@ body::after { content: ''; position: fixed; inset: 0; z-index: 9998; pointer-eve
    (an inline transform) is kept. No card: it's drawn on the page, edge to edge (out past the stage's 20px
    sides), and the park behind (.ds-world) goes on up behind the header, in the people's own ink, faded
    only under the header so its buttons stay clear ===== */
-.ds { position: relative; width: calc(100% + 40px); height: var(--ds-h, 356px); margin: 0 -20px; container-type: size;
-  --tall: 196px; --ground: 18px; font-family: var(--font); color: var(--tw-text); text-align: left; }
+.ds { position: relative; width: calc(100% + 40px); height: var(--ds-h, 420px); margin: 0 -20px; container-type: size;
+  --tall: 196px; --ground: 50px; font-family: var(--font); color: var(--tw-text); text-align: left; }
 /* the card sheet comes up over it (solid, its top edge a soft fade, no line) and stops under the profile row,
    which stays with the top bar; the scene holds still behind it (moving, the tree would go past the top of
    the page and be cut off there) and dims a little */
@@ -2317,7 +2318,7 @@ body::after { content: ''; position: fixed; inset: 0; z-index: 9998; pointer-eve
 .ds-world { position: absolute; left: 0; right: 0; bottom: 0; top: calc(-1 * var(--hp-stage-top, 0px)); overflow: hidden; pointer-events: none; color: #18181B;
   --fade: linear-gradient(to bottom, rgba(0, 0, 0, .16), rgba(0, 0, 0, .16) calc(var(--hp-stage-top, 0px) - 20px), #000 calc(var(--hp-stage-top, 0px) + 50px));
   -webkit-mask-image: var(--fade); mask-image: var(--fade); }
-.ds-person, .ds-prop { position: absolute; left: var(--x); bottom: var(--ground); translate: -50% 0; pointer-events: none; }
+.ds-person, .ds-prop { position: absolute; left: var(--x); bottom: calc(var(--ground) + var(--far, 0px)); translate: -50% 0; pointer-events: none; }
 .ds-prop { overflow: visible; }
 .ds-prop.ds-sky { bottom: auto; }
 /* the land (behind the park, under the header's fade): a light tint from the horizon down past our feet, on
@@ -2329,7 +2330,6 @@ body::after { content: ''; position: fixed; inset: 0; z-index: 9998; pointer-eve
 .ds-hills path { stroke-width: 1.2px; }
 .ds-hills .ds-land-fill { fill: var(--land); stroke: none; }
 /* the little trees far off on the hills (no leaf marks: they'd only be specks) */
-.ds-prop.ds-far { bottom: calc(var(--ground) + var(--far)); }
 .ds-far .ds-leaves > path:last-child { display: none; }
 .ds-sitter { bottom: calc(var(--ground) + var(--tall) * var(--lift, 0)); }
 .ds-pose { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }

@@ -45,27 +45,26 @@ function Person({ look, poses, flip, className = '', style }) {
 
 const pose = (look, kind) => `${kind}${look.tone || 'BW'}`;
 
-// Seen as the people are drawn, from eye height: the horizon (the hills) is at a standing person's eye level,
-// HORIZON px over our feet, which is why the bench shows its seat's top (it's below our eyes) and why the
-// ground is the land itself, not a line (Land). Everyone and everything near stands level with us; the grass
-// further off, and the little trees on the hills, are smaller by as much as they're nearer the horizon.
-const HORIZON = 185;
-// the park round us: { p: prop, x: centre, size: of life size, far: px up the page towards the horizon } or,
-// in the sky, { p, x, top: off the top of the whole backdrop (header and all), size }. Nothing may reach past the
-// top of the page (a crop there clashes with the browser's bar), so the tree is a young one, about 4 m. A day
-// out: the tree behind me on the left, the bench behind the friends. A free day: the bench (I sit on it) under
-// the tree, a signpost pointing two ways
-const FAR_TREES = [{ p: 'tree', x: '58%', far: 166, size: 0.9 }, { p: 'tree', x: '63%', far: 168, size: 0.7 }];
-// grass about the land, nearer and further, so it reads as ground going back
-const GRASS = [{ p: 'tuft', x: '6%', far: -8 }, { p: 'tuft', x: '52%', far: 26 }, { p: 'tuft', x: '34%', far: 70 }, { p: 'tuft', x: '74%', far: 52 },
-  { p: 'tuft', x: '90%', far: 104 }, { p: 'tuft', x: '20%', far: 128 }];
+// Seen from a little over our heads, as the people are drawn (the tops of their shoes show, a foot set back sits
+// higher): the horizon (the hills) is HORIZON px over our feet, above our heads, so the land (Land, a tint, not
+// a line) spreads out round us and the bench shows its seat's top. We stand level, at the front; the park is
+// further back, each thing `far` px up the land and smaller by as much as that's nearer the horizon.
+const HORIZON = 240;
+// the park round us: { p: prop, x: centre, size: of life size, far: px back up the land } or, in the sky,
+// { p, x, top: off the top of the whole backdrop (header and all), size }. Nothing may reach past the top of the
+// page (a crop there clashes with the browser's bar). A day out: the tree behind me on the left, the bench
+// behind the friends. A free day: the bench (I sit on it, level with us) under the tree, a signpost pointing two
+// ways. Little trees far off on the hills, grass about the land nearer and further
+const FAR_TREES = [{ p: 'tree', x: '58%', far: 222, size: 0.9 }, { p: 'tree', x: '63%', far: 225, size: 0.7 }];
+const GRASS = [{ p: 'tuft', x: '8%', far: -26 }, { p: 'tuft', x: '52%', far: -14 }, { p: 'tuft', x: '36%', far: 30 }, { p: 'tuft', x: '76%', far: 62 },
+  { p: 'tuft', x: '24%', far: 96 }, { p: 'tuft', x: '92%', far: 128 }, { p: 'tuft', x: '46%', far: 168 }];
 const BENCH_AT = { p: 'bench', x: '40%' };
 const SEAT = 960; // the middle of the bench's seat, off its front legs' ground, in its units (scenery.jsx)
 const BACKDROP = {
-  meet: [...FAR_TREES, ...GRASS, { p: 'cloud', x: '88%', top: '44%', size: 0.4 }, { p: 'birds', x: '50%', top: '50%', size: 0.42 },
-    { p: 'tree', x: '8%', size: 0.88 }, { p: 'bush', x: '20%', size: 0.6 }, { p: 'bench', x: '86%' }],
-  free: [...FAR_TREES, ...GRASS, { p: 'cloud', x: '80%', top: '44%', size: 0.4 }, { p: 'birds', x: '64%', top: '50%', size: 0.42 },
-    { p: 'tree', x: '13%', size: 0.88 }, { p: 'sign', x: '88%' }, { p: 'bush', x: '70%', size: 0.75 }, BENCH_AT],
+  meet: [...FAR_TREES, ...GRASS, { p: 'cloud', x: '86%', top: '34%', size: 0.4 }, { p: 'birds', x: '52%', top: '30%', size: 0.42 },
+    { p: 'tree', x: '10%', far: 56 }, { p: 'bush', x: '24%', far: 40, size: 0.7 }, { p: 'bench', x: '86%', far: 34 }],
+  free: [...FAR_TREES, ...GRASS, { p: 'cloud', x: '80%', top: '34%', size: 0.4 }, { p: 'birds', x: '64%', top: '30%', size: 0.42 },
+    { p: 'tree', x: '13%', far: 56 }, { p: 'sign', x: '88%', far: 44 }, { p: 'bush', x: '70%', far: 40, size: 0.8 }, BENCH_AT],
 };
 const reduced = () => typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
@@ -98,7 +97,7 @@ export default function DayScene({ scene, notes = [], onTap }) {
       <Land />
       <div className="ds-world" aria-hidden="true">
         {BACKDROP[kind].map(({ p, x, size = 1, top, far }, i) => (top ? <Prop key={i} kind={p} x={x} size={size} className="ds-sky" style={{ top }} />
-          : far ? <Prop key={i} kind={p} x={x} size={size * (1 - far / HORIZON)} className="ds-far" style={{ '--far': `${far}px` }} />
+          : far ? <Prop key={i} kind={p} x={x} size={size * (1 - far / HORIZON)} className={far > 150 ? 'ds-far' : ''} style={{ '--far': `${far}px` }} />
             : <Prop key={i} kind={p} x={x} size={size} />))}
       </div>
       <button className="ds-tap" onClick={onTap} aria-label={scene.label} />
