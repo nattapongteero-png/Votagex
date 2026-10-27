@@ -778,33 +778,48 @@ button.pt-exp:active { background: var(--tw-sunken); }
 .pt-mem-meta { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--tw-text-3); }
 
 /* recap */
-/* the photo stays put while the page slides up over it (the hero's text and buttons go with the page); its
-   negative margin is its height and the scroll's 14px gap, so the hero sits on top of it */
+/* the photo and its shade stay put while the page slides up over them; its negative margin is its height and
+   the scroll's 14px gap, so the hero (the title) sits on top of it */
 .pt-recap-cover {
   position: sticky;
   top: 0;
   height: 340px;
   margin-bottom: -354px;
 }
-/* the photo, with the shade the buttons sit on; pulled past the top it grows upward only (RecapPage), so it
-   never spills sideways and the shade stretches with it */
+/* pulled past the top it grows upward only (RecapPage), so it never spills sideways; the shade stretches with it */
 .pt-recap-cover > i { position: absolute; inset: 0; background-size: cover; background-position: center; }
-.pt-recap-cover > i::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0) 30%); }
+.pt-recap-cover > i::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0) 30%, rgba(0, 0, 0, 0.7)); }
+/* back and share stay put too, on a bar that turns solid with the trip's name as the page reaches it
+   (--solid, 0 to 1, set from the scroll); only the buttons take taps, so a drag on the photo still scrolls */
+.pt-recap-bar {
+  --solid: 0;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px 12px;
+  pointer-events: none;
+}
+.pt-recap-bar::before { content: ''; position: absolute; inset: 0; background: var(--tw-canvas); opacity: var(--solid); box-shadow: 0 1px 0 var(--tw-border); }
+.pt-recap-bar > * { position: relative; pointer-events: auto; }
+.pt-recap-bar-title { flex: 1; min-width: 0; text-align: center; font-size: 15px; font-weight: 600; color: var(--tw-text); opacity: var(--solid); }
 .pt-recap-hero {
   position: relative;
   height: 340px;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: flex-end;
   padding: 16px 20px 20px;
   color: #fff;
 }
-/* the shade under the title goes with it; the top of the shade stays on the photo */
-.pt-recap-hero::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0, 0, 0, 0) 30%, rgba(0, 0, 0, 0.7)); }
-.pt-recap-hero > * { position: relative; z-index: 1; }
-.pt-recap-hero-top { display: flex; justify-content: space-between; }
 .pt-recap-hero-text { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; font-size: 14px; }
+/* the title now slides up past the shade, over the bright middle of the photo */
+.pt-recap-hero-text > div { text-shadow: 0 1px 12px rgba(0, 0, 0, 0.35); }
 .pt-recap-title { font-size: 30px; font-weight: 700; line-height: 40px; }
 .pt-recap-body { padding: 20px; display: flex; flex-direction: column; gap: 16px; margin-top: -24px; position: relative; z-index: 1; background: var(--tw-canvas); border-radius: var(--tw-r-lg) 24px 0 0; }
 .pt-recap-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }

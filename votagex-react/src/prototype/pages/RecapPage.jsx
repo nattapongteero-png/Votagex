@@ -6,12 +6,17 @@ import MapView from '../MapView';
 import { Avatar, Avatars } from '../ui';
 import { PEOPLE, EXPENSE_CATS, countryOf, thaiRange, thaiShort, dayList, byOrder, distanceKm, fmtKm, fmtMoney, toTHB, myShare } from '../data';
 
+const clamp01 = (v) => Math.min(1, Math.max(0, v));
+
 // Auto-generated story of a finished plan: route, numbers, best photos and notes
 export default function RecapPage() {
   const { planId } = useParams();
   const navigate = useNavigate();
   const { plans, memories, expenses, showToast } = useProto();
   const cover = useRef(null);
+  const bar = useRef(null);
+  const body = useRef(null);
+  const head = useRef(null);
   const plan = plans.find((p) => p.id === planId);
   if (!plan) return <Navigate to="/proto/plans" replace />;
 
@@ -27,11 +32,20 @@ export default function RecapPage() {
   const hero = photos[0]?.photos[0] || plan.cover?.img;
   const c = countryOf(plan.country);
 
-  // pulled down past the top (iOS lets the page overscroll), the photo grows upward into the gap and, being
-  // cover-sized, zooms as it does; only its height changes (a scale spilled it sideways and let the page pan)
-  const stretch = (e) => {
+  const onScroll = (e) => {
+    if (!bar.current) return;
     const y = e.currentTarget.scrollTop;
-    if (cover.current) cover.current.style.top = y < 0 ? `${y}px` : '';
+    // where the title and the card are below the bar, read before anything changes
+    const edge = bar.current.getBoundingClientRect().bottom;
+    const title = head.current.getBoundingClientRect().top - edge;
+    const card = body.current.getBoundingClientRect().top - edge;
+    // pulled down past the top (iOS lets the page overscroll), the photo grows upward into the gap and, being
+    // cover-sized, zooms as it does; only its height changes (a scale spilled it sideways and let the page pan)
+    cover.current.style.top = y < 0 ? `${y}px` : '';
+    // the title fades out over its last 60px to the bar, so it never runs under the buttons; the bar turns
+    // solid, with the trip's name, over the card's last 40px
+    head.current.style.opacity = clamp01(title / 60);
+    bar.current.style.setProperty('--solid', clamp01(1 - card / 40));
   };
 
   const share = async () => {
@@ -44,14 +58,15 @@ export default function RecapPage() {
 
   return (
     <div className="pt-page">
-      <div className="pt-scroll flush" onScroll={stretch}>
+      <div ref={bar} className="pt-recap-bar">
+        <button className="pt-round-btn" aria-label="ย้อนกลับ" onClick={() => navigate(-1)}><Icon name="back" size={20} /></button>
+        <span className="pt-recap-bar-title ellipsis">{plan.name}</span>
+        <button className="pt-round-btn" aria-label="แชร์" onClick={share}><Icon name="share" size={18} /></button>
+      </div>
+      <div className="pt-scroll flush" onScroll={onScroll}>
         <div className="pt-recap-cover"><i ref={cover} style={hero ? { backgroundImage: `url(${hero})` } : { background: plan.cover?.tint }} /></div>
         <div className="pt-recap-hero">
-          <div className="pt-recap-hero-top">
-            <button className="pt-round-btn" aria-label="ย้อนกลับ" onClick={() => navigate(-1)}><Icon name="back" size={20} /></button>
-            <button className="pt-round-btn" aria-label="แชร์" onClick={share}><Icon name="share" size={18} /></button>
-          </div>
-          <div className="pt-recap-hero-text">
+          <div ref={head} className="pt-recap-hero-text">
             <span className="pt-badge glass"><Flag code={c.code} /> สรุปทริป</span>
             <div className="pt-recap-title">{plan.name}</div>
             <div>{thaiRange(plan.startDate, plan.endDate)} {plan.startDate ? Number(plan.startDate.slice(0, 4)) + 543 : ''}</div>
@@ -59,7 +74,7 @@ export default function RecapPage() {
           </div>
         </div>
 
-        <div className="pt-recap-body">
+        <div ref={body} className="pt-recap-body">
           <div className="pt-recap-stats">
             <div><b>{days.length}</b><span>วัน</span></div>
             <div><b>{stops.length}</b><span>จุดแวะ</span></div>
