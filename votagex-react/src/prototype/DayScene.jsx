@@ -103,15 +103,13 @@ const BACKDROP = {
   meet: [...FRAME, { p: 'bush', x: '17%', far: 44, size: 0.7 }, { p: 'bush', x: '84%', far: 50, size: 0.55, flip: true }],
   free: [...FRAME, { p: 'bench', x: '25%', far: 48 }, { p: 'bush', x: '86%', far: 50, size: 0.55, flip: true }, { p: 'sign', x: '74%', far: 12 }],
 };
-// where we stand, by how many friends (three at most): my centre (% across), and each friend's [centre, px back
-// up the land, facing right]. On my own, in the middle; one friend, face to face, me on the left; two, the
-// second close in a step behind the first; three, a circle: the first friend level with me, facing me, the
-// other two a step back between us, facing each other
+// where we stand, by how many friends (two at most): my centre (% across), and each friend's [centre, px back up
+// the land]. On my own, in the middle; one friend, face to face, me on the left; two, the second close in a step
+// behind the first, both facing me
 const LAYOUT = [
   { me: 50, at: [] },
   { me: 33, at: [[67, 0]] },
   { me: 30, at: [[60, 0], [71, 11]] },
-  { me: 25, at: [[75, 0], [41, 36, true], [59, 36]] },
 ];
 const SHELTER = [4600, 3800]; // the shelter's size in people's units (scenery.jsx), for the rain to keep off under it
 const reduced = () => typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
@@ -145,12 +143,10 @@ export default function DayScene({ scene, notes = [], weather = { kind: 'partly'
   // friends there, it's not wanted)
   const cover = wet ? 'shelter' : weather.hot ? 'parasol' : null;
   const coverAt = cover === 'parasol' && !n ? (free ? 52 : 62) : free && !n ? 40 : 50;
-  // (with four of us its pole stands just behind the two at the back)
-  const coverFar = cover === 'parasol' && n === 3 ? 44 : 0;
   const signAt = cover ? '88%' : '74%';
   const head = headOf(cast[0][1]);
   // my thoughts, one at a time, out from the side of my head (towards the friends, a little up over the gap
-  // between our heads, higher still over the two at the back of four; on a free day alone the other way,
+  // between our heads; on a free day alone the other way,
   // the signpost's there): { i: which, k: a count to start each afresh, on: showing }. The first comes once
   // the hellos are done (straight away with reduced motion); a tap on me brings the next
   const said = free ? [{ key: 'ask', text: scene.ask, onClick: onTap }, ...notes] : notes;
@@ -188,8 +184,8 @@ export default function DayScene({ scene, notes = [], weather = { kind: 'partly'
           return <Prop key={i} kind={p} x={p === 'sign' ? signAt : x} size={size * (1 - (far || 0) / HORIZON)} className={p === 'butterfly' ? `ds-bfly ds-bfly-${i % 2}` : ''}
             style={{ '--far': `${far || 0}px`, transform: flip ? 'scaleX(-1)' : undefined }} />;
         })}
-        {cover === 'parasol' && <i className="ds-shade" style={{ '--x': `${coverAt}%`, '--far': `${coverFar}px` }} />}
-        {cover && <Prop kind={cover} x={`${coverAt}%`} size={1 - coverFar / HORIZON} style={{ '--far': `${coverFar}px` }} />}
+        {cover === 'parasol' && <i className="ds-shade" style={{ '--x': `${coverAt}%` }} />}
+        {cover && <Prop kind={cover} x={`${coverAt}%`} />}
         {weather.kind === 'fog' && [0, 1, 2].map((i) => <i key={i} className={`ds-mist ds-mist-${i}`} />)}
       </div>
       <button className="ds-tap" onClick={onTap} aria-label={scene.label} />
@@ -197,7 +193,7 @@ export default function DayScene({ scene, notes = [], weather = { kind: 'partly'
         <>
           {/* the furthest back first, so the nearer ones stand in front */}
           {friends.map((look, i) => (
-            <Person key={i} look={look} poses={cast[i + 1][1]} flip={!LAYOUT[n].at[i][2]} gear={gear(look)} far={back(i)} className={`ds-friend${i || free ? '' : ' ds-greeter'}`}
+            <Person key={i} look={look} poses={cast[i + 1][1]} flip gear={gear(look)} far={back(i)} className={`ds-friend${i || free ? '' : ' ds-greeter'}`}
               style={{ '--x': `${at(i)}%`, '--blink': `${1.1 + 0.9 * i}s` }} />
           )).reverse()}
           {free ? (
@@ -207,14 +203,13 @@ export default function DayScene({ scene, notes = [], weather = { kind: 'partly'
             <Person look={me} poses={cast[0][1]} onTap={think} label="ความคิดของฉัน" gear={gear(me)}
               className={`ds-me${n ? '' : ' ds-alone'}`} style={{ '--x': `${meAt}%`, '--blink': '2.4s' }} />
           )}
-          {/* (with four of us, said over their head, clear of the two at the back) */}
-          {!free && n > 0 && <span className={`ds-say${n > 2 ? ' over' : ''}`} style={{ '--x': `${at(0)}%` }}>หวัดดี!</span>}
+          {!free && n > 0 && <span className="ds-say" style={{ '--x': `${at(0)}%` }}>หวัดดี!</span>}
         </>
       )}
       {/* fog low over the ground, in front of our feet */}
       {weather.kind === 'fog' && <i className="ds-mist ds-mist-low" />}
       {ready && shown && (
-        <div key={thought.k} className={`ds-note ${free && !n ? 'left' : `right${n ? ' up' : ''}${n > 2 ? ' high' : ''}`}`} style={{ '--x': `${meAt}%`, '--head': head }}
+        <div key={thought.k} className={`ds-note ${free && !n ? 'left' : `right${n ? ' up' : ''}`}`} style={{ '--x': `${meAt}%`, '--head': head }}
           onAnimationEnd={(e) => e.target === e.currentTarget && setThought((x) => ({ ...x, on: false }))}>
           <SpeechNotes notes={[shown]} />
         </div>

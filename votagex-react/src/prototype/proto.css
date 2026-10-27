@@ -2371,7 +2371,6 @@ body::after { content: ''; position: fixed; inset: 0; z-index: 9998; pointer-eve
 .ds-say { position: absolute; left: calc(var(--x) - 8%); bottom: calc(var(--ground) + var(--tall) * .8); translate: -100% 0; padding: 6px 12px;
   border-radius: 16px 16px 4px 16px; background: #fff; font-size: 13px; font-weight: 700; line-height: 1.4; white-space: nowrap; pointer-events: none;
   box-shadow: 0 4px 14px rgba(15, 23, 42, .1); opacity: 0; transform-origin: 100% 100%; animation: ds-say 2.4s 1.7s both; }
-.ds-say.over { left: calc(var(--x) + 2%); bottom: calc(var(--ground) + var(--tall) + 10px); border-radius: 16px 16px 4px 16px; }
 @keyframes ds-say { 0% { opacity: 0; scale: .4; } 14% { opacity: 1; scale: 1.08; } 22%, 84% { opacity: 1; scale: 1; } 100% { opacity: 0; scale: .92; } }
 /* a free day: on the bench, the head tilting now and then */
 .ds-wonder .pp-head { transform-box: fill-box; transform-origin: 50% 85%; animation: ds-tilt 6s ease-in-out infinite; }
@@ -2405,9 +2404,6 @@ body::after { content: ''; position: fixed; inset: 0; z-index: 9998; pointer-eve
 .ds-note.up .pt-speech { transform-origin: -8px 140%; }
 .ds-note.up .pt-speech::before { left: -5px; bottom: -8px; }
 .ds-note.up .pt-speech::after { left: -12px; bottom: -15px; }
-.ds-note.high { bottom: calc(var(--ground) + var(--tall) * var(--head) + 26px); left: calc(var(--x) + 6px); }
-.ds-note.high .pt-speech::before { left: 2px; bottom: -11px; }
-.ds-note.high .pt-speech::after { left: -5px; bottom: -22px; }
 /* ===== the day's weather on the scene. The sky runs down into the land as rain's does: each sky's colour at
    the horizon is all but the land's there, the land a touch deeper nearer us, so there's never a line of two
    colours meeting; each weather keeps its own light. The lines stay ink. The rain, heat and fog in the air are
