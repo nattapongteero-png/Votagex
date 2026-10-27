@@ -201,7 +201,6 @@ export default function TodayPage() {
   const night = selected === today && (hour >= 19 || hour < 6);
   const dayTitle = selected === today ? `วันนี้ · ${thaiShort(selected)}` : `${TH_DOW[parseISO(selected).getDay()]} ${thaiShort(selected)}`;
   const holiday = HOLIDAYS[selected];
-  const daySub = [holiday, stops.length ? `${stops.length} จุดแวะ` : 'ยังไม่มีแผน'].filter(Boolean).join(' · ');
   // events on the selected day
   const dayEvents = events.filter((ev) => eventOn(ev, selected)).sort((a, b) => (a.time || '99').localeCompare(b.time || '99'));
   // the soonest event worth a note: on today, tomorrow, or ending within two days
@@ -272,22 +271,6 @@ export default function TodayPage() {
   const [recapOf, setRecapOf] = useState(null); // the trip whose diary is open
   const recap = looks.find((l) => l.plan.id === recapOf);
 
-  // the day's title, when there's no weather card to say it
-  const EN_DOW = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
-  const EN_MON = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
-  const sel = parseISO(selected);
-  // a station sign: the day's name big, and the days either side to step to, like the stations before and after
-  const dayHead = !wxSel && (
-    <div className="pt-station">
-      <span className="pt-station-name">{dayTitle}</span>
-      <span className="pt-station-en">{EN_DOW[sel.getDay()]} · {EN_MON[sel.getMonth()]} {sel.getDate()}</span>
-      <span className="pt-muted sm">{daySub}{selPlace ? ` · ${selPlace}` : ''}</span>
-      <span className="pt-station-band">
-        <button onClick={() => setSelected(addDays(selected, -1))}><Icon name="back" size={14} stroke={2.6} /> {thaiShort(addDays(selected, -1))}</button>
-        <button onClick={() => setSelected(addDays(selected, 1))}>{thaiShort(addDays(selected, 1))} <Icon name="next" size={14} stroke={2.6} /></button>
-      </span>
-    </div>
-  );
   // one plan of the day, its own card: its head, its own map, its stops, then add a stop / open the plan
   // (the day's ongoing trip also gets its next stop, and noting a spend instead of adding a stop)
   const renderCard = ({ p, g, stops: ss }) => {
@@ -295,7 +278,6 @@ export default function TodayPage() {
     const isLive = live && p === plan;
     return (
       <div key={p.id} className="hp-tile pt-day-card">
-        {!multi && dayHead}
         <PlanHead plan={p} group={g} onOpen={() => navigate(`/proto/plan/${p.id}`)} onGroup={() => openSheet('group', { groupId: g.id })} />
         {pins.length > 0 && <DayMap pins={pins} order={ss} onOpen={() => navigate(`/proto/plan/${p.id}`)} />}
         {ss.length > 0 && (
@@ -397,13 +379,9 @@ export default function TodayPage() {
 
           {/* the selected day's plans: a card each, side by side when there are several */}
           {multi ? (
-            <>
-              {dayHead}
-              <div className="pt-day-row">{sections.map(renderCard)}</div>
-            </>
+            <div className="pt-day-row">{sections.map(renderCard)}</div>
           ) : sections.length ? renderCard(sections[0]) : (
             <div className="hp-tile pt-day-card">
-              {dayHead}
               {/* a group's page: whose calendar this is, and its info, even on a day without plans */}
               {group && <PlanHead group={group} invite={selected === today ? 'วันนี้ยังว่าง ไปไหนกันดี?' : 'วันนี้ยังว่าง ชวนกันไปไหนดี?'} onOpen={() => openSheet('group', { groupId: group.id })} onGroup={() => openSheet('group', { groupId: group.id })} />}
               <div className="hp-plan-actions">

@@ -2082,12 +2082,3 @@ body::after { content: ''; position: fixed; inset: 0; z-index: 9998; pointer-eve
 .pt-title, .me-title, .hp-section-title, .me-panel-title, .pt-sheet-title { font-family: var(--font-display); letter-spacing: -.2px; }
 .pt-title, .me-title { font-weight: 800; }
 .hp-section-title, .me-panel-title { font-weight: 700; }
-/* the day's head as a station sign: white plate, the name big, a band in the line's colour with the days either side */
-.pt-station { display: flex; flex-direction: column; align-items: center; gap: 0; margin: -4px -4px 4px; padding: 12px 0 0; border-radius: 14px; overflow: hidden;
-  background: #fff; box-shadow: inset 0 0 0 2px var(--tw-text); text-align: center; }
-.pt-station-name { font-family: var(--font-display); font-size: 26px; line-height: 36px; font-weight: 800; color: var(--tw-text); }
-.pt-station-en { font-family: 'Anton', var(--font); font-size: 12px; line-height: 18px; letter-spacing: 3px; color: var(--tw-text-2); }
-.pt-station > .pt-muted { margin-top: 2px; }
-.pt-station-band { display: flex; align-self: stretch; justify-content: space-between; margin-top: 10px; background: var(--line, #2E7D6B); }
-.pt-station-band button { display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; border: none; background: none; color: #fff;
-  font-family: var(--font); font-size: 13px; line-height: 20px; font-weight: 600; cursor: pointer; }
