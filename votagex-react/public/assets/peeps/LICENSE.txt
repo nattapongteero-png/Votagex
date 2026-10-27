@@ -1,0 +1,6 @@
+Open Peeps — a hand-drawn illustration library by Pablo Stanley (https://www.openpeeps.com),
+released under CC0 1.0 (https://creativecommons.org/publicdomain/zero/1.0/): free for commercial and
+personal use, no credit required.
+
+The pieces here are JSON element trees taken (by parsing, not running) from react-peeps by Emre Çakır
+(https://github.com/CeamKrier/react-peeps, MIT licence), which draws Open Peeps as React components.

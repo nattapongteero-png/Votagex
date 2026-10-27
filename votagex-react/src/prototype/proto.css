@@ -2319,3 +2319,73 @@ body::after { content: ''; position: fixed; inset: 0; z-index: 9998; pointer-eve
 .pt-act-thumb { width: 44px; height: 44px; flex-shrink: 0; border-radius: 8px; background: var(--tw-sunken) center / cover; }
 .pt-act-row .pt-pill-btn { flex-shrink: 0; }
 
+/* ===== Home stage: today as a scene of Open Peeps (DayScene.jsx), in place of the calendar. It plays once as
+   it shows, then only breathes and blinks. People are sized off --tall (a standing person's height) and stand
+   on one line; movement uses translate / rotate / scale on their own, so a person's flip (an inline transform)
+   is kept ===== */
+.ds { position: relative; display: block; width: 100%; height: 280px; padding: 0; border: 0; border-radius: 28px; overflow: hidden; cursor: pointer;
+  container-type: size; --tall: 70cqh; font-family: var(--font); color: var(--tw-text); text-align: left; -webkit-tap-highlight-color: transparent;
+  background: radial-gradient(120% 80% at 72% 0%, #FFF9EF, rgba(255, 249, 239, 0) 62%), linear-gradient(#F6F1E7, #EEE6D6); }
+.ds::before { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 16%; background: #E8DECC; box-shadow: 0 -1px 0 rgba(60, 45, 25, .07); }
+.homepage.pt-today .ds { opacity: clamp(0, calc(1 - var(--sheet-p, 0) * 1.6), 1); }
+.ds-person { position: absolute; left: var(--x); bottom: 11%; translate: -50% 0; }
+.ds-pose { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.ds-shadow { position: absolute; left: 12%; right: 12%; bottom: -2.5%; height: 5%; border-radius: 50%; background: radial-gradient(closest-side, rgba(60, 45, 25, .24), rgba(60, 45, 25, 0)); }
+/* breathing, and a blink every few seconds (--blink sets each person apart) */
+.ds-pose > g { transform-box: fill-box; transform-origin: 50% 100%; animation: ds-breathe 3.6s ease-in-out infinite; }
+.ds .pp-face { animation: ds-open 4.4s var(--blink, 0s) infinite; }
+.ds .pp-shut { opacity: 0; animation: ds-shut 4.4s var(--blink, 0s) infinite; }
+@keyframes ds-breathe { 50% { transform: scaleY(1.012); } }
+@keyframes ds-open { 0%, 92% { opacity: 1; } 92.5%, 95.5% { opacity: 0; } 96%, 100% { opacity: 1; } }
+@keyframes ds-shut { 0%, 92% { opacity: 0; } 92.5%, 95.5% { opacity: 1; } 96%, 100% { opacity: 0; } }
+/* a day out: I walk in from the right with a step bounce, stop and turn to them with a little hop and a hand
+   out (1.5s), then stand easy once we've said hi (3.6s) */
+.ds-me { animation: ds-walk-in 1.5s cubic-bezier(.33, .2, .35, 1) both; }
+.ds-me .ds-pose-0 { animation: ds-step .375s ease-in-out 4 both, ds-me-a 3.6s both; }
+.ds-me .ds-pose-1 { opacity: 0; animation: ds-me-b 3.6s both, ds-hop .45s 1.5s ease-out both; }
+.ds-me .ds-pose-2 { opacity: 0; animation: ds-me-c 3.6s both; }
+@keyframes ds-walk-in { from { transform: translateX(62cqw); } }
+@keyframes ds-step { 0%, 100% { translate: 0 0; rotate: 0deg; } 50% { translate: 0 -2.5%; rotate: -1.2deg; } }
+@keyframes ds-hop { 0%, 100% { translate: 0 0; } 35% { translate: 0 -4%; } }
+@keyframes ds-me-a { 0%, 41.6% { opacity: 1; } 41.7%, 100% { opacity: 0; } }
+@keyframes ds-me-b { 0%, 41.6% { opacity: 0; } 41.7%, 99.8% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes ds-me-c { 0%, 99.8% { opacity: 0; } 100% { opacity: 1; } }
+/* the first friend holds out a hand as I arrive, says hi, and stands back easy */
+.ds-greeter .ds-pose-0 { animation: ds-greet-a 3.6s both; }
+.ds-greeter .ds-pose-1 { opacity: 0; animation: ds-greet-b 3.6s both; }
+@keyframes ds-greet-a { 0%, 45.8% { opacity: 1; } 46%, 99.8% { opacity: 0; } 100% { opacity: 1; } }
+@keyframes ds-greet-b { 0%, 45.8% { opacity: 0; } 46%, 99.8% { opacity: 1; } 100% { opacity: 0; } }
+.ds-say { position: absolute; left: calc(var(--x) + 8%); bottom: calc(11% + var(--tall) * .8); padding: 6px 12px; border-radius: 16px 16px 16px 4px;
+  background: #fff; font-size: 13px; font-weight: 700; line-height: 1.4; box-shadow: 0 4px 14px rgba(15, 23, 42, .1); opacity: 0; transform-origin: 0 100%;
+  animation: ds-say 2.4s 1.7s both; }
+@keyframes ds-say { 0% { opacity: 0; scale: .4; } 14% { opacity: 1; scale: 1.08; } 22%, 84% { opacity: 1; scale: 1; } 100% { opacity: 0; scale: .92; } }
+/* the day's stops pop up over us, one after another */
+/* one row, over the heads: on a narrow card the names give way first */
+.ds-stops { position: absolute; top: 12px; left: 12px; right: 12px; display: flex; justify-content: center; gap: 6px; pointer-events: none; }
+.ds-stop { display: inline-flex; align-items: center; gap: 5px; min-width: 0; height: 28px; padding: 0 11px 0 4px; border-radius: 999px; background: #fff; white-space: nowrap;
+  font-size: 12px; font-weight: 500; box-shadow: 0 1px 2px rgba(15, 23, 42, .06), 0 4px 12px rgba(15, 23, 42, .08);
+  opacity: 0; transform-origin: 50% 100%; animation: ds-chip .55s calc(2.1s + var(--i) * .14s) cubic-bezier(.3, 1.5, .5, 1) both; }
+.ds-stop b { font-weight: 700; flex-shrink: 0; }
+.ds-stop-icon { width: 20px; height: 20px; flex-shrink: 0; display: grid; place-items: center; border-radius: 50%; }
+.ds-stop-name { min-width: 0; max-width: 108px; overflow: hidden; text-overflow: ellipsis; }
+@keyframes ds-chip { from { opacity: 0; translate: 0 10px; scale: .6; } to { opacity: 1; } }
+/* a free day: sitting about, the head tilting now and then, wondering where to go */
+.ds-sitter .pp-head { transform-box: fill-box; transform-origin: 50% 85%; animation: ds-tilt 6s ease-in-out infinite; }
+@keyframes ds-tilt { 0%, 100% { transform: rotate(0deg); } 30% { transform: rotate(-4deg); } 60% { transform: rotate(2deg); } }
+.ds-think { position: absolute; left: 57%; top: 16%; max-width: 38%; padding: 9px 14px; border-radius: 18px; background: #fff; font-size: 13px; font-weight: 600; line-height: 1.4;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, .05), 0 4px 14px rgba(15, 23, 42, .08); opacity: 0; transform-origin: 0 100%;
+  animation: ds-think .5s .6s cubic-bezier(.3, 1.5, .5, 1) both; }
+.ds-think::before, .ds-think::after { content: ''; position: absolute; border-radius: 50%; background: #fff; box-shadow: 0 2px 4px rgba(15, 23, 42, .06); }
+.ds-think::before { left: 4px; bottom: -10px; width: 10px; height: 10px; }
+.ds-think::after { left: -6px; bottom: -20px; width: 6px; height: 6px; }
+@keyframes ds-think { from { opacity: 0; scale: .5; } to { opacity: 1; } }
+/* the sheet over it: everything holds still */
+.homepage.pt-today:not(.at-rest) .ds * { animation-play-state: paused; }
+@media (prefers-reduced-motion: reduce) {
+  .ds *, .ds *::before, .ds *::after { animation: none !important; }
+  .ds-me .ds-pose-0, .ds-me .ds-pose-1, .ds-greeter .ds-pose-1, .ds .pp-shut { opacity: 0; }
+  .ds-me .ds-pose-2 { opacity: 1; }
+  .ds-say { display: none; }
+  .ds-stop, .ds-think { opacity: 1; }
+}
+

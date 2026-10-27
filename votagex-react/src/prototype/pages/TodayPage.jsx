@@ -13,6 +13,8 @@ import MapView from '../MapView';
 import RecapViewer from '../RecapViewer';
 import PostcardTile from '../Postcard';
 import HomeBar from '../HomeBar';
+import DayScene from '../DayScene';
+import { lookOf } from '../peeps';
 import { postcardOf, stampOfTrip, useStamps } from '../stamps';
 import { pm25Level, useWeather, weatherKind } from '../weather';
 import HOLIDAYS from '../thHolidays.json';
@@ -23,6 +25,7 @@ import {
 } from '../data';
 
 const FOLD_TOP = 12; // folded calendar's distance from the top of the screen
+const SHOW_CALENDAR = false; // the month calendar on the stage, put aside while the day's scene is tried there
 const TH_DOW = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'];
 // a plan's head in the day card, the same on my page and a group's: its group's tag (tap: the group) over its
 // name, and the faces as tall as both; tap for the plan. No plan: the group alone, with everyone in it
@@ -102,9 +105,9 @@ export default function TodayPage() {
       if (page.querySelector('.hp-content')?.scrollTop > 0) return; // folding: the open sizes stay as measured
       const bottom = stage.offsetTop + stage.offsetHeight;
       const top = Math.round(Math.min(bottom + 38, page.clientHeight - (page.clientHeight < 720 ? 100 : 126)));
-      // what's left of the calendar when folded (header bar, weekdays, one week)
+      // what's left of the calendar when folded (header bar, weekdays, one week); the day's scene goes entirely
       const away = [...stage.querySelectorAll('.pt-riso-stack > :first-child .pt-fold-away')].reduce((h, el) => h + el.offsetHeight, 0);
-      setSheet({ top, clip: Math.max(0, bottom - (top - 24)), folded: stage.offsetHeight - away });
+      setSheet({ top, clip: Math.max(0, bottom - (top - 24)), folded: stage.querySelector('.pt-riso-stack') ? stage.offsetHeight - away : 0 });
     };
     const ro = new ResizeObserver(fit);
     ro.observe(stage);
@@ -256,6 +259,19 @@ export default function TodayPage() {
   // something saved I haven't been to yet, for the shuffle on an empty day
   const canShuffle = selected >= today && shufflePool(places, allPlans, selected, group).length > 0;
 
+  // the day as a scene (DayScene): the next of its plans (the first with a stop still to come, else the last),
+  // with whoever's going and its stops; with nothing on, a free day
+  const scene = (() => {
+    const me = lookOf(ME);
+    const next = sections.find((x) => x.stops.some((s) => !s.skip && (s.time || '99') >= nowHM)) || sections[sections.length - 1];
+    if (!next) return { kind: 'free', me, ask: 'ว่างนะ ไปไหนดี?', label: 'วันนี้ว่าง ไปไหนดี' };
+    return {
+      kind: 'meet', me, label: next.p.name, planId: next.p.id,
+      friends: next.p.members.filter((id) => id !== ME).slice(0, 3).map(lookOf),
+      stops: next.stops.filter((s) => !s.skip).slice(0, 3).map((s) => ({ cat: s.cat, time: s.time, name: s.name })),
+    };
+  })();
+
   // past trips to look back on (this page's own, with photos), the one from this day in a past year (±3 days)
   // first; each plays back as its diary
   const looks = useMemo(() => {
@@ -356,10 +372,16 @@ export default function TodayPage() {
       </div>
 
       <div className="hp-stage" ref={stageRef} style={sheet?.clip && atRest ? { clipPath: `inset(0 0 ${sheet.clip}px 0)` } : undefined}>
-        {/* the calendar sits where the 3D piggy used to be; the sheet folds it to one week as it rises */}
-        <div className="hp-tile hp-plan-card">
-          <MonthCalendar selected={selected} today={today} onSelect={setSelected} stopsOn={stopsOn} eventsOn={eventsOn} groupsOn={groupsOn} plans={plans} />
-        </div>
+        {/* the calendar sits where the 3D piggy used to be; the sheet folds it to one week as it rises.
+            Put aside for now (SHOW_CALENDAR): today's scene takes its place, and the sheet rises over it */}
+        {SHOW_CALENDAR ? (
+          <div className="hp-tile hp-plan-card">
+            <MonthCalendar selected={selected} today={today} onSelect={setSelected} stopsOn={stopsOn} eventsOn={eventsOn} groupsOn={groupsOn} plans={plans} />
+          </div>
+        ) : (
+          <DayScene scene={scene} onTap={() => (scene.kind === 'meet' ? navigate(`/proto/plan/${scene.planId}`)
+            : openSheet(canShuffle ? 'shuffle' : 'createPlan', { date: selected }))} />
+        )}
       </div>
 
       <div className="hp-sheet-frame" aria-hidden="true"><div className="hp-sheet-bg" /><span className="hp-sheet-handle" /></div>
