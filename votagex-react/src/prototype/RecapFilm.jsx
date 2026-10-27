@@ -1,328 +1,431 @@
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { AbsoluteFill, Easing, Img, interpolate, spring, useCurrentFrame, useVideoConfig } from 'remotion';
 import { TransitionSeries, linearTiming } from '@remotion/transitions';
 import { slide } from '@remotion/transitions/slide';
-import { CUT, FPS, shotsFor } from './recapShots';
+import { iris } from '@remotion/transitions/iris';
+import * as maplibregl from 'maplibre-gl';
+import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url';
+import 'maplibre-gl/dist/maplibre-gl.css';
+import { lineString } from '@turf/helpers';
+import bezierSpline from '@turf/bezier-spline';
+import length from '@turf/length';
+import lineSliceAlong from '@turf/line-slice-along';
+import { BLOCK, CUT, FPS, blocksFor, shotsFor } from './recapShots';
 
-// A trip's recap cut like a product launch film (Remotion), 9:16 at 1080 wide, in the app's own type and
-// colours: Kanit for display, IBM Plex Sans Thai for the rest, navy ink, one blue accent. Type is set flush
-// left and comes in by masks (wipes), numbers roll like an odometer, lines draw, faces and pins pop; nothing
-// just fades in. It opens on "how long ago" with the trip's photos already moving under it, pushes through
-// the trip's name into the cover, then who went, the route drawn across the screen, each photo with its note
-// and who took it, the trip in three numbers stacking up, and the name set on a panel over a wall of photos.
-// Shots are laid out with TransitionSeries: a slide between shots of a kind, a zoom where the film changes key.
+// A trip's recap cut like a launch film (after mtioon's), 9:16 at 1080 wide. A pastel ground; a mascot (a
+// map pin with eyes) pops up and the trip bursts out of it as glossy 3D pills (where, when, who, how much);
+// big words land a beat at a time while quotes from the trip float round them and a search bar types the
+// trip in; a white card sets its name over a tilted conveyor of its photos; a real map (MapLibre, free
+// OpenFreeMap tiles) draws the route with the mascot riding the head of the line, a callout pill on a leader
+// line at each stop; each photo as a tilted card with its note and who took it as pills; the numbers as
+// full-screen colour blocks opening one from another in circles over a tilted field of the trip's words; the
+// name with the mascot to close. Cuts: slides, a rise, and iris circles.
+
+maplibregl.setWorkerUrl(workerUrl);
+const MAP_STYLE = 'https://tiles.openfreemap.org/styles/positron';
 
 const DISPLAY = "'Kanit', 'IBM Plex Sans Thai', sans-serif";
 const UI = "'IBM Plex Sans Thai', sans-serif";
 const INK = '#1B2A4A';
-const INK_2 = '#4B5878';
-const PALE = '#F9FAFB';
-const ACCENT = '#2B78C5';
-const LEFT = 80;
+const INK_2 = '#5B6478';
+const C = { orange: '#FF6B2C', blue: '#2F7BF5', purple: '#8B5CF6', pink: '#EC5FA0', yellow: '#F6C531', green: '#22B07D', black: '#1B1D24', white: '#FFFFFF' };
 const clamp = { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' };
 const IN_OUT = Easing.bezier(0.65, 0, 0.35, 1);
 const lerp = (f, a, b, from, to, easing = Easing.bezier(0.16, 1, 0.3, 1)) => interpolate(f, [a, b], [from, to], { ...clamp, easing });
-const POP = { damping: 13, stiffness: 170, mass: 0.8 };
-const sp = (f, at, config = { damping: 200 }) => spring({ frame: f - at, fps: FPS, config });
+const POP = { damping: 11, stiffness: 180, mass: 0.7 };
+const sp = (f, at, config = POP) => spring({ frame: f - at, fps: FPS, config });
 const baht = (n) => `฿${Math.round(n).toLocaleString('en-US')}`;
-const ui = (size, color = INK_2, weight = 500) => ({ fontFamily: UI, fontSize: size, fontWeight: weight, color, lineHeight: 1.4 });
-const display = (size, color = INK, weight = 700) => ({ fontFamily: DISPLAY, fontSize: size, fontWeight: weight, color, lineHeight: 1.2, letterSpacing: -size * 0.01 });
+const graphemes = (s) => [...new Intl.Segmenter('th', { granularity: 'grapheme' }).segment(s || '')].map((x) => x.segment);
+const cut = (s, n) => (graphemes(s).length > n ? `${graphemes(s).slice(0, n).join('')}…` : s);
+const float = (f, seed, amp = 8) => Math.sin((f + seed * 13) / 16) * amp;
 
-// type revealed by a mask: from the left (a sideways wipe) or from below; `out` always wipes it away
-// sideways, so no tone marks are left hanging above a half-cleared line
-function Wipe({ f, at, out, from = 'left', dur = 14, style, children }) {
-  const p = lerp(f, at, at + dur, 0, 1, IN_OUT);
-  const q = out == null ? 0 : lerp(f, out, out + dur, 0, 1, IN_OUT);
-  if (p <= 0 || q >= 1) return null;
-  const clip = from === 'left' ? `inset(-40% ${(1 - p) * 100}% -40% ${q * 100}%)` : `inset(${(1 - p) * 100}% -10% -10% ${q * 100}%)`;
-  const move = from === 'left' ? `${(1 - p) * -50 + q * 50}px 0px` : `${q * 50}px ${(1 - p) * 60}px`;
-  return <div style={{ clipPath: clip, translate: move, ...style }}>{children}</div>;
-}
+/* ---------------- pieces ---------------- */
 
-// a number rolling up digit by digit like an odometer; anything that isn't a digit stays put
-function Odo({ f, at, text, dur = 36, style }) {
-  let k = 0;
+// the soft pastel ground, its light drifting slowly
+const Pastel = ({ f }) => (
+  <AbsoluteFill style={{ background: `radial-gradient(70% 45% at ${18 + Math.sin(f / 50) * 6}% 8%, #FFE0CF, transparent 70%),
+    radial-gradient(70% 50% at ${88 - Math.sin(f / 60) * 5}% 58%, #E6E1FF, transparent 72%), radial-gradient(60% 35% at 25% 98%, #FFE6D8, transparent 70%), #FBF9FB` }} />
+);
+
+// a glossy 3D pill: lit from above, a darker edge underneath for its thickness, a coloured glow below
+function Pill({ bg = C.blue, fg = '#fff', size = 40, avatar, dot, wrap = false, style, children }) {
+  const white = bg === C.white;
+  const edge = white ? '#D9DCE3' : `color-mix(in srgb, ${bg} 72%, black)`;
   return (
-    <div style={{ display: 'flex', alignItems: 'flex-start', ...style }}>
-      {[...text].map((c, i) => {
-        if (!/\d/.test(c)) return <span key={i} style={{ lineHeight: '1.15em' }}>{c}</span>;
-        const p = lerp(f, at + k * 3, at + dur + k * 3, 0, 1);
-        k += 1;
-        const roll = (Number(c) + 10) * p;
-        return (
-          <span key={i} style={{ position: 'relative', display: 'inline-block', height: '1.15em', lineHeight: '1.15em', overflow: 'hidden' }}>
-            <span style={{ visibility: 'hidden' }}>{c}</span>{/* sizes the cell to its own digit, so a 1 doesn't sit in a 0's width */}
-            <span style={{ position: 'absolute', left: '50%', top: 0, display: 'block', textAlign: 'center', translate: `-50% ${-roll * 1.15}em` }}>
-              {Array.from({ length: 21 }, (_, n) => <span key={n} style={{ display: 'block', height: '1.15em' }}>{n % 10}</span>)}
-            </span>
-          </span>
-        );
-      })}
+    <div style={{ display: 'inline-flex', alignItems: 'center', gap: size * 0.35, padding: `${size * 0.42}px ${size * 0.75}px`, borderRadius: wrap ? size * 0.9 : 999,
+      whiteSpace: wrap ? 'normal' : 'nowrap', maxWidth: wrap ? 860 : undefined, color: fg, fontFamily: UI, fontWeight: 700, fontSize: size, lineHeight: 1.3,
+      background: white ? 'linear-gradient(180deg, #FFFFFF, #F3F4F7)' : `linear-gradient(180deg, color-mix(in srgb, ${bg} 62%, white) 0%, ${bg} 42%, color-mix(in srgb, ${bg} 88%, black) 100%)`,
+      boxShadow: `inset 0 ${size * 0.08}px 0 rgba(255,255,255,.55), 0 ${size * 0.16}px 0 ${edge}, 0 ${size * 0.5}px ${size * 0.9}px color-mix(in srgb, ${white ? INK : bg} 28%, transparent)`, ...style }}>
+      {avatar && <Img src={avatar} style={{ width: size * 1.35, height: size * 1.35, borderRadius: '50%', background: '#fff', margin: `${-size * 0.25}px 0 ${-size * 0.25}px ${-size * 0.45}px`, flexShrink: 0 }} />}
+      {dot && <i style={{ width: size * 0.42, height: size * 0.42, borderRadius: '50%', border: `${size * 0.1}px solid currentColor`, flexShrink: 0 }} />}
+      {children}
     </div>
   );
 }
 
-// an accent rule drawn out from the left
-const Rule = ({ f, at, w = 140, color = ACCENT }) => (
-  <i style={{ display: 'block', height: 12, borderRadius: 6, background: color, width: lerp(f, at, at + 16, 0, w, IN_OUT) }} />
+// something placed on the frame that pops in on its beat, tilted a little in 3D, bobbing gently
+function Pop({ f, at, x, y, r = 0, from, seed = 0, bob = 8, tilt = 14, children }) {
+  const p = sp(f, at);
+  if (f < at - 1) return null;
+  const px = from ? from[0] + (x - from[0]) * Math.min(1, p) : x;
+  const py = (from ? from[1] + (y - from[1]) * Math.min(1, p) : y) + float(f, seed, bob);
+  return (
+    <div style={{ position: 'absolute', left: px, top: py, zIndex: 3,
+      transform: `translate(-50%, -50%) perspective(900px) rotateX(${tilt}deg) rotate(${r}deg) scale(${Math.max(0, p)})` }}>{children}</div>
+  );
+}
+
+// the mascot: a map pin with eyes, glossy, blinking now and then
+function Mascot({ f, size = 300, blink = [44, 120, 190] }) {
+  const shut = blink.some((b) => f >= b && f < b + 5) ? 0.12 : 1;
+  return (
+    <svg width={size} height={size * 1.2} viewBox="0 0 100 120" style={{ overflow: 'visible', display: 'block' }}>
+      <defs>
+        <linearGradient id="rc-pin" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#FF9A5C" /><stop offset=".55" stopColor="#FF6B2C" /><stop offset="1" stopColor="#E9481A" /></linearGradient>
+      </defs>
+      <ellipse cx="50" cy="117" rx="18" ry="4" fill="rgba(27,42,74,.14)" />
+      <path d="M50 114 C50 114 11 72 11 44 A39 39 0 1 1 89 44 C89 72 50 114 50 114 Z" fill="url(#rc-pin)" />
+      <path d="M50 114 C50 114 11 72 11 44 A39 39 0 1 1 89 44 C89 72 50 114 50 114 Z" fill="none" stroke="rgba(0,0,0,.08)" strokeWidth="1.5" />
+      <ellipse cx="34" cy="22" rx="15" ry="8" fill="rgba(255,255,255,.35)" transform="rotate(-24 34 22)" />
+      {[37, 63].map((x) => (
+        <g key={x} transform={`translate(${x} 46) scale(1 ${shut})`}>
+          <ellipse rx="8.5" ry="11.5" fill="#15161B" />
+          <circle cx="2.6" cy="-4.2" r="3" fill="#fff" />
+        </g>
+      ))}
+    </svg>
+  );
+}
+
+const Ink = ({ size, weight = 800, color = INK, style, children }) => (
+  <div style={{ fontFamily: DISPLAY, fontWeight: weight, fontSize: size, lineHeight: 1.18, color, letterSpacing: -size * 0.015, whiteSpace: 'nowrap', ...style }}>{children}</div>
 );
+
+// a word landing on its beat: a quick overshoot in scale
+const Word = ({ f, at, children, style }) => {
+  const p = sp(f, at, { damping: 12, stiffness: 220, mass: 0.6 });
+  if (f < at) return null;
+  return <span style={{ display: 'inline-block', transform: `scale(${0.6 + 0.4 * p})`, opacity: Math.min(1, p * 3), ...style }}>{children}</span>;
+};
 
 /* ---------------- shots ---------------- */
 
-// "how long ago" wipes in over the trip's photos already sliding past; "we went"; then the trip's name in
-// ink fills with its cover and the camera pushes through the letters into the cover shot
-function Intro({ d, f, H }) {
-  const cy = H / 2;
-  const size = Math.min(240, 1800 / Math.max(5, [...d.title].length));
-  const inP = sp(f, 46, POP);
-  const fill = lerp(f, 60, 74, 0, 1, Easing.inOut(Easing.quad));
-  const zoom = interpolate(f, [78, 108], [1, 30], { ...clamp, easing: Easing.in(Easing.quad), output: 'perceptual-scale' });
-  const full = lerp(f, 94, 108, 0, 1, Easing.linear);
-  const at = `translate(540 ${cy + (1 - inP) * 80}) scale(${(0.92 + 0.08 * Math.min(1.05, inP)) * zoom}) translate(-540 ${-cy})`;
-  const text = (props) => (
-    <text x="540" y={cy} textAnchor="middle" dominantBaseline="central" transform={at}
-      style={{ fontFamily: DISPLAY, fontSize: size, fontWeight: 800, letterSpacing: -size * 0.01 }} {...props}>{d.title}</text>
-  );
-  const pics = [...d.photos.map((p) => p.src), d.cover].filter(Boolean);
-  const tile = 380; const gap = 28;
+// the mascot pops up and the trip bursts out of it as pills
+function Hook({ d, f, H }) {
+  const cx = 540; const cy = H * 0.42;
+  const chips = [
+    { dx: -270, dy: -520, r: -8, bg: C.blue, dot: true, t: cut(d.stops[0]?.name || d.title, 14) },
+    { dx: 290, dy: -450, r: 7, bg: C.black, t: d.dateCode },
+    { dx: -330, dy: -40, r: -6, bg: C.purple, avatar: d.crew[0]?.avatar, t: d.crew[0]?.name },
+    { dx: 340, dy: 20, r: 8, bg: C.pink, t: `${d.stats.photos} ภาพ` },
+    { dx: -260, dy: 420, r: 6, bg: C.yellow, fg: INK, t: d.spend.total > 0 ? baht(d.spend.total) : `${d.stats.days} วัน` },
+    { dx: 280, dy: 470, r: -7, bg: C.orange, t: `${d.stats.km.toFixed(1)} กม.` },
+  ].filter((c) => c.t);
   return (
-    <AbsoluteFill style={{ background: PALE, overflow: 'hidden' }}>
-      {/* the trip's photos, already moving when the film starts, leaving as the name arrives */}
-      <div style={{ position: 'absolute', top: H * 0.56, left: 0, display: 'flex', gap,
-        translate: `${1080 * lerp(f, 0, 12, 0.25, 0) - f * 9}px ${lerp(f, 36, 50, 0, H * 0.5, Easing.in(Easing.cubic))}px` }}>
-        {Array.from({ length: 8 }, (_, i) => (
-          <Img key={i} src={pics[i % pics.length]} style={{ width: tile, height: tile * 1.25, objectFit: 'cover', borderRadius: 40, flexShrink: 0, rotate: `${(i % 2 ? 2 : -2)}deg` }} />
-        ))}
+    <AbsoluteFill style={{ overflow: 'hidden' }}>
+      <Pastel f={f} />
+      <Pop f={f} at={-6} x={cx} y={cy} bob={6} tilt={0}><Mascot f={f} size={360} /></Pop>
+      <div style={{ position: 'absolute', left: 0, right: 0, top: cy + 270, textAlign: 'center', opacity: lerp(f, 10, 18, 0, 1) }}>
+        <div style={{ fontFamily: UI, fontWeight: 700, fontSize: 48, color: INK }}>{d.title}</div>
+        <div style={{ fontFamily: UI, fontWeight: 500, fontSize: 34, color: INK_2, marginTop: 4 }}>{d.ago}</div>
       </div>
-      <div style={{ position: 'absolute', left: LEFT, right: LEFT, top: H * 0.22 }}>
-        {(d.ago.startsWith('วันนี้') ? ['วันนี้', d.ago.slice(6)] : [d.ago]).map((line, i) => (
-          <Wipe key={line} f={f} at={-8 + i * 4} out={22 + i * 3} style={{ ...display(Math.min(200, 1700 / Math.max(4, [...line].length)), INK, 800), whiteSpace: 'nowrap' }}>{line}</Wipe>
-        ))}
-      </div>
-      <div style={{ position: 'absolute', left: LEFT, right: LEFT, top: H * 0.24 }}>
-        <Wipe f={f} at={28} out={40} from="up" style={display(220, INK, 800)}>เราไป</Wipe>
-      </div>
-      {f >= 45 && (
-        <svg width="1080" height={H} style={{ position: 'absolute', inset: 0 }}>
-          <defs><clipPath id="rc-title">{text({})}</clipPath></defs>
-          {text({ fill: INK, opacity: Math.min(1, inP * 1.4) * (1 - fill) })}
-          {d.cover && <image href={d.cover} width="1080" height={H} preserveAspectRatio="xMidYMid slice" clipPath="url(#rc-title)" opacity={fill} />}
-        </svg>
-      )}
-      {d.cover && full > 0 && <Img src={d.cover} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: full }} />}
+      {chips.map((c, i) => (
+        <Pop key={i} f={f} at={6 + i * 4} x={cx + c.dx} y={cy + c.dy} r={c.r} from={[cx, cy]} seed={i}>
+          <Pill bg={c.bg} fg={c.fg} dot={c.dot} avatar={c.avatar}>{c.t}</Pill>
+        </Pop>
+      ))}
     </AbsoluteFill>
   );
 }
 
-// the cover: the date wipes up, a rule draws, the trip's size in a line; the photo punches in a step
-function Cover({ d, f, dur }) {
+// big words a beat at a time, the trip's name typing itself in; quotes from the trip float round them, then
+// a search bar types the trip and its send button is pressed
+function Say({ d, f, H }) {
+  const name = graphemes(d.title);
+  const typedName = Math.max(0, Math.min(name.length, Math.floor((f - 24) / 1.6)));
+  const query = `${d.title} · ${d.dateFull}`;
+  const q = graphemes(query);
+  const typed = Math.max(0, Math.min(q.length, Math.floor((f - 52) / 1.1)));
+  const press = f >= 88 && f < 93 ? 0.88 : 1;
+  const quotes = d.photos.map((p) => p.text).filter(Boolean);
+  const qs = [
+    { x: 300, y: H * 0.22, r: -7, bg: C.orange, t: quotes[0] },
+    { x: 790, y: H * 0.26, r: 6, bg: C.blue, t: quotes[1] },
+    { x: 230, y: H * 0.52, r: -5, bg: C.pink, t: quotes[2] },
+    { x: 840, y: H * 0.5, r: 8, bg: C.yellow, fg: INK, t: d.crew.length > 1 ? `${d.crew.length} คน` : null },
+  ].filter((c) => c.t);
+  const nameSize = Math.min(150, 1450 / Math.max(5, name.length + 4)); // the line is "เราไป" and the name together
   return (
-    <AbsoluteFill style={{ background: '#000', overflow: 'hidden' }}>
-      {d.cover && <Img src={d.cover} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover',
-        scale: interpolate(f, [0, 56, 66, dur], [1, 1.03, 1.09, 1.11], { ...clamp, easing: [Easing.linear, IN_OUT, Easing.linear], output: 'perceptual-scale' }) }} />}
-      <AbsoluteFill style={{ background: 'linear-gradient(180deg, rgba(0,0,0,.28), transparent 26%, transparent 46%, rgba(0,0,0,.68))' }} />
-      <div style={{ position: 'absolute', left: LEFT, right: LEFT, bottom: 420, display: 'flex', flexDirection: 'column', gap: 22 }}>
-        <Rule f={f} at={20} color="#fff" />
-        <Wipe f={f} at={4} from="up" style={display(150, '#fff', 700)}>{d.dateFull}</Wipe>
-        <Wipe f={f} at={30} style={ui(48, 'rgba(255,255,255,.9)', 500)}>
-          {[`${d.stats.days} วัน`, d.stats.stops && `${d.stats.stops} ที่`, d.crew.length > 1 && `${d.crew.length} คน`].filter(Boolean).join(' · ')}
-        </Wipe>
+    <AbsoluteFill style={{ overflow: 'hidden' }}>
+      <Pastel f={f + 84} />
+      <div style={{ position: 'absolute', left: 0, right: 0, top: H * 0.31, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+        <Ink size={128}><Word f={f} at={0}>วันนี้</Word> <Word f={f} at={7}>{d.ago.replace(/^วันนี้/, '')}</Word></Ink>
+        <Ink size={nameSize}>
+          <Word f={f} at={16}>เราไป</Word>
+          {f >= 22 && <span>{name.map((g, i) => <span key={i} style={{ color: i < typedName ? INK : 'rgba(27,42,74,.16)' }}>{g}</span>)}</span>}
+        </Ink>
       </div>
-    </AbsoluteFill>
-  );
-}
-
-// who went: the count rolls up, the faces slide in from the edge, each name wiping in under its face
-function Crew({ d, f, H }) {
-  const faces = d.crew.slice(0, 4);
-  const av = faces.length > 2 ? 280 : 340; const step = av - 40;
-  return (
-    <AbsoluteFill style={{ background: PALE, overflow: 'hidden' }}>
-      <div style={{ position: 'absolute', left: LEFT, top: H * 0.24 }}>
-        <Wipe f={f} at={0} style={ui(52, INK_2)}>ไปด้วยกัน</Wipe>
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 24 }}>
-          <Odo f={f} at={2} text={String(d.crew.length)} style={display(320, INK, 800)} />
-          <Wipe f={f} at={12} from="up" style={display(120, INK, 700)}>คน</Wipe>
+      {qs.map((c, i) => (
+        <Pop key={i} f={f} at={32 + i * 5} x={c.x} y={c.y} r={c.r} seed={i + 3} bob={6}>
+          <Pill bg={c.bg} fg={c.fg} size={34}>“{cut(c.t, 16)}”</Pill>
+        </Pop>
+      ))}
+      <Pop f={f} at={46} x={540} y={H * 0.66} tilt={0} bob={0}>
+        <div style={{ width: 860, height: 120, borderRadius: 60, background: '#fff', display: 'flex', alignItems: 'center', gap: 22, padding: '0 18px 0 30px',
+          boxShadow: '0 2px 0 #E4E6EC, 0 24px 50px rgba(27,42,74,.14)', fontFamily: UI, fontSize: 40, fontWeight: 500, color: INK }}>
+          <span style={{ width: 54, flexShrink: 0 }}><Mascot f={f} size={50} blink={[]} /></span>
+          <span style={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden' }}>{q.slice(0, typed).join('')}<span style={{ opacity: Math.floor(f / 8) % 2 ? 0 : 1, color: C.orange }}>|</span></span>
+          <span style={{ width: 84, height: 84, borderRadius: '50%', background: typed >= q.length ? C.blue : '#E6E9F0', display: 'grid', placeItems: 'center', flexShrink: 0, transform: `scale(${press})` }}>
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5M5 12l7-7 7 7" /></svg>
+          </span>
         </div>
-        <Rule f={f} at={20} w={200} />
-      </div>
-      <div style={{ position: 'absolute', left: LEFT, top: H * 0.52, width: 1080 }}>
-        {faces.map((c, i) => {
-          const x = lerp(f, 16 + i * 6, 40 + i * 6, 1100, i * step, Easing.bezier(0.16, 1.2, 0.3, 1));
-          return (
-            <div key={c.id} style={{ position: 'absolute', left: 0, translate: `${x}px 0px`, zIndex: faces.length - i, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 18, width: av }}>
-              <Img src={c.avatar} style={{ width: av, height: av, borderRadius: '50%', background: '#fff', border: `10px solid ${PALE}`, boxShadow: '0 24px 50px rgba(27,42,74,.14)' }} />
-              <Wipe f={f} at={40 + i * 6} from="up" style={ui(44, INK, 600)}>{c.name}</Wipe>
+      </Pop>
+    </AbsoluteFill>
+  );
+}
+
+// a white card with the trip's name over a tilted conveyor of its photos and pills; the mascot peeks in
+function Brief({ d, f, H }) {
+  const card = sp(f, 0, { damping: 200 });
+  const tokens = [
+    ...d.photos.map((p) => ({ src: p.src })),
+    ...d.stops.map((s, i) => ({ t: s.name, bg: [C.blue, C.purple, C.pink, C.orange][i % 4] })),
+    ...d.crew.map((c) => ({ t: c.name, avatar: c.avatar, bg: C.white, fg: INK })),
+  ];
+  const lane = (k) => tokens.filter((_, j) => j % 3 === k);
+  return (
+    <AbsoluteFill style={{ overflow: 'hidden' }}>
+      <Pastel f={f + 184} />
+      <div style={{ position: 'absolute', left: -200, right: -200, top: H * 0.5, height: H * 0.7, perspective: 1600 }}>
+        <div style={{ position: 'absolute', inset: 0, transform: 'rotateX(52deg) rotateZ(-24deg)', transformOrigin: '50% 30%' }}>
+          {[0, 1, 2].map((k) => (
+            <div key={k} style={{ position: 'absolute', left: 0, top: k * 300, display: 'flex', gap: 40, alignItems: 'center', translate: `${-600 + ((f * (5 + k)) % 600) - k * 180}px 0px` }}>
+              {[...lane(k), ...lane(k), ...lane(k), ...lane(k)].map((t, j) => (t.src
+                ? <Img key={j} src={t.src} style={{ width: 300, height: 220, objectFit: 'cover', borderRadius: 30, boxShadow: '0 20px 30px rgba(27,42,74,.18)', flexShrink: 0 }} />
+                : <Pill key={j} bg={t.bg} fg={t.fg} avatar={t.avatar} size={44}>{t.t}</Pill>))}
             </div>
+          ))}
+        </div>
+      </div>
+      <div style={{ position: 'absolute', left: 50, right: 50, top: H * 0.17, padding: '70px 64px', borderRadius: 64, background: '#fff', boxShadow: '0 40px 90px rgba(27,42,74,.16)',
+        transform: `translateY(${(1 - card) * 220}px)`, opacity: Math.min(1, card * 2) }}>
+        <Ink size={Math.min(130, 1500 / Math.max(5, graphemes(d.title).length))}><Word f={f} at={6}>{d.title}</Word></Ink>
+        <div style={{ fontFamily: UI, fontSize: 40, fontWeight: 500, color: INK_2, marginTop: 18, opacity: lerp(f, 14, 24, 0, 1), translate: `0 ${lerp(f, 14, 24, 20, 0)}px` }}>
+          {[d.dateFull, `${d.stats.days} วัน`, d.stats.stops && `${d.stats.stops} ที่`, d.crew.length > 1 && `${d.crew.length} คน`].filter(Boolean).join(' · ')}
+        </div>
+      </div>
+      <Pop f={f} at={26} x={170} y={H * 0.17 - 10} r={-12} tilt={0} bob={5} seed={2}><Mascot f={f + 20} size={150} /></Pop>
+    </AbsoluteFill>
+  );
+}
+
+// the route on a real map: the line draws with the mascot riding its head, each stop pops a pin and a
+// callout pill on a leader line; the distance lands as a pill when the line arrives
+function RouteMap({ d, f, H, dur }) {
+  const box = useRef(null);
+  const [map, setMap] = useState(null);
+  const [pins, setPins] = useState(null);
+  const [ready, setReady] = useState(false); // the first frame of tiles has drawn
+  const route = useMemo(() => {
+    const coords = d.stops.map((s) => [s.lng, s.lat]);
+    if (coords.length < 2) return null;
+    const line = bezierSpline(lineString(coords), { resolution: 10000, sharpness: 0.6 });
+    return { line, km: length(line) };
+  }, [d.stops]);
+  useEffect(() => {
+    const lng = d.stops.map((s) => s.lng); const lat = d.stops.map((s) => s.lat);
+    const m = new maplibregl.Map({
+      container: box.current, style: MAP_STYLE, interactive: false, attributionControl: false, fadeDuration: 0, pixelRatio: 1,
+      bounds: [[Math.min(...lng), Math.min(...lat)], [Math.max(...lng), Math.max(...lat)]],
+      fitBoundsOptions: { padding: { top: H * 0.3, bottom: H * 0.32, left: 230, right: 230 }, maxZoom: 15 },
+      canvasContextAttributes: { preserveDrawingBuffer: true },
+    });
+    m.on('load', () => {
+      m.addSource('route', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+      m.addLayer({ id: 'route-casing', type: 'line', source: 'route', paint: { 'line-color': '#fff', 'line-width': 22 }, layout: { 'line-cap': 'round', 'line-join': 'round' } });
+      m.addLayer({ id: 'route', type: 'line', source: 'route', paint: { 'line-color': C.orange, 'line-width': 12 }, layout: { 'line-cap': 'round', 'line-join': 'round' } });
+      setPins(d.stops.map((s) => m.project([s.lng, s.lat])));
+      setMap(m);
+      m.once('idle', () => setReady(true));
+    });
+    return () => m.remove(); // in the app the player unmounts this shot; free the WebGL context
+  }, [d.stops, H]);
+  const per = 16; const start = 14;
+  const drawn = lerp(f, start, start + Math.max(1, d.stops.length - 1) * per, 0, 1, IN_OUT);
+  const head = useMemo(() => (route && drawn > 0.001 ? lineSliceAlong(route.line, 0, route.km * drawn) : null), [route, drawn]);
+  useEffect(() => {
+    if (!map) return;
+    map.getSource('route')?.setData(head || { type: 'FeatureCollection', features: [] });
+  }, [map, head]);
+  const tip = map && head ? map.project(head.geometry.coordinates[head.geometry.coordinates.length - 1]) : pins?.[0];
+  // callouts above or below their pin, kept inside the frame and clear of one another
+  const calls = (pins || []).map((p, i) => ({ x: Math.max(250, Math.min(830, p.x)), y: p.y + (i % 2 ? 150 : -150), i }));
+  calls.forEach((c, i) => calls.slice(0, i).forEach((o) => { if (Math.abs(o.x - c.x) < 380 && Math.abs(o.y - c.y) < 100) c.y += c.y > o.y ? 100 : -100; }));
+  return (
+    <AbsoluteFill style={{ overflow: 'hidden' }}>
+      <Pastel f={f + 260} />
+      <div style={{ position: 'absolute', inset: 0, scale: lerp(f, 0, dur, 1, 1.06, Easing.linear) }}>
+        <div ref={box} style={{ position: 'absolute', inset: 0, width: 1080, height: H, opacity: ready ? 1 : 0 }} />
+        <AbsoluteFill style={{ background: 'linear-gradient(180deg, rgba(251,249,251,.95), rgba(251,249,251,0) 22%, rgba(251,249,251,0) 74%, rgba(251,249,251,.95))' }} />
+        {pins && (
+          <svg width="1080" height={H} style={{ position: 'absolute', inset: 0 }}>
+            {calls.map((c) => {
+              const p = pins[c.i]; const at = start + c.i * per;
+              const k = lerp(f, at + 4, at + 12, 0, 1, IN_OUT);
+              return <line key={c.i} x1={p.x} y1={p.y} x2={p.x + (c.x - p.x) * k} y2={p.y + (c.y - p.y) * k} stroke={INK} strokeWidth="3" strokeDasharray="2 8" strokeLinecap="round" />;
+            })}
+          </svg>
+        )}
+        {pins && pins.map((p, i) => (
+          <Pop key={i} f={f} at={start + i * per - 2} x={p.x} y={p.y} tilt={0} bob={0}>
+            <div style={{ width: 64, height: 64, borderRadius: '50%', display: 'grid', placeItems: 'center', fontFamily: DISPLAY, fontWeight: 700, fontSize: 32, color: '#fff',
+              background: `linear-gradient(180deg, #FF9A5C, ${C.orange})`, boxShadow: '0 0 0 6px #fff, 0 10px 18px rgba(255,107,44,.35)' }}>{i + 1}</div>
+          </Pop>
+        ))}
+        {pins && calls.map((c) => {
+          const s = d.stops[c.i];
+          return (
+            <Pop key={c.i} f={f} at={start + c.i * per + 8} x={c.x} y={c.y} r={c.i % 2 ? 3 : -3} seed={c.i} bob={4} tilt={10}>
+              <Pill bg={C.white} fg={INK} size={38}>
+                <span style={{ color: C.orange, fontFamily: DISPLAY }}>{c.i + 1}</span>{cut(s.name, 16)}{s.time && <span style={{ color: INK_2, fontWeight: 500 }}>{s.time}</span>}
+              </Pill>
+            </Pop>
           );
         })}
+        {tip && drawn < 1 && (
+          <div style={{ position: 'absolute', left: tip.x, top: tip.y, transform: `translate(-50%, -100%) rotate(${Math.sin(f / 3) * 6}deg)`, zIndex: 4 }}><Mascot f={f} size={110} blink={[]} /></div>
+        )}
       </div>
+      <Pop f={f} at={4} x={540} y={H * 0.17} tilt={0} bob={4}><Pill bg={C.black} size={46}>เส้นทาง</Pill></Pop>
+      <Pop f={f} at={start + Math.max(1, d.stops.length - 1) * per + 6} x={540} y={H * 0.8} r={-4} bob={6}>
+        <Pill bg={C.orange} size={72}>{d.stats.km.toFixed(1)} กม.</Pill>
+      </Pop>
+      <div style={{ position: 'absolute', left: 40, bottom: 300, fontFamily: UI, fontSize: 22, color: 'rgba(27,42,74,.45)' }}>© OpenFreeMap © OpenMapTiles © OpenStreetMap</div>
     </AbsoluteFill>
   );
 }
 
-// the route drawn across the top of the screen, pins popping as it reaches them; the places listed underneath,
-// each wiping in as its pin lands (stops can sit too close together to name them beside their pins); the
-// distance rolls up at the foot
-function Route({ d, f, H }) {
-  const box = { x: 170, y: H * 0.15, w: 740, h: H * 0.25 };
-  const la = d.stops.map((s) => s.lat); const ln = d.stops.map((s) => s.lng);
-  const k = Math.min(box.w / Math.max(Math.max(...ln) - Math.min(...ln), 1e-4), box.h / Math.max(Math.max(...la) - Math.min(...la), 1e-4));
-  const cx = (Math.max(...ln) + Math.min(...ln)) / 2; const cy = (Math.max(...la) + Math.min(...la)) / 2;
-  const pts = d.stops.map((s) => ({ x: box.x + box.w / 2 + (s.lng - cx) * k, y: box.y + box.h / 2 - (s.lat - cy) * k }));
-  const path = pts.map((p, i) => (i ? `Q${(pts[i - 1].x + p.x) / 2 + (i % 2 ? 70 : -70)},${(pts[i - 1].y + p.y) / 2 + (i % 2 ? -50 : 50)} ${p.x},${p.y}` : `M${p.x},${p.y}`)).join(' ');
-  const per = 14; const start = 8;
-  const drawn = lerp(f, start, start + Math.max(1, pts.length - 1) * per, 0, 1, IN_OUT);
-  const pin = (n, size) => ({ width: size, height: size, borderRadius: '50%', background: INK, display: 'grid', placeItems: 'center', flexShrink: 0, ...display(size * 0.5, '#fff', 700), lineHeight: 1 });
-  return (
-    <AbsoluteFill style={{ background: PALE, overflow: 'hidden' }}>
-      <svg width="1080" height={H} style={{ position: 'absolute', inset: 0 }}>
-        <path d={path} pathLength="1" fill="none" stroke={ACCENT} strokeWidth="14" strokeLinecap="round" strokeDasharray="1" strokeDashoffset={1 - drawn} />
-      </svg>
-      {pts.map((p, i) => (
-        <div key={i} style={{ position: 'absolute', left: p.x - 36, top: p.y - 36, ...pin(i + 1, 72), scale: sp(f, start + i * per - 2, POP) }}>{i + 1}</div>
-      ))}
-      <div style={{ position: 'absolute', left: LEFT, right: LEFT, top: H * 0.45, display: 'flex', flexDirection: 'column', gap: 26 }}>
-        {d.stops.slice(0, 5).map((s, i) => (
-          <Wipe key={s.id} f={f} at={start + i * per + 2} style={{ display: 'flex', alignItems: 'center', gap: 28 }}>
-            <span style={pin(i + 1, 64)}>{i + 1}</span>
-            <span style={{ ...ui(50, INK, 600), whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.name}</span>
-            {s.time && <span style={{ ...ui(40, INK_2), marginLeft: 'auto' }}>{s.time}</span>}
-          </Wipe>
-        ))}
-      </div>
-      <div style={{ position: 'absolute', left: LEFT, bottom: Math.max(400, H * 0.18) }}>
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 20 }}>
-          <Wipe f={f} at={start + pts.length * per} from="up" dur={10}><Odo f={f} at={start + pts.length * per} text={d.stats.km.toFixed(1)} dur={40} style={display(220, INK, 800)} /></Wipe>
-          <Wipe f={f} at={start + pts.length * per + 10} from="up" style={display(90, INK, 700)}>กม.</Wipe>
-        </div>
-      </div>
-    </AbsoluteFill>
-  );
-}
-
-// the first photo springs in as a card and opens out to fill the screen (the rest slide in already full);
-// its note wipes in, then who took it, with their face
+// a photo as a tilted card, its note and who took it popping on as pills
 function PhotoShot({ d, f, dur, i, H }) {
   const ph = d.photos[i];
-  const inP = i ? 1 : sp(f, 0, POP);
-  const open = i ? 1 : lerp(f, 16, 36, 0, 1, IN_OUT);
-  const w = 760 + (1080 - 760) * open; const h = 980 + (H - 980) * open;
   const side = i % 2 ? 1 : -1;
-  const t0 = i ? 14 : 34;
+  const p = sp(f, 0, { damping: 16, stiffness: 120 });
+  const colours = [C.purple, C.blue, C.pink, C.green];
   return (
-    <AbsoluteFill style={{ background: INK, overflow: 'hidden' }}>
-      <div style={{ position: 'absolute', left: 540 - w / 2, top: H / 2 - h / 2 + (1 - inP) * 300, width: w, height: h, borderRadius: 56 * (1 - open), overflow: 'hidden',
-        opacity: Math.min(1, inP * 2), rotate: `${side * 5 * (1 - open) * inP}deg`, boxShadow: open < 1 ? '0 30px 70px rgba(0,0,0,.35)' : 'none' }}>
-        <Img src={ph.src} style={{ width: '100%', height: '100%', objectFit: 'cover', scale: lerp(f, 0, dur, 1.12, 1.02, Easing.linear) }} />
-      </div>
-      <AbsoluteFill style={{ background: 'linear-gradient(180deg, rgba(0,0,0,.28), transparent 24%, transparent 50%, rgba(0,0,0,.72))', opacity: open }} />
-      <div style={{ position: 'absolute', left: LEFT, right: LEFT, bottom: 420, display: 'flex', flexDirection: 'column', gap: 30 }}>
-        {ph.text && <Wipe f={f} at={t0} style={{ ...ui(ph.text.length > 40 ? 60 : 70, '#fff', 600), lineHeight: 1.35 }}>{ph.text}</Wipe>}
-        <Wipe f={f} at={t0 + 22} style={{ display: 'flex', alignItems: 'center', gap: 22 }}>
-          {ph.byAvatar && <Img src={ph.byAvatar} style={{ width: 84, height: 84, borderRadius: '50%', background: '#fff' }} />}
-          <span style={ui(42, 'rgba(255,255,255,.85)', 500)}>{[ph.by, ph.date].filter(Boolean).join(' · ')}</span>
-        </Wipe>
-      </div>
-    </AbsoluteFill>
-  );
-}
-
-// the trip in three numbers, each rolling up and stacking under the last; the earlier ones step back
-function Numbers({ d, f, H }) {
-  const each = d.spend.total / Math.max(1, d.crew.length);
-  const rows = [
-    { text: String(d.stats.stops), unit: 'ที่ที่ไปด้วยกัน' },
-    { text: String(d.stats.photos), unit: 'ภาพที่เก็บไว้' },
-    each > 0 && { text: baht(each), unit: d.crew.length > 1 ? 'ต่อคน' : 'ที่ใช้ไป' },
-  ].filter(Boolean);
-  const beat = 36; const rowH = 360;
-  const top = H / 2 - (rows.length * rowH) / 2;
-  return (
-    <AbsoluteFill style={{ background: INK, overflow: 'hidden' }}>
-      {rows.map((r, i) => {
-        const at = 4 + i * beat;
-        const dim = i < rows.length - 1 ? lerp(f, at + beat, at + beat + 12, 1, 0.38, IN_OUT) : 1;
-        return (
-          <div key={r.unit} style={{ position: 'absolute', left: LEFT, top: top + i * rowH, opacity: dim }}>
-            <Wipe f={f} at={at} from="up" dur={10}><Odo f={f} at={at} text={r.text} style={display(230, '#fff', 800)} /></Wipe>
-            <Wipe f={f} at={at + 8} style={ui(48, 'rgba(255,255,255,.7)')}>{r.unit}</Wipe>
-          </div>
-        );
-      })}
-      <div style={{ position: 'absolute', left: LEFT, top: top + rows.length * rowH - 10 }}><Rule f={f} at={4 + (rows.length - 1) * beat + 30} w={220} /></div>
-    </AbsoluteFill>
-  );
-}
-
-// a tilted wall of the trip's photos pulling back; a panel wipes up over it and the name is set on it, then
-// the faces of who went line up beside a drawn rule
-function End({ d, f, H }) {
-  const pics = d.photos.length ? d.photos.map((p) => p.src) : [d.cover].filter(Boolean);
-  const tile = 300; const gap = 26;
-  const panel = lerp(f, 36, 54, 0, 1, IN_OUT);
-  return (
-    <AbsoluteFill style={{ background: PALE, overflow: 'hidden' }}>
-      <div style={{ position: 'absolute', left: '50%', top: '50%', width: 4 * (tile + gap), display: 'flex', flexWrap: 'wrap', gap,
-        translate: `-50% calc(-50% - ${f * 1.4}px)`, rotate: '-10deg', scale: interpolate(f, [0, 60], [1.7, 1], { ...clamp, easing: Easing.bezier(0.16, 1, 0.3, 1), output: 'perceptual-scale' }) }}>
-        {Array.from({ length: 4 * Math.ceil((H * 1.7) / (tile * 1.25 + gap)) }, (_, j) => (
-          <Img key={j} src={pics[j % pics.length]} style={{ width: tile, height: tile * 1.25, objectFit: 'cover', borderRadius: 30 }} />
-        ))}
-      </div>
-      <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: H * 0.56, background: PALE, clipPath: `inset(${(1 - panel) * 100}% 0 0 0)` }} />
-      <div style={{ position: 'absolute', left: LEFT, right: LEFT, top: H * 0.5, display: 'flex', flexDirection: 'column', gap: 20 }}>
-        <Wipe f={f} at={52} from="up" style={display(Math.min(170, 1500 / Math.max(5, [...d.title].length)), INK, 800)}>{d.title}</Wipe>
-        <Wipe f={f} at={62} style={ui(48, INK_2)}>{d.dateFull} · {d.ago}</Wipe>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 26, marginTop: 30 }}>
-          <Rule f={f} at={84} w={160} />
-          <div style={{ display: 'flex' }}>
-            {d.crew.slice(0, 5).map((c, i) => (
-              <Img key={c.id} src={c.avatar} style={{ width: 96, height: 96, borderRadius: '50%', background: '#fff', border: `5px solid ${PALE}`, marginLeft: i ? -22 : 0, scale: sp(f, 92 + i * 4, POP) }} />
-            ))}
-          </div>
+    <AbsoluteFill style={{ overflow: 'hidden' }}>
+      <Pastel f={f + 300 + i * 90} />
+      <div style={{ position: 'absolute', left: 110, top: H * 0.16, width: 860, height: H * 0.56, perspective: 1800 }}>
+        <div style={{ width: '100%', height: '100%', borderRadius: 60, overflow: 'hidden', boxShadow: '0 50px 90px rgba(27,42,74,.25)',
+          transform: `translateY(${(1 - p) * 300}px) rotateY(${side * lerp(f, 0, dur, 16, 6, Easing.linear)}deg) rotateZ(${side * -2}deg)` }}>
+          <Img src={ph.src} style={{ width: '100%', height: '100%', objectFit: 'cover', scale: lerp(f, 0, dur, 1.12, 1.02, Easing.linear) }} />
         </div>
       </div>
+      <Pop f={f} at={12} x={side > 0 ? 300 : 780} y={H * 0.17} r={side * -6} seed={i}><Pill bg={C.black} size={36}>{ph.date}</Pill></Pop>
+      {ph.text && (
+        <Pop f={f} at={20} x={540} y={H * 0.75} r={side * 2} seed={i + 1} bob={5} tilt={8}>
+          <Pill bg={C.white} fg={INK} size={50} wrap>{ph.text}</Pill>
+        </Pop>
+      )}
+      {ph.by && (
+        <Pop f={f} at={30} x={side > 0 ? 760 : 320} y={H * (ph.text ? 0.83 : 0.76)} r={side * 5} seed={i + 2}>
+          <Pill bg={colours[i % colours.length]} avatar={ph.byAvatar} size={40}>{ph.by} ถ่าย</Pill>
+        </Pop>
+      )}
+    </AbsoluteFill>
+  );
+}
+
+// the numbers as full-screen colour blocks, each opening out of the last in a circle, over a tilted field
+// of the trip's words; the number lands with a punch
+function Blocks({ d, f, H }) {
+  const each = d.spend.total / Math.max(1, d.crew.length);
+  const rows = [
+    { bg: C.orange, big: `${d.stats.stops} ที่.` },
+    { bg: C.purple, big: `${d.stats.photos} ภาพ.` },
+    { bg: C.blue, big: `${Math.max(1, d.crew.length)} คน.` },
+    { bg: C.yellow, fg: INK, big: baht(each), small: d.crew.length > 1 ? 'ต่อคน' : 'ที่ใช้ไป' },
+  ].slice(0, blocksFor(d));
+  const words = [d.title, ...d.stops.map((s) => s.name), ...d.crew.map((c) => c.name), d.dateCode, `${d.stats.km.toFixed(1)} กม.`];
+  const R = Math.hypot(540, H / 2);
+  return (
+    <AbsoluteFill style={{ overflow: 'hidden' }}>
+      {rows.map((r, k) => {
+        const t = f - k * BLOCK;
+        if (t < 0) return null;
+        const open = k === 0 ? 1 : lerp(t, 0, 12, 0, 1, Easing.bezier(0.5, 0, 0.2, 1));
+        return (
+          <AbsoluteFill key={k} style={{ background: r.bg, clipPath: `circle(${open * R}px at 540px ${H / 2}px)`, overflow: 'hidden' }}>
+            <div style={{ position: 'absolute', left: -600, top: -400, width: 2400, rotate: '-18deg', display: 'flex', flexDirection: 'column', gap: 26, translate: `${-(f * 3) % 400}px 0px` }}>
+              {Array.from({ length: Math.ceil((H + 800) / 86) }, (_, row) => (
+                <div key={row} style={{ display: 'flex', gap: 22, marginLeft: (row % 2) * -120 }}>
+                  {Array.from({ length: 14 }, (_, j) => (
+                    <span key={j} style={{ padding: '10px 24px', borderRadius: 999, fontFamily: UI, fontWeight: 600, fontSize: 28, whiteSpace: 'nowrap',
+                      color: `color-mix(in srgb, ${r.bg} 55%, black)`, background: `color-mix(in srgb, ${r.bg} 88%, white)`, opacity: 0.55 }}>{words[(row * 5 + j) % words.length]}</span>
+                  ))}
+                </div>
+              ))}
+            </div>
+            <AbsoluteFill style={{ alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 10 }}>
+              <Ink size={r.big.length > 7 ? 190 : 230} color={r.fg || '#fff'} style={{ transform: `scale(${1.25 - 0.25 * sp(t, 4, { damping: 14, stiffness: 200 })})`, textShadow: '0 10px 30px rgba(0,0,0,.18)' }}>{r.big}</Ink>
+              {r.small && <Ink size={70} weight={700} color={r.fg || '#fff'}>{r.small}</Ink>}
+            </AbsoluteFill>
+          </AbsoluteFill>
+        );
+      })}
+    </AbsoluteFill>
+  );
+}
+
+// the close: the mascot, a kicker, the trip's name and when, and who went as a pill
+function End({ d, f }) {
+  return (
+    <AbsoluteFill style={{ overflow: 'hidden' }}>
+      <Pastel f={f + 600} />
+      <AbsoluteFill style={{ alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 18, padding: '0 60px', textAlign: 'center' }}>
+        <div style={{ transform: `scale(${sp(f, 4)})`, marginBottom: 30 }}><Mascot f={f} size={220} blink={[60]} /></div>
+        <div style={{ fontFamily: UI, fontWeight: 600, fontSize: 30, letterSpacing: 8, color: INK_2, opacity: lerp(f, 12, 20, 0, 1) }}>VOTAGEX · TRIP RECAP</div>
+        <Ink size={Math.min(170, 1500 / Math.max(5, graphemes(d.title).length))}><Word f={f} at={16}>{d.title}</Word></Ink>
+        <div style={{ fontFamily: UI, fontWeight: 500, fontSize: 42, color: INK_2, opacity: lerp(f, 26, 34, 0, 1) }}>{d.dateFull} · {d.ago}</div>
+        <div style={{ marginTop: 40, transform: `scale(${sp(f, 36)})` }}>
+          <Pill bg={C.orange} size={42}>
+            <span style={{ display: 'flex' }}>{d.crew.slice(0, 4).map((c, i) => <Img key={c.id} src={c.avatar} style={{ width: 60, height: 60, borderRadius: '50%', background: '#fff', marginLeft: i ? -16 : -14, border: '3px solid #fff' }} />)}</span>
+            {d.crew.map((c) => c.name).join(' · ')}
+          </Pill>
+        </div>
+      </AbsoluteFill>
     </AbsoluteFill>
   );
 }
 
 /* ---------------- the cut ---------------- */
 
-// the new shot settles in from close up and out of a blur, while the old one falls back and darkens
-function Zoom({ children, presentationDirection, presentationProgress: p }) {
-  const entering = presentationDirection === 'entering';
-  return (
-    <AbsoluteFill style={entering
-      ? { opacity: p, scale: 1.14 - 0.14 * p, filter: `blur(${(1 - p) * 14}px)` }
-      : { scale: 1 - 0.08 * p, filter: `brightness(${1 - 0.5 * p})` }}>
-      {children}
-    </AbsoluteFill>
-  );
-}
-const PRESENT = { slide: slide({ direction: 'from-right' }), zoom: { component: Zoom, props: {} } };
-const timing = linearTiming({ durationInFrames: CUT, easing: IN_OUT });
-
 // one shot, reading its own frame (local to its sequence)
 function Shot({ d, shot }) {
   const f = useCurrentFrame();
   const { height: H } = useVideoConfig();
   const p = { d, f, dur: shot.dur, H };
-  if (shot.key === 'intro') return <Intro {...p} />;
-  if (shot.key === 'cover') return <Cover {...p} />;
-  if (shot.key === 'crew') return <Crew {...p} />;
-  if (shot.key === 'route') return <Route {...p} />;
-  if (shot.key === 'numbers') return <Numbers {...p} />;
+  if (shot.key === 'hook') return <Hook {...p} />;
+  if (shot.key === 'say') return <Say {...p} />;
+  if (shot.key === 'brief') return <Brief {...p} />;
+  if (shot.key === 'map') return <RouteMap {...p} />;
+  if (shot.key === 'blocks') return <Blocks {...p} />;
   if (shot.key === 'end') return <End {...p} />;
   return <PhotoShot {...p} i={shot.photo} />;
 }
 
 export default function RecapFilm(d) {
+  const { width, height } = useVideoConfig();
   const shots = shotsFor(d);
+  const present = { slide: slide({ direction: 'from-right' }), rise: slide({ direction: 'from-bottom' }), iris: iris({ width, height }) };
+  const timing = linearTiming({ durationInFrames: CUT, easing: IN_OUT });
   return (
-    <AbsoluteFill style={{ background: '#000' }}>
+    <AbsoluteFill style={{ background: '#FBF9FB' }}>
       <TransitionSeries>
         {shots.flatMap((shot) => [
-          PRESENT[shot.cut] && <TransitionSeries.Transition key={`${shot.key}-cut`} presentation={PRESENT[shot.cut]} timing={timing} />,
-          <TransitionSeries.Sequence key={shot.key} name={shot.key} durationInFrames={shot.dur}><Shot d={d} shot={shot} /></TransitionSeries.Sequence>,
+          shot.cut && <TransitionSeries.Transition key={`${shot.key}-cut`} presentation={present[shot.cut]} timing={timing} />,
+          <TransitionSeries.Sequence key={shot.key} name={shot.key} durationInFrames={shot.dur} premountFor={shot.key === 'map' ? 90 : 0}>
+            <Shot d={d} shot={shot} />
+          </TransitionSeries.Sequence>,
         ].filter(Boolean))}
       </TransitionSeries>
     </AbsoluteFill>
