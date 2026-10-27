@@ -93,9 +93,19 @@ const BUSH = {
   ),
 };
 
+// a cloud, its underside shaded grey (deeper on a dull day, CSS)
 const CLOUD = {
   box: [0, 0, 1700, 700],
-  art: <path {...shape} d={`${bumpy(850, 560, 720, 380, 5, 150, 11, Math.PI, 2 * Math.PI)} C1460 640 240 640 130 560 Z`} />,
+  art: (
+    <>
+      <defs>
+        <linearGradient id="ds-cloud-shade" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0.45" className="ds-cloud-top" /><stop offset="1" className="ds-cloud-under" />
+        </linearGradient>
+      </defs>
+      <path {...line} fill="url(#ds-cloud-shade)" d={`${bumpy(850, 560, 720, 380, 5, 150, 11, Math.PI, 2 * Math.PI)} C1460 640 240 640 130 560 Z`} />
+    </>
+  ),
 };
 
 const TUFT = {
@@ -103,9 +113,73 @@ const TUFT = {
   art: <path {...line} d="M70 170 Q60 100 22 52 M110 170 Q108 80 116 16 M150 170 Q160 104 196 66" />,
 };
 
+// two birds, their wings beating (CSS)
 const BIRDS = {
   box: [0, 0, 700, 300],
-  art: <path {...line} d="M20 120 Q70 70 130 124 Q190 70 240 120 M420 230 Q460 194 506 234 Q552 194 592 230" />,
+  art: (
+    <>
+      <path {...line} className="ds-wing" d="M20 120 Q70 70 130 124 Q190 70 240 120" />
+      <path {...line} className="ds-wing ds-wing-2" d="M420 230 Q460 194 506 234 Q552 194 592 230" />
+    </>
+  ),
+};
+
+// a butterfly, wings opening and closing (CSS)
+const BUTTERFLY = {
+  box: [0, 0, 400, 300],
+  art: (
+    <>
+      <g className="ds-flutter">
+        <path {...shape} strokeWidth={16} d="M200 150 C140 30 30 40 50 120 C60 170 130 170 200 150 Z M200 160 C150 190 90 250 120 270 C160 290 190 220 200 160 Z" />
+        <path {...shape} strokeWidth={16} d="M200 150 C260 30 370 40 350 120 C340 170 270 170 200 150 Z M200 160 C250 190 310 250 280 270 C240 290 210 220 200 160 Z" />
+      </g>
+      <path {...line} strokeWidth={18} d="M200 110 L200 230 M200 110 Q185 70 165 60 M200 110 Q215 70 235 60" />
+    </>
+  ),
+};
+
+// a leaf, blown on the wind or falling (CSS)
+const LEAF = {
+  box: [0, 0, 300, 180],
+  art: <path {...shape} strokeWidth={16} d="M20 90 C80 10 220 10 280 90 C220 170 80 170 20 90 Z M20 90 L250 90" />,
+};
+
+// a patio umbrella stood in the ground, its canopy striped, for shade on a scorching day; about 2.6 m across,
+// its rim 2.1 m up (the shade it casts is drawn under it, CSS)
+const CANOPY = `M80 1240 C200 620 1200 300 2300 300 C3400 300 4400 620 4520 1240 ${[3780, 3040, 2300, 1560, 820, 80].map((x) => `Q${x + 370} 1140 ${x} 1240`).join(' ')} Z`;
+const PARASOL = {
+  box: [0, 0, 4600, 4800],
+  art: (
+    <>
+      <defs><clipPath id="ds-parasol-clip"><path d={CANOPY} /></clipPath></defs>
+      <path {...line} strokeWidth={34} d="M2300 4800 L2300 600" />
+      <path {...shape} d={CANOPY} />
+      <path fill={INK} clipPath="url(#ds-parasol-clip)" d="M2300 300 L-62 1300 L726 1300 Z M2300 300 L1513 1300 L2300 1300 Z M2300 300 L3087 1300 L3874 1300 Z" />
+      <path {...line} d="M2300 300 L820 1240 M2300 300 L1560 1240 M2300 300 L2300 1240 M2300 300 L3040 1240 M2300 300 L3780 1240" />
+      <path {...line} d={CANOPY} />
+      <path {...line} strokeWidth={30} d="M2300 300 L2300 180" />
+    </>
+  ),
+};
+
+// the sun, glowing, its rays turning slowly
+const SUN = {
+  box: [0, 0, 1600, 1600],
+  art: (
+    <>
+      <defs>
+        <radialGradient id="ds-sun-glow"><stop offset="0.3" className="ds-glow-in" /><stop offset="1" className="ds-glow-out" /></radialGradient>
+      </defs>
+      <circle className="ds-glow" cx="800" cy="800" r="800" fill="url(#ds-sun-glow)" />
+      <g className="ds-rays">
+        <path {...line} strokeWidth={30} d={Array.from({ length: 12 }, (_, i) => {
+          const a = (i / 12) * 2 * Math.PI; const r0 = i % 2 ? 500 : 470; const r1 = i % 2 ? 610 : 660;
+          return `M${Math.round(800 + r0 * Math.cos(a))} ${Math.round(800 + r0 * Math.sin(a))} L${Math.round(800 + r1 * Math.cos(a))} ${Math.round(800 + r1 * Math.sin(a))}`;
+        }).join(' ')} />
+      </g>
+      <circle {...line} className="ds-disc" strokeWidth={30} cx="800" cy="800" r="360" />
+    </>
+  ),
 };
 
 // a signpost, two blank boards pointing different ways
@@ -117,22 +191,6 @@ const SIGN = {
       <path {...shape} d="M180 700 H1060 L1260 880 L1060 1060 H180 Z" />
       <path {...shape} d="M1220 1300 H340 L140 1480 L340 1660 H1220 Z" />
       <path {...line} d="M330 880 H800 M420 1480 H960" />
-    </>
-  ),
-};
-
-// the sun, its rays turning slowly
-const SUN = {
-  box: [0, 0, 1600, 1600],
-  art: (
-    <>
-      <g className="ds-rays">
-        <path {...line} strokeWidth={30} d={Array.from({ length: 12 }, (_, i) => {
-          const a = (i / 12) * 2 * Math.PI; const r0 = i % 2 ? 500 : 470; const r1 = i % 2 ? 610 : 660;
-          return `M${Math.round(800 + r0 * Math.cos(a))} ${Math.round(800 + r0 * Math.sin(a))} L${Math.round(800 + r1 * Math.cos(a))} ${Math.round(800 + r1 * Math.sin(a))}`;
-        }).join(' ')} />
-      </g>
-      <circle {...shape} strokeWidth={30} cx="800" cy="800" r="360" />
     </>
   ),
 };
@@ -154,7 +212,7 @@ const shelter = (w) => ({
   ),
 });
 
-const PROPS = { shelter: shelter(4600), sun: SUN, tree: TREE, lamp: LAMP, bench: BENCH, bush: BUSH, cloud: CLOUD, tuft: TUFT, birds: BIRDS, sign: SIGN };
+const PROPS = { shelter: shelter(4600), parasol: PARASOL, butterfly: BUTTERFLY, leaf: LEAF, sun: SUN, tree: TREE, lamp: LAMP, bench: BENCH, bush: BUSH, cloud: CLOUD, tuft: TUFT, birds: BIRDS, sign: SIGN };
 
 // one prop at --x (its centre), feet on the ground line; `size` scales it from life size
 export function Prop({ kind, x, size = 1, className = '', style }) {
@@ -192,6 +250,19 @@ export function Sweat() {
     <g className="ds-sweat">
       <path {...shape} strokeWidth={16} transform="translate(705 215)" d={drop} />
       <path {...shape} strokeWidth={16} transform="translate(690 390) scale(.8)" d={drop} />
+    </g>
+  );
+}
+
+// a knitted scarf round the neck, an end hanging down the front; dark on a light top, light on a dark one
+export function Scarf({ dark }) {
+  const knit = dark ? { ...line, stroke: '#fff', strokeWidth: 14 } : { ...line, strokeWidth: 14 };
+  return (
+    <g className="ds-scarf">
+      <path {...shape} fill={dark ? INK : '#fff'} d="M520 640 C540 760 560 860 600 900 L700 880 C660 820 640 720 640 640 Z" />
+      <path {...knit} d="M548 720 L646 712 M566 800 L668 790 M600 900 l-10 50 M635 893 l-4 50 M670 886 l2 50" />
+      <path {...shape} fill={dark ? INK : '#fff'} d="M290 560 C380 520 560 520 650 560 C660 600 660 650 650 690 C560 650 380 650 300 690 C285 650 282 600 290 560 Z" />
+      <path {...knit} d="M360 548 L372 668 M440 538 L448 652 M520 538 L524 652 M590 548 L590 662" />
     </g>
   );
 }

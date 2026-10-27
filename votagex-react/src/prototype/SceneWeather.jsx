@@ -70,23 +70,25 @@ function Rain({ level, storm, top, foot, cover }) {
   );
 }
 
-// a hot day: wavy lines of heat rising off the land and fading
+// a hot day: heat coming off the land, in threes, as a cartoonist draws it: wavy lines rising and fading
 function Heat({ top, foot }) {
   const frame = useCurrentFrame();
   const { width: W } = useVideoConfig();
   const out = [];
-  for (let i = 0; i < 9; i += 1) {
-    const t = cycle(frame, 4, random(`h${i}`));
-    const x = (0.06 + 0.88 * random(`hx${i}`)) * W;
-    const base = top + 24 + random(`hy${i}`) * (foot - top - 30);
-    const y0 = base - t * 36;
-    const op = Math.sin(t * Math.PI) * 0.35;
-    let d = '';
-    for (let s = 0; s <= 6; s += 1) {
-      const yy = y0 - s * 4;
-      d += `${s ? 'L' : 'M'}${(x + Math.sin(s * 1.3 + t * 9) * 2.4).toFixed(1)} ${yy.toFixed(1)} `;
+  for (let g = 0; g < 7; g += 1) {
+    const t = cycle(frame, 3, random(`h${g}`));
+    const cx = (0.08 + 0.84 * ((g + random(`hx${g}`) * 0.6) / 7)) * W;
+    const base = top + 30 + random(`hy${g}`) * (foot - top - 24);
+    const y0 = base - t * 46;
+    const op = Math.sin(t * Math.PI) * 0.55;
+    for (let k = -1; k <= 1; k += 1) {
+      let d = '';
+      for (let s = 0; s <= 8; s += 1) {
+        const yy = y0 - s * 3.6;
+        d += `${s ? 'L' : 'M'}${(cx + k * 6 + Math.sin(s * 1.1 + t * 10 + k) * 2.6).toFixed(1)} ${yy.toFixed(1)} `;
+      }
+      out.push(<path key={`${g}${k}`} d={d} fill="none" stroke={INK} strokeOpacity={op * (k ? 0.75 : 1)} strokeWidth={1.3} strokeLinecap="round" />);
     }
-    out.push(<path key={i} d={d} fill="none" stroke={INK} strokeOpacity={op} strokeWidth={1} strokeLinecap="round" />);
   }
   return <svg width="100%" height="100%" style={{ position: 'absolute', inset: 0 }}>{out}</svg>;
 }

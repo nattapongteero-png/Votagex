@@ -5,7 +5,6 @@ import Icon, { Flag } from '../icons';
 import { Avatars, CatIcon, Cover, Progress, SectionTitle } from '../ui';
 import MonthCalendar from '../MonthCalendar';
 import useSheetSnap from '../../hooks/useSheetSnap';
-import WeatherCard from '../WeatherCard';
 import { MonthPiggyTile } from '../MonthMoney';
 import StopRow from '../StopRow';
 import MapView from '../MapView';
@@ -18,14 +17,13 @@ import { postcardOf, stampOfTrip, useStamps } from '../stamps';
 import { pm25Level, sceneWeather, useWeather, weatherKind } from '../weather';
 import HOLIDAYS from '../thHolidays.json';
 import {
-  ME, PEOPLE, CURRENCIES, HOME, addDays, parseISO, diffDays, thaiShort, byOrder, localHM,
+  ME, PEOPLE, CURRENCIES, HOME, addDays, diffDays, thaiShort, byOrder, localHM,
   stopState, keepThai, fmtMoney, distanceKm, fmtKm, directionsUrl, countryOf, planStatus, toTHB, jarStats,
   EVENT_KINDS, KINDS, eventOn, shufflePool, nextCheckIndex, passedStop,
 } from '../data';
 
 const FOLD_TOP = 12; // folded calendar's distance from the top of the screen
 const SHOW_CALENDAR = false; // the month calendar on the stage, put aside while the day's scene is tried there
-const TH_DOW = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'];
 // a plan's head in the day card, the same on my page and a group's: its group's tag (tap: the group) over its
 // name, and the faces as tall as both; tap for the plan. No plan: the group alone, with everyone in it
 function PlanHead({ plan, group, invite, onOpen, onGroup }) {
@@ -210,15 +208,6 @@ export default function TodayPage() {
 
   // today's weather where I am (trip destination while travelling)
   const wxToday = useWeather({ [today]: live && plan.destination?.lat ? plan.destination : HOME })[today];
-  // the selected day's forecast, where I'll be that day (a trip's destination, else home)
-  const tripSel = plans.find((p) => p.kind !== 'outing' && p.destination?.lat && p.startDate && selected >= p.startDate && selected <= (p.endDate || p.startDate));
-  const wxSel = useWeather({ [selected]: tripSel?.destination || HOME })[selected];
-  const selPlace = tripSel?.destination?.name;
-  // today after dark: night sky and the moon (as the iPhone weather app does)
-  const hour = new Date().getHours();
-  const night = selected === today && (hour >= 19 || hour < 6);
-  const dayTitle = selected === today ? `วันนี้ · ${thaiShort(selected)}` : `${TH_DOW[parseISO(selected).getDay()]} ${thaiShort(selected)}`;
-  const holiday = HOLIDAYS[selected];
   // events on the selected day
   const dayEvents = events.filter((ev) => eventOn(ev, selected)).sort((a, b) => (a.time || '99').localeCompare(b.time || '99'));
   // the soonest event worth a note: on today, tomorrow, or ending within two days
@@ -268,13 +257,16 @@ export default function TodayPage() {
   // with whoever's going; with nothing on, a free day
   const scene = (() => {
     const me = lookOf(ME);
+    // on my own page it's only me; with a group picked, always the group: whoever's going with me, else (a
+    // free day, or a trip of mine alone) the group's people
+    const crew = (ids) => ids.filter((id) => id !== ME).slice(0, 3).map(lookOf);
+    const together = (ids) => (group ? (crew(ids).length ? crew(ids) : crew(group.members)) : []);
     const next = sections.find((x) => x.stops.some((s) => !s.skip && (s.time || '99') >= nowHM)) || sections[sections.length - 1];
-    if (!next) return { kind: 'free', me, ask: 'ว่างนะ ไปไหนดี?', label: 'วันนี้ว่าง ไปไหนดี' };
-    return {
-      kind: 'meet', me, label: next.p.name, planId: next.p.id,
-      // on my own page it's only me; with a group picked, whoever's going with me
-      friends: group ? next.p.members.filter((id) => id !== ME).slice(0, 3).map(lookOf) : [],
-    };
+    if (!next) {
+      return group ? { kind: 'free', me, friends: together([]), ask: 'ว่างกันนะ ไปไหนดี?', label: `${group.name} วันนี้ว่าง ไปไหนดี` }
+        : { kind: 'free', me, friends: [], ask: 'ว่างนะ ไปไหนดี?', label: 'วันนี้ว่าง ไปไหนดี' };
+    }
+    return { kind: 'meet', me, label: next.p.name, planId: next.p.id, friends: together(next.p.members) };
   })();
 
   // past trips to look back on (this page's own, with photos), the one from this day in a past year (±3 days)
@@ -393,8 +385,7 @@ export default function TodayPage() {
           {/* the trip to look back on (this day in a past year, else the latest), as a postcard; a tap plays its film */}
           {card && <PostcardTile card={card} onPlay={() => setRecapOf(looks[0].plan.id)} />}
 
-          {/* the selected day's weather, its own card */}
-          {wxSel && <WeatherCard wx={wxSel} place={selPlace || 'กรุงเทพฯ'} title={dayTitle} holiday={holiday} night={night} clock={selected === today} utc={countryOf(tripSel?.country).utc} />}
+          {/* (the day's weather is on the scene now, no card of its own) */}
 
           {/* events on the selected day */}
           {dayEvents.map((ev) => <EventTile key={ev.id} ev={ev} last={ev.endDate && ev.endDate !== ev.startDate && ev.endDate === selected} onOpen={() => openSheet('place', { placeId: ev.id })} />)}

@@ -2323,23 +2323,24 @@ body::after { content: ''; position: fixed; inset: 0; z-index: 9998; pointer-eve
 .ds-prop.ds-sky { bottom: auto; }
 /* the land (behind the park, under the header's fade): a light tint from the horizon down past our feet, on
    under the top of the card sheet, fading out there */
-.ds { --land: #ECEEE8; }
-.ds-land { position: absolute; left: 0; right: 0; bottom: -22px; height: calc(22px + var(--ground) + var(--horizon) - 1px); background: var(--land); pointer-events: none;
+.ds-land { position: absolute; left: 0; right: 0; bottom: -22px; height: calc(22px + var(--ground) + var(--horizon) - 1px); pointer-events: none;
+  background: linear-gradient(to bottom, var(--land-far), var(--land-near));
   -webkit-mask-image: linear-gradient(to top, transparent, #000 34px); mask-image: linear-gradient(to top, transparent, #000 34px); }
 .ds-hills { position: absolute; left: 0; bottom: calc(var(--ground) + var(--horizon) - 2px); width: 100%; height: 26px; overflow: visible; color: #18181B; pointer-events: none; }
 .ds-hills path { stroke-width: 1.2px; }
-.ds-hills .ds-land-fill { fill: var(--land); stroke: none; }
-.ds-pose { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
-/* the park, alive a little: the leaves sway, the clouds and birds drift */
+.ds-hills .ds-land-fill { fill: var(--land-far); stroke: none; }
+.ds-pose { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; color: #18181B; }
+/* the park, alive a little: the leaves sway */
 .ds-leaves { transform-box: fill-box; transform-origin: 50% 100%; animation: ds-sway 8s ease-in-out infinite; }
 @keyframes ds-sway { 0%, 100% { rotate: 0deg; } 50% { rotate: .8deg; } }
-.ds-birds { animation: ds-drift 16s ease-in-out infinite alternate-reverse; }
-/* clouds sail across, off one side and in at the other (still, where they're placed, with reduced motion) */
+/* clouds, birds and blown leaves go across, off one side and in at the other (still, where they're placed,
+   with reduced motion) */
 @media (prefers-reduced-motion: no-preference) {
-  .ds-cloud { left: 0; translate: none; animation: ds-across var(--dur, 80s) linear var(--delay, 0s) infinite; }
+  .ds-cloud, .ds-fly, .ds-blown { left: 0; translate: none; animation: ds-across var(--dur, 80s) linear var(--delay, 0s) infinite; }
+  .ds-blown { animation: ds-across var(--dur, 8s) linear var(--delay, 0s) infinite, ds-tumble 1.8s linear infinite; }
 }
 @keyframes ds-across { from { translate: -100% 0; } to { translate: 100cqw 0; } }
-@keyframes ds-drift { to { translate: calc(-50% + 5cqw) 0; } }
+@keyframes ds-tumble { to { rotate: 360deg; } }
 /* breathing, and a blink every few seconds (--blink sets each person apart) */
 .ds-pose > g { transform-box: fill-box; transform-origin: 50% 100%; animation: ds-breathe 3.6s ease-in-out infinite; }
 .ds .pp-face { animation: ds-open 4.4s var(--blink, 0s) infinite; }
@@ -2403,27 +2404,76 @@ body::after { content: ''; position: fixed; inset: 0; z-index: 9998; pointer-eve
 .ds-note.up .pt-speech { transform-origin: -8px 140%; }
 .ds-note.up .pt-speech::before { left: -5px; bottom: -8px; }
 .ds-note.up .pt-speech::after { left: -12px; bottom: -15px; }
-/* ===== the day's weather on the scene: the sky and land take its colour (lines stay ink), the sun's rays
-   turn, a storm shakes the trees; the rain, heat and fog are SceneWeather.jsx; what we have on for it ===== */
-.ds { --sky: transparent; }
-.ds-skytint { position: absolute; left: 0; right: 0; top: 0; bottom: calc(var(--ground) + var(--horizon) - 4px); background: var(--sky); }
-.ds.ds-wx-sun { --sky: #FBF6E9; --land: #EEEADC; }
-.ds.ds-hot { --sky: #FCEFDA; --land: #F0E6D1; }
-.ds.ds-wx-cloud, .ds.ds-wx-snow { --sky: #EEF0F3; --land: #E7EAE6; }
-.ds.ds-wx-fog { --sky: #F1F2F3; --land: #EAECEB; }
-.ds.ds-wx-rain { --sky: #E8EDF2; --land: #E0E6EA; }
-.ds.ds-wx-storm { --sky: #DDE3EA; --land: #D8DFE4; }
-.ds.ds-cold { --sky: #EDF2F8; --land: #E8EDF1; }
+/* ===== the day's weather on the scene. The sky runs down into the land as rain's does: each sky's colour at
+   the horizon is all but the land's there, the land a touch deeper nearer us, so there's never a line of two
+   colours meeting; each weather keeps its own light. The lines stay ink. The rain, heat and fog in the air are
+   SceneWeather.jsx; the rest here ===== */
+.ds { --sky-top: #E7EEF5; --sky-low: #EBEFE7; --land-far: #EBEFE7; --land-near: #E4E9DE; } /* a fair day with some cloud */
+.ds.ds-wx-sun { --sky-top: #DFEBF6; --sky-low: #EAEFE4; --land-far: #EAEFE4; --land-near: #E2EAD9; }
+.ds.ds-wx-cloud, .ds.ds-wx-snow { --sky-top: #E3E7EC; --sky-low: #E7EAE6; --land-far: #E7EAE6; --land-near: #DFE4DE; }
+.ds.ds-wx-fog { --sky-top: #EDEFF0; --sky-low: #EDEFEE; --land-far: #EDEFEE; --land-near: #E6E9E8; }
+.ds.ds-wx-rain { --sky-top: #E5EAF0; --sky-low: #E2E8EB; --land-far: #E2E8EB; --land-near: #DCE3E7; }
+.ds.ds-wx-storm { --sky-top: #D7DEE6; --sky-low: #D9DFE4; --land-far: #D9DFE4; --land-near: #D2D9DE; }
+.ds.ds-hot { --sky-top: #FCF3DF; --sky-low: #F4EAD4; --land-far: #F4EAD4; --land-near: #EEDFC3; }
+.ds.ds-cold { --sky-top: #E4ECF5; --sky-low: #E9EEF1; --land-far: #E9EEF1; --land-near: #E1E8EC; }
+.ds-skytint { position: absolute; left: 0; right: 0; top: 0; bottom: calc(var(--ground) + var(--horizon) - 4px);
+  background: linear-gradient(to bottom, var(--sky-top), var(--sky-low)); }
 .ds-wx { position: absolute; inset: 0; pointer-events: none; }
+/* the sun: yellow, glowing, its rays turning; on a scorcher white-hot and glaring */
 .ds-rays { transform-box: fill-box; transform-origin: center; animation: ds-turn 60s linear infinite; }
 @keyframes ds-turn { to { rotate: 360deg; } }
-.ds-wx-rain .ds-cloud path { fill: #EEF1F5; }
-.ds-wx-storm .ds-cloud path { fill: #DFE4EA; }
+.ds-disc { fill: #FFD964; }
+.ds-glow-in { stop-color: #FFE48A; stop-opacity: .5; }
+.ds-glow-out { stop-color: #FFE48A; stop-opacity: 0; }
+.ds-glow { transform-box: fill-box; transform-origin: center; animation: ds-glow 4s ease-in-out infinite alternate; }
+@keyframes ds-glow { from { scale: .85; } to { scale: 1.05; } }
+.ds-hot .ds-disc { fill: #FFF2C4; }
+.ds-hot .ds-glow-in { stop-color: #FFF6D8; stop-opacity: .95; }
+.ds-hot .ds-glow-out { stop-color: #FFEDB8; stop-opacity: 0; }
+.ds-hot .ds-glow { animation-duration: 2.4s; }
+/* clouds grey-bellied, more so on a dull day, darker in the rain */
+.ds-cloud-top { stop-color: #fff; }
+.ds-cloud-under { stop-color: #E6EAEF; }
+.ds-wx-cloud .ds-cloud-under { stop-color: #CDD4DD; }
+.ds-wx-rain .ds-cloud-top { stop-color: #F1F4F7; }
+.ds-wx-rain .ds-cloud-under { stop-color: #CFD6DE; }
+.ds-wx-storm .ds-cloud-top { stop-color: #E3E8ED; }
+.ds-wx-storm .ds-cloud-under { stop-color: #B9C2CC; }
 .ds-wx-storm .ds-leaves { animation: ds-sway-hard 2.4s ease-in-out infinite; }
 @keyframes ds-sway-hard { 0%, 100% { rotate: -1.2deg; } 50% { rotate: 2.2deg; } }
+.ds-wx-cloud .ds-leaves { animation-duration: 3.6s; }
+/* birds beating their wings as they cross; butterflies looping about the bushes */
+.ds-wing { transform-box: fill-box; transform-origin: 50% 70%; animation: ds-flap .42s ease-in-out infinite alternate; }
+.ds-wing-2 { animation-delay: -.2s; }
+@keyframes ds-flap { to { scale: 1 .3; } }
+.ds-bfly { animation: ds-bfly 9s ease-in-out infinite; }
+.ds-bfly-1 { animation-duration: 11s; animation-direction: reverse; }
+@keyframes ds-bfly { 0%, 100% { translate: -50% 0; } 25% { translate: calc(-50% + 26px) -20px; } 50% { translate: calc(-50% + 6px) -38px; } 75% { translate: calc(-50% - 22px) -16px; } }
+.ds-flutter { transform-box: fill-box; transform-origin: center; animation: ds-flutter .2s ease-in-out infinite alternate; }
+@keyframes ds-flutter { to { scale: .3 1; } }
+/* leaves falling from the trees in the cold */
+.ds-falling { opacity: 0; animation: ds-fall 8.5s ease-in var(--delay, 0s) infinite; }
+@keyframes ds-fall { 0% { opacity: 0; translate: -50% 0; rotate: 0deg; } 8%, 88% { opacity: 1; } 50% { translate: calc(-50% + 20px) 28cqh; rotate: 170deg; }
+  100% { opacity: 0; translate: calc(-50% - 8px) 58cqh; rotate: 330deg; } }
+/* a scorcher: the shade of the patio umbrella on the land under us */
+.ds-shade { position: absolute; left: var(--x); bottom: calc(var(--ground) - 10px); width: 300px; height: 28px; translate: -50% 0; border-radius: 50%;
+  background: rgba(150, 105, 40, .13); pointer-events: none; }
+/* fog: banks of it drifting through, over the far hills, among the trees, low over the ground in front of our
+   feet; the park pale in it */
+.ds-mist { position: absolute; left: -20%; width: 140%; height: 90px; pointer-events: none; animation: ds-mist 14s ease-in-out infinite alternate;
+  background: radial-gradient(closest-side, rgba(255, 255, 255, .92), rgba(255, 255, 255, 0)); }
+.ds-mist-0 { bottom: calc(var(--ground) + var(--horizon) - 44px); }
+.ds-mist-1 { bottom: calc(var(--ground) + 120px); height: 120px; animation-duration: 18s; animation-direction: alternate-reverse; }
+.ds-mist-2 { bottom: calc(var(--ground) + 26px); height: 80px; animation-duration: 11s; }
+.ds-mist-low { bottom: -24px; height: 76px; z-index: 1; opacity: .8; animation-duration: 9s; }
+@keyframes ds-mist { from { translate: -6% 0; } to { translate: 6% 0; } }
 .ds-wx-fog .ds-hills { opacity: .3; }
-/* what we have about us: drawn over the pose */
-.ds-gear { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; color: #18181B; }
+.ds-wx-fog .ds-prop:not(.ds-sky) { opacity: .62; }
+/* the cold: we shiver now and then */
+.ds-cold .ds-person:not(.ds-me) { transform-origin: 50% 100%; animation: ds-shiver 3.4s var(--blink, 0s) infinite; }
+.ds-cold .ds-me { transform-origin: 50% 100%; animation: ds-walk-in 1.5s cubic-bezier(.33, .2, .35, 1) both, ds-shiver 3.4s 2.2s infinite; }
+@keyframes ds-shiver { 0%, 84%, 100% { rotate: 0deg; } 86% { rotate: -1.2deg; } 88% { rotate: 1.2deg; } 90% { rotate: -1deg; } 92% { rotate: 1deg; } 94% { rotate: -.4deg; } 96% { rotate: 0deg; } }
+/* what we have about us, drawn on the pose: sweat, breath (and a scarf, still) */
 .ds-sweat path { animation: ds-sweat 2.8s var(--blink, 0s) ease-in infinite both; }
 .ds-sweat path + path { animation-delay: calc(var(--blink, 0s) + 1.4s); }
 @keyframes ds-sweat { 0% { opacity: 0; translate: 0 -40px; } 20%, 65% { opacity: 1; } 100% { opacity: 0; translate: 0 140px; } }
