@@ -11,6 +11,8 @@ import { MonthPiggyTile } from '../MonthMoney';
 import StopRow from '../StopRow';
 import MapView from '../MapView';
 import RecapViewer from '../RecapViewer';
+import { InkDefs, Stamp } from '../StampBook';
+import { stampOfTrip, useStamps } from '../stamps';
 import { pm25Level, useWeather, weatherKind } from '../weather';
 import HOLIDAYS from '../thHolidays.json';
 import {
@@ -269,6 +271,13 @@ export default function TodayPage() {
   }, [plans, memories, expenses, today]);
   const [recapOf, setRecapOf] = useState(null); // the trip whose diary is open
   const recap = looks.find((l) => l.plan.id === recapOf);
+  // the trip's stamp from the stamp book: on the card, and pressed in near the end of its film
+  const stamps = useStamps();
+  const stampOf = (plan) => {
+    const s = stampOfTrip(stamps, plan);
+    return s && { ...s, total: (s.kind === 'country' ? stamps.countries : stamps.provinces).length };
+  };
+  const cardStamp = stampOf(looks[0]?.plan);
 
   // one plan of the day, its own card: its head, its own map, its stops, then add a stop / open the plan
   // (the day's ongoing trip also gets its next stop, and noting a spend instead of adding a stop)
@@ -355,11 +364,15 @@ export default function TodayPage() {
           {/* the trip to look back on (this day in a past year, else the latest), played back as its diary */}
           {looks[0] && (
             <button className="hp-tile pt-rc-tile" onClick={() => setRecapOf(looks[0].plan.id)}>
-              <span className="pt-rc-stack" aria-hidden="true">
-                {(looks[0].photos.length ? looks[0].photos : [looks[0].plan.cover?.img]).filter(Boolean).slice(0, 3).reverse().map((src, i) => (
-                  <i key={src + i} style={{ backgroundImage: `url(${src})` }} />
-                ))}
-              </span>
+              {cardStamp ? (
+                <span className="pt-rc-stamp" aria-hidden="true"><InkDefs /><Stamp stamp={cardStamp} w={50} press /></span>
+              ) : (
+                <span className="pt-rc-stack" aria-hidden="true">
+                  {(looks[0].photos.length ? looks[0].photos : [looks[0].plan.cover?.img]).filter(Boolean).slice(0, 3).reverse().map((src, i) => (
+                    <i key={src + i} style={{ backgroundImage: `url(${src})` }} />
+                  ))}
+                </span>
+              )}
               <span className="pt-grow">
                 <span className="pt-muted sm">{looks[0].label}</span>
                 <span className="pt-strong ellipsis">{looks[0].plan.name}</span>
@@ -425,7 +438,7 @@ export default function TodayPage() {
           )}
         </div>
       </div>
-      {recap && <RecapViewer {...recap} onClose={() => setRecapOf(null)} />}
+      {recap && <RecapViewer {...recap} stamp={stampOf(recap.plan)} onClose={() => setRecapOf(null)} />}
     </div>
   );
 }

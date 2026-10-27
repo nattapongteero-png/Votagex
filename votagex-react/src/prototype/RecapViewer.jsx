@@ -10,10 +10,11 @@ import { PEOPLE, EXPENSE_CATS, byOrder, diffDays, distanceKm, parseISO, thaiShor
 
 const pad = (n) => String(n).padStart(2, '0');
 
-// A past trip played back as a film (RecapFilm) with its synthesized sound (recapSound), built when it opens;
+// A past trip played back as a film (RecapFilm) with its synthesized sound (recapSound), built when it opens
+// (its stamp, when it has one, pressed in near the end);
 // a speaker button mutes it. A bar per shot up top; tap the left third for the shot
 // before, elsewhere for the next; hold to pause. "ดูทริปนี้" opens the plan any time; at the end, the full recap.
-export default function RecapViewer({ plan, memories, expenses, label, onClose }) {
+export default function RecapViewer({ plan, memories, expenses, label, stamp, onClose }) {
   const navigate = useNavigate();
   const player = useRef(null);
   const [frame, setFrame] = useState(0);
@@ -46,8 +47,9 @@ export default function RecapViewer({ plan, memories, expenses, label, onClose }
       photos,
       spend: { total, cats },
       stats: { days: plan.endDate ? diffDays(plan.startDate, plan.endDate) + 1 : 1, stops: stops.length, photos: photos.length, km },
+      stamp, // the trip's stamp from the stamp book, with how many of its kind are collected (stamp.total)
     };
-  }, [plan, memories, expenses, label]);
+  }, [plan, memories, expenses, label, stamp]);
   const shots = useMemo(() => shotsFor(film), [film]);
   const total = lengthOf(shots);
   useEffect(() => {

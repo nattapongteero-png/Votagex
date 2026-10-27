@@ -136,6 +136,9 @@ export async function buildSound(d, shots, total) {
       CHORDS[k % 4].forEach((n) => tone(fx, 'sawtooth', midi(n), t, 0.24, 0.05, { lp: 2200, lpTo: 600 }));
     },
     chime: (t) => [77, 81, 84, 89].forEach((n, i) => bell(t + i * 0.05, n, 0.12)),
+    // a rubber stamp coming down on paper, and the postmark struck after it
+    stamp: (t) => { tone(fx, 'sine', 150, t, 0.18, 0.6, { to: 55, glide: 0.08 }); hiss(fx, t, 0.08, 0.32, 'lowpass', 1300); },
+    ink: (t) => { hiss(fx, t, 0.06, 0.28, 'bandpass', 950, { q: 0.8 }); tone(fx, 'sine', 95, t, 0.12, 0.42, { to: 50, glide: 0.06 }); },
   };
 
   // the arrangement, building with the film's shots

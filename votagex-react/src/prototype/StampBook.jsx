@@ -19,8 +19,9 @@ const W = 148; const H = 184; // a stamp's own size; others are this scaled
 const INKS = ['#B5412F', '#1F3D6E', '#2D6A4F', '#B07A1E', '#5A3F8C', '#1E6C78', '#8C2F55'];
 const graphemes = (s) => [...new Intl.Segmenter('th', { granularity: 'grapheme' }).segment(s)].length;
 
-// the shared ink filter: a postmark's lines broken where the ink didn't take, and a little wobbly
-function InkDefs() {
+// the shared ink filter: a postmark's lines broken where the ink didn't take, and a little wobbly; wherever
+// stamps are drawn (the recap film too)
+export function InkDefs() {
   return (
     <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true">
       <filter id="pt-ink" x="-10%" y="-10%" width="120%" height="120%">
@@ -49,11 +50,11 @@ function Pattern({ ink }) {
 }
 
 // a cancellation: a double ring with the place and date, and wavy lines running off it, in uneven ink
-function Postmark({ stamp, id }) {
+function Postmark({ stamp, id, style }) {
   const d = new Date(`${stamp.date}T00:00:00`);
   const date = `${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(stamp.year).slice(2)}`;
   return (
-    <svg className="pt-postmark" viewBox="0 0 108 60" aria-hidden="true">
+    <svg className="pt-postmark" viewBox="0 0 108 60" aria-hidden="true" style={style}>
       <defs><path id={id} d="M30,30 m-21,0 a21,21 0 1,1 42,0 a21,21 0 1,1 -42,0" /></defs>
       <g filter="url(#pt-ink)">
         <circle cx="30" cy="30" r="26" /><circle cx="30" cy="30" r="16" />
@@ -65,15 +66,16 @@ function Postmark({ stamp, id }) {
   );
 }
 
-// a stamp, `w` wide
-export function Stamp({ stamp, w = W, i = 0, press = false, mark = true }) {
+// a stamp, `w` wide; `press` presses it in (CSS), or a film moves it frame by frame through `style` (its
+// shadow) and `markStyle` (its postmark)
+export function Stamp({ stamp, w = W, i = 0, press = false, mark = true, style, markStyle }) {
   const h = (w * H) / W;
   const path = useMemo(() => perforated(w, h, (3.3 * w) / W, (10.6 * w) / W), [w, h]);
   const ink = INKS[Math.floor(seeded(stamp.key, 1) * INKS.length)];
   const rot = (seeded(stamp.key) - 0.5) * 8;
   return (
     <div className={`pt-stamp${press ? ' press' : ''}`} style={{ width: w, height: h, fontSize: w / 14.8, '--rot': `${rot.toFixed(1)}deg`, '--i': i, '--ink': ink,
-      '--prot': `${(-20 + seeded(stamp.key, 3) * 24).toFixed(1)}deg` }}>
+      '--prot': `${(-20 + seeded(stamp.key, 3) * 24).toFixed(1)}deg`, ...style }}>
       <div className="pt-stamp-paper" style={{ clipPath: `path('${path}')` }}>
         <div className="pt-stamp-print">
           <div className="pt-stamp-art">
@@ -87,7 +89,7 @@ export function Stamp({ stamp, w = W, i = 0, press = false, mark = true }) {
           </div>
         </div>
       </div>
-      {mark && <Postmark stamp={stamp} id={`pm-${stamp.key}-${Math.round(w)}`} />}
+      {mark && <Postmark stamp={stamp} id={`pm-${stamp.key}-${Math.round(w)}`} style={markStyle} />}
     </div>
   );
 }

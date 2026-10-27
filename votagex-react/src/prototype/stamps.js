@@ -93,6 +93,16 @@ export function useStamps() {
   }, [plans, memories, places, today, provinces, countries]);
 }
 
+// the stamp a trip goes with (from useStamps): abroad, its country's; at home, the province it checked in at most
+export function stampOfTrip({ provinces, countries }, plan) {
+  if (!plan) return null;
+  if (plan.country && plan.country !== 'TH') return countries.find((s) => s.code === plan.country) || null;
+  const count = {};
+  plan.stops.forEach((s) => { if (s.prov && checkedIn(s)) count[s.prov] = (count[s.prov] || 0) + 1; });
+  const most = Object.keys(count).sort((a, b) => count[b] - count[a])[0];
+  return provinces.find((s) => s.name === most) || null;
+}
+
 // a seeded random in [0, 1) from a string, so a stamp always sits at the same tilt
 export function seeded(key, salt = 0) {
   let h = 2166136261 ^ salt;
