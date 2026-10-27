@@ -259,7 +259,8 @@ export default function TodayPage() {
     const me = lookOf(ME);
     // on my own page it's only me; with a group picked, always the group: whoever's going with me, else (a
     // free day, or a trip of mine alone) the group's people
-    const crew = (ids) => ids.filter((id) => id !== ME).slice(0, 3).map(lookOf);
+    // (three of us at most in the scene, me and two more: any more crowd the screen)
+    const crew = (ids) => ids.filter((id) => id !== ME).slice(0, 2).map(lookOf);
     const together = (ids) => (group ? (crew(ids).length ? crew(ids) : crew(group.members)) : []);
     const next = sections.find((x) => x.stops.some((s) => !s.skip && (s.time || '99') >= nowHM)) || sections[sections.length - 1];
     if (!next) {

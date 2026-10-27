@@ -56,10 +56,12 @@ export default function useSheetSnap(pageRef, { cssDriven = false } = {}) {
     page.style.setProperty('--hp-mask-top', `${stopTop + HANDLE_ZONE - 6}px`);
     page.style.setProperty('--sheet-range', `${Math.max(1, range)}px`);
 
-    // Short lists still need enough scroll room to reach step 2
-    content.style.paddingBottom = `${BASE_PADDING}px`;
-    const missing = range - (content.scrollHeight - content.clientHeight);
-    if (missing > 0) content.style.paddingBottom = `${BASE_PADDING + missing}px`;
+    // Short lists still need enough scroll room to reach step 2. Measured from the padding already there, never
+    // by setting it back first: that would shrink the list mid-scroll and the browser would pull it back down
+    const pad = parseFloat(content.style.paddingBottom) || BASE_PADDING;
+    const missing = range - (content.scrollHeight - pad + BASE_PADDING - content.clientHeight);
+    const want = BASE_PADDING + Math.max(0, missing);
+    if (Math.abs(want - pad) > 0.5) content.style.paddingBottom = `${want}px`;
     apply(content.scrollTop);
   });
 

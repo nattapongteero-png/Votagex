@@ -126,22 +126,24 @@ export default function DayScene({ scene, notes = [], weather = { kind: 'partly'
   // dressed for it: a scarf against the cold (dark on a light top), sweat in the heat, breath in the cold
   const gear = (look) => ({ sweat: weather.hot, breath: weather.cold, scarf: weather.cold && ((look.tone || 'BW') === 'WB' ? 'dark' : 'light') });
   const ready = usePeeps(['face/EyesClosed', ...cast.flatMap(([look, poses]) => poses.flatMap((p) => piecesOf(look, p)))]);
-  // where people stand (centres), face to face about the middle: me on the left, the first friend level with me
-  // on the right, any others close in behind them, a step further back each (so we all fit under a wet day's
-  // shelter); on my own, in the middle; on a free day, by the signpost
-  // (a free day with friends: me on the left, the signpost between us, the friends on the right)
-  const meAt = free ? (n ? 28 : 40) : [50, 33, 30, 27][n];
-  const at = (i) => (free ? [[], [70], [66, 77], [62, 71, 80]] : [[], [67], [60, 71], [56, 65, 74]])[n][i];
-  const back = (i) => i * 11;
+  // where people stand (centres), at most three of us, balanced about the middle: on my own, in the middle (on
+  // a free day, by the signpost); two of us face to face, me on the left; three, a triangle: me front left, the
+  // first friend front right, facing each other, the other a step back in the middle between us
+  const meAt = free && !n ? 40 : [50, 33, 29][n];
+  const at = (i) => [[], [67], [71, 50]][n][i];
+  const back = (i) => (i ? 30 : 0);
   // what keeps the weather off us, centred on us: a shelter from the rain, a patio umbrella from a scorching
   // sun (beside me when I'm alone, its pole not through me). Out from under them goes the signpost (or, with
   // friends there, it's not wanted)
   const cover = wet ? 'shelter' : weather.hot ? 'parasol' : null;
   const coverAt = cover === 'parasol' && !n ? (free ? 52 : 62) : free && !n ? 40 : 50;
-  const signAt = cover ? (n ? null : '88%') : free && n ? '48%' : '74%';
+  // (with three of us the umbrella's pole stands just behind the one in the middle)
+  const coverFar = cover === 'parasol' && n === 2 ? 34 : 0;
+  const signAt = cover ? '88%' : '74%';
   const head = headOf(cast[0][1]);
   // my thoughts, one at a time, out from the side of my head (towards the friends, a little up over the gap
-  // between our heads; on a free day the other way, the signpost's there): { i: which, k: a count to start each afresh, on: showing }. The first comes once
+  // between our heads, higher still over the one in the middle of three; on a free day alone the other way,
+  // the signpost's there): { i: which, k: a count to start each afresh, on: showing }. The first comes once
   // the hellos are done (straight away with reduced motion); a tap on me brings the next
   const said = free ? [{ key: 'ask', text: scene.ask, onClick: onTap }, ...notes] : notes;
   const [thought, setThought] = useState({ i: -1, k: 0, on: false });
@@ -152,7 +154,8 @@ export default function DayScene({ scene, notes = [], weather = { kind: 'partly'
   const think = () => said.length && setThought((x) => ({ i: (x.i + 1) % said.length, k: x.k + 1, on: true }));
   const shown = thought.on && said[thought.i % said.length];
 
-  const props = [...(SKY[sky] || SKY.partly), ...BACKDROP[free ? 'free' : 'meet'],
+  // (the signpost and the bench are a free day's on my own; with friends, the park as on a day out)
+  const props = [...(SKY[sky] || SKY.partly), ...BACKDROP[free && !n ? 'free' : 'meet'],
     ...((sky === 'sun' || sky === 'partly') && !weather.cold ? BUTTERFLIES : []), ...(sky === 'cloud' ? BLOWN : []), ...(weather.cold ? FALLING : [])];
   return (
     <div className={`ds ds-${kind} ds-wx-${weather.kind}${weather.hot ? ' ds-hot' : ''}${weather.cold ? ' ds-cold' : ''}${ready ? ' ready' : ''}`}
@@ -177,8 +180,8 @@ export default function DayScene({ scene, notes = [], weather = { kind: 'partly'
           return <Prop key={i} kind={p} x={p === 'sign' ? signAt : x} size={size * (1 - (far || 0) / HORIZON)} className={p === 'butterfly' ? `ds-bfly ds-bfly-${i % 2}` : ''}
             style={{ '--far': `${far || 0}px`, transform: flip ? 'scaleX(-1)' : undefined }} />;
         })}
-        {cover === 'parasol' && <i className="ds-shade" style={{ '--x': `${coverAt}%` }} />}
-        {cover && <Prop kind={cover} x={`${coverAt}%`} />}
+        {cover === 'parasol' && <i className="ds-shade" style={{ '--x': `${coverAt}%`, '--far': `${coverFar}px` }} />}
+        {cover && <Prop kind={cover} x={`${coverAt}%`} size={1 - coverFar / HORIZON} style={{ '--far': `${coverFar}px` }} />}
         {weather.kind === 'fog' && [0, 1, 2].map((i) => <i key={i} className={`ds-mist ds-mist-${i}`} />)}
       </div>
       <button className="ds-tap" onClick={onTap} aria-label={scene.label} />
@@ -196,13 +199,14 @@ export default function DayScene({ scene, notes = [], weather = { kind: 'partly'
             <Person look={me} poses={cast[0][1]} onTap={think} label="ความคิดของฉัน" gear={gear(me)}
               className={`ds-me${n ? '' : ' ds-alone'}`} style={{ '--x': `${meAt}%`, '--blink': '2.4s' }} />
           )}
-          {!free && n > 0 && <span className="ds-say" style={{ '--x': `${at(0)}%` }}>หวัดดี!</span>}
+          {/* (with three of us, said over their head, clear of the one in the middle) */}
+          {!free && n > 0 && <span className={`ds-say${n > 1 ? ' over' : ''}`} style={{ '--x': `${at(0)}%` }}>หวัดดี!</span>}
         </>
       )}
       {/* fog low over the ground, in front of our feet */}
       {weather.kind === 'fog' && <i className="ds-mist ds-mist-low" />}
       {ready && shown && (
-        <div key={thought.k} className={`ds-note ${free && !n ? 'left' : `right${n ? ' up' : ''}`}`} style={{ '--x': `${meAt}%`, '--head': head }}
+        <div key={thought.k} className={`ds-note ${free && !n ? 'left' : `right${n ? ' up' : ''}${n > 1 ? ' high' : ''}`}`} style={{ '--x': `${meAt}%`, '--head': head }}
           onAnimationEnd={(e) => e.target === e.currentTarget && setThought((x) => ({ ...x, on: false }))}>
           <SpeechNotes notes={[shown]} />
         </div>
