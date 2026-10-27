@@ -40,13 +40,15 @@ const boxOf = (poses) => {
 const headOf = (poses) => (footOf(poses) - 62) / FULL;
 
 // a person, in one pose or swapping between `poses` (CSS); looking left with `flip`; with `onTap`, one to tap.
-// gear: { sweat, breath }, drawn in the pose's own units over it
-function Person({ look, poses, flip, onTap, label, gear = {}, className = '', style }) {
+// gear: { sweat, breath }, drawn in the pose's own units over it. `far`: px back up the land (smaller for it)
+function Person({ look, poses, flip, onTap, label, gear = {}, far = 0, className = '', style }) {
   const [x, y, w, h] = boxOf(poses);
+  const scale = 1 - far / HORIZON;
   const tap = onTap ? { role: 'button', tabIndex: 0, 'aria-label': label, onClick: onTap, onKeyDown: (e) => (e.key === 'Enter' || e.key === ' ') && onTap() } : {};
   const svg = { viewBox: `${x} ${y} ${w} ${h}`, style: flip ? { transform: 'scaleX(-1)' } : undefined };
   return (
-    <div className={`ds-person ${className}${onTap ? ' ds-tappable' : ''}`} style={{ aspectRatio: `${w} / ${h}`, height: `calc(var(--tall) * ${h / FULL})`, ...style }} {...tap}>
+    <div className={`ds-person ${className}${onTap ? ' ds-tappable' : ''}`} {...tap}
+      style={{ aspectRatio: `${w} / ${h}`, height: `calc(var(--tall) * ${(h / FULL) * scale})`, '--far': `${far}px`, ...style }}>
       {poses.map((pose, i) => (
         <svg key={pose} className={`ds-pose ds-pose-${i}`} {...svg}>
           <Peep look={look} pose={pose} blink />
@@ -65,14 +67,11 @@ const pose = (look, kind) => `${kind}${look.tone || 'BW'}`;
 // further back, each thing `far` px up the land and smaller by as much as that's nearer the horizon.
 const HORIZON = 240;
 // the park round us, a stage framed by two trees, the big one on the left, a smaller one on the right (the
-// same tree turned round); a bush at the foot of each, the little trees far off on the hills in the middle,
-// between us. { p: prop, x: centre, size: of life size, far: px back up the land, flip } or, in the sky,
+// same tree turned round); a bush at the foot of each. { p: prop, x: centre, size: of life size, far: px back up the land, flip } or, in the sky,
 // { p, x, top: off the top of the whole backdrop (header and all), size }. Nothing may reach past the top of the
 // page (a crop there clashes with the browser's bar). A free day: the signpost near the middle (I stand by it),
-// the bench back on the left, empty. On a wet day, a shelter over us (SHELTER_SIZE: its width and height in
-// people's units, for the rain to keep off under it)
-const FRAME = [{ p: 'tree', x: '47%', far: 222, size: 0.9 }, { p: 'tree', x: '53%', far: 225, size: 0.7, flip: true },
-  { p: 'tuft', x: '9%', far: -24 }, { p: 'tuft', x: '91%', far: -20 }, { p: 'tuft', x: '50%', far: -30, size: 0.9 }, { p: 'tuft', x: '30%', far: 40 },
+// the bench back on the left, empty. On a wet day, a shelter over us (and the signpost out from under it)
+const FRAME = [{ p: 'tuft', x: '9%', far: -24 }, { p: 'tuft', x: '91%', far: -20 }, { p: 'tuft', x: '50%', far: -30, size: 0.9 }, { p: 'tuft', x: '30%', far: 40 },
   { p: 'tuft', x: '70%', far: 36 }, { p: 'tuft', x: '40%', far: 120, size: 0.8 }, { p: 'tuft', x: '62%', far: 150 },
   { p: 'tree', x: '3%', far: 60 }, { p: 'tree', x: '97%', far: 74, size: 0.82, flip: true }];
 // the sky, by the weather (the sun high on the right, the birds out only on a fair day)
@@ -93,8 +92,7 @@ const BACKDROP = {
   meet: [...FRAME, { p: 'bush', x: '17%', far: 44, size: 0.7 }, { p: 'bush', x: '84%', far: 50, size: 0.55, flip: true }],
   free: [...FRAME, { p: 'bench', x: '25%', far: 48 }, { p: 'bush', x: '86%', far: 50, size: 0.55, flip: true }, { p: 'sign', x: '74%', far: 12 }],
 };
-// the shelter's width in people's units: one for a few of us, a smaller one for me alone (scenery.jsx)
-const SHELTER_W = { shelter: 4600, shelterOne: 2900 };
+const SHELTER = [4600, 3800]; // the shelter's size in people's units (scenery.jsx), for the rain to keep off under it
 const reduced = () => typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
 // scene: { kind: 'meet', me, friends: [look], label } or { kind: 'free', me, ask, label };
@@ -112,13 +110,14 @@ export default function DayScene({ scene, notes = [], weather = { kind: 'partly'
     : [[me, stands(me, ['CrossedArms'])]];
   const gear = { sweat: weather.hot, breath: weather.cold };
   const ready = usePeeps(['face/EyesClosed', ...cast.flatMap(([look, poses]) => poses.flatMap((p) => piecesOf(look, p)))]);
-  // where people stand (centres), all on the one line, spread evenly about the middle, face to face: me on
-  // the left, the friends on the right; on my own, in the middle; on a free day, by the signpost
-  const meAt = kind === 'free' ? 40 : [50, 33, 25, 20][n];
-  const at = (i) => [0, 67, 50, 40][n] + i * [0, 0, 25, 20][n];
-  // a wet day's shelter over us all (centred on us; a small one for me alone), and my thoughts go up over its roof
+  // where people stand (centres), face to face about the middle: me on the left, the first friend level with me
+  // on the right, any others close in behind them, a step further back each (so we all fit under a wet day's
+  // shelter); on my own, in the middle; on a free day, by the signpost
+  const meAt = kind === 'free' ? 40 : [50, 33, 30, 27][n];
+  const at = (i) => [[], [67], [60, 71], [56, 65, 74]][n][i];
+  const back = (i) => i * 11;
+  // a wet day's shelter over us all (centred on us), and my thoughts go up over its roof
   const shelterAt = kind === 'free' ? 40 : 50;
-  const shelterKind = n ? 'shelter' : 'shelterOne';
   const head = headOf(cast[0][1]) + (wet ? 0.32 : 0);
   // my thoughts, one at a time: { i: which, k: a count to start each afresh, on: showing }. The first comes once
   // the hellos are done (straight away with reduced motion); a tap on me brings the next
@@ -141,21 +140,22 @@ export default function DayScene({ scene, notes = [], weather = { kind: 'partly'
         {(wet || weather.hot || weather.kind === 'fog') && (
           <Suspense fallback={null}>
             <SceneWeather kind={weather.kind} level={weather.level} hot={weather.hot} horizon={HORIZON}
-              shelter={wet ? { at: shelterAt / 100, w: SHELTER_W[shelterKind], h: 3800 } : null} />
+              shelter={wet ? { at: shelterAt / 100, w: SHELTER[0], h: SHELTER[1] } : null} />
           </Suspense>
         )}
         {[...(SKY[weather.kind] || SKY.partly), ...BACKDROP[kind]].map(({ p, x, size = 1, top, far, flip }, i) => (top ? <Prop key={i} kind={p} x={x} size={size} className="ds-sky" style={{ top, ...(p === 'cloud' ? across(x, size) : {}) }} />
-          : <Prop key={i} kind={p} x={x} size={size * (1 - (far || 0) / HORIZON)} className={far > 150 ? 'ds-far' : ''}
+          : <Prop key={i} kind={p} x={wet && p === 'sign' ? '88%' : x} size={size * (1 - (far || 0) / HORIZON)}
             style={{ '--far': `${far || 0}px`, transform: flip ? 'scaleX(-1)' : undefined }} />))}
-        {wet && <Prop kind={shelterKind} x={`${shelterAt}%`} />}
+        {wet && <Prop kind="shelter" x={`${shelterAt}%`} />}
       </div>
       <button className="ds-tap" onClick={onTap} aria-label={scene.label} />
       {ready && kind === 'meet' && (
         <>
+          {/* the furthest back first, so the nearer ones stand in front */}
           {scene.friends.map((look, i) => (
-            <Person key={i} look={look} poses={cast[i + 1][1]} flip gear={gear} className={`ds-friend${i ? '' : ' ds-greeter'}`}
+            <Person key={i} look={look} poses={cast[i + 1][1]} flip gear={gear} far={back(i)} className={`ds-friend${i ? '' : ' ds-greeter'}`}
               style={{ '--x': `${at(i)}%`, '--blink': `${1.1 + 0.9 * i}s` }} />
-          ))}
+          )).reverse()}
           {/* coming in facing right, then a hand out to say hi, then standing easy (on my own, just standing) */}
           <Person look={me} poses={cast[0][1]} onTap={think} label="ความคิดของฉัน" gear={gear}
             className={`ds-me${n ? '' : ' ds-alone'}`} style={{ '--x': `${meAt}%`, '--blink': '2.4s' }} />

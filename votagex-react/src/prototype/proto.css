@@ -2329,8 +2329,6 @@ body::after { content: ''; position: fixed; inset: 0; z-index: 9998; pointer-eve
 .ds-hills { position: absolute; left: 0; bottom: calc(var(--ground) + var(--horizon) - 2px); width: 100%; height: 26px; overflow: visible; color: #18181B; pointer-events: none; }
 .ds-hills path { stroke-width: 1.2px; }
 .ds-hills .ds-land-fill { fill: var(--land); stroke: none; }
-/* the little trees far off on the hills (no leaf marks: they'd only be specks) */
-.ds-far .ds-leaves > path:last-child { display: none; }
 .ds-pose { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 /* the park, alive a little: the leaves sway, the clouds and birds drift */
 .ds-leaves { transform-box: fill-box; transform-origin: 50% 100%; animation: ds-sway 8s ease-in-out infinite; }
@@ -2416,7 +2414,7 @@ body::after { content: ''; position: fixed; inset: 0; z-index: 9998; pointer-eve
 .ds-wx-storm .ds-cloud path { fill: #DFE4EA; }
 .ds-wx-storm .ds-leaves { animation: ds-sway-hard 2.4s ease-in-out infinite; }
 @keyframes ds-sway-hard { 0%, 100% { rotate: -1.2deg; } 50% { rotate: 2.2deg; } }
-.ds-wx-fog :is(.ds-far, .ds-hills) { opacity: .3; }
+.ds-wx-fog .ds-hills { opacity: .3; }
 /* what we have about us: drawn over the pose */
 .ds-gear { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; color: #18181B; }
 .ds-sweat path { animation: ds-sweat 2.8s var(--blink, 0s) ease-in infinite both; }

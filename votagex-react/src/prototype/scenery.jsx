@@ -138,8 +138,8 @@ const SUN = {
 };
 
 // a shelter from the rain, as at a bus stop: a flat roof on thin posts, a glass wall at the back, seen as the
-// bench is (the back posts stand further back, higher up); the roof 2.2 m up, `w` across (4600, about 2.6 m,
-// for a few of us; 2900 for one). The rain keeps off under it (SceneWeather.jsx knows its size from DayScene)
+// bench is (the back posts stand further back, higher up); the roof 2.2 m up, `w` across (4600, about 2.6 m).
+// The rain keeps off under it (SceneWeather.jsx knows its size from DayScene)
 const shelter = (w) => ({
   box: [0, 0, w, 3800],
   art: (
@@ -154,7 +154,7 @@ const shelter = (w) => ({
   ),
 });
 
-const PROPS = { shelter: shelter(4600), shelterOne: shelter(2900), sun: SUN, tree: TREE, lamp: LAMP, bench: BENCH, bush: BUSH, cloud: CLOUD, tuft: TUFT, birds: BIRDS, sign: SIGN };
+const PROPS = { shelter: shelter(4600), sun: SUN, tree: TREE, lamp: LAMP, bench: BENCH, bush: BUSH, cloud: CLOUD, tuft: TUFT, birds: BIRDS, sign: SIGN };
 
 // one prop at --x (its centre), feet on the ground line; `size` scales it from life size
 export function Prop({ kind, x, size = 1, className = '', style }) {
