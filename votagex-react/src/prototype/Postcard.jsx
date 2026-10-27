@@ -23,8 +23,10 @@ const sideAt = (deg) => (Math.cos((deg * Math.PI) / 180) >= 0 ? 'back' : 'front'
 
 // a postcard `w` wide, turned `flip` degrees (0 its back, 180 its front). `press` presses its stamp in and
 // strikes the postmark (CSS); the film moves them frame by frame through `stampStyle`, `stampShadow` and
-// `markStyle`. `write` makes the back a place to write ({ value, onChange })
-export function Postcard({ card, w, flip = 0, press = false, mark = true, write, stampStyle, stampShadow, markStyle, cardRef, className = '', children }) {
+// `markStyle`. `write` makes the back a place to write ({ value, onChange }); `play` prints a play mark on both
+// faces (the card opens a film)
+export function Postcard({ card, w, flip = 0, press = false, mark = true, write, play = false, stampStyle, stampShadow, markStyle, cardRef, className = '', children }) {
+  const cue = play && <span className="pt-pc-cue" aria-hidden="true"><Icon name="play" size={Math.round(w / 40)} /></span>;
   const stampW = (w * STAMP) / 24;
   return (
     <div className={`pt-pc${press ? ' press' : ''} ${className}`} style={{ width: w, height: w / 1.5, fontSize: w / 24 }}>
@@ -48,7 +50,7 @@ export function Postcard({ card, w, flip = 0, press = false, mark = true, write,
           </div>
           <i className="pt-pc-rule" />
           <div className="pt-pc-to">
-            <b>{card.title}</b>
+            <b><span className="pt-pc-title">{card.title}</span>{cue}</b>
             <span>{card.date}</span>
             <span className="en">{card.where}</span>
           </div>
@@ -62,6 +64,7 @@ export function Postcard({ card, w, flip = 0, press = false, mark = true, write,
         <div className="pt-pc-face pt-pc-front">
           {card.photo && <img src={card.photo} alt="" draggable="false" />}
           {card.where && <span className="pt-pc-caption">{card.where}</span>}
+          {cue}
         </div>
       </div>
       {children}
@@ -81,15 +84,16 @@ function useWidth(ref) {
   return w;
 }
 
-// on the home page: the postcard lands back up, its stamp pressed in; a tap turns it over, and so does a drag
-// sideways, the card following the finger and springing onto the nearer face (or the one it was flicked to),
-// carrying the flick's speed. The play button opens the film
+// on the home page: the postcard lands back up, its stamp pressed in; a drag sideways turns it over, the card
+// following the finger and springing onto the nearer face (or the one it was flicked to), carrying the flick's
+// speed. A tap opens the film
 export default function PostcardTile({ card, onPlay }) {
   const box = useRef(null);
   const face = useRef(null);
   const w = useWidth(box);
   const at = useRef(0); // the card's turn, in degrees
   const drag = useRef(null);
+  const dragged = useRef(false); // the click that ends a drag isn't a tap
   const spin = useRef(0); // the settling spring's frame
   useEffect(() => () => cancelAnimationFrame(spin.current), []);
   const show = (deg) => {
@@ -111,9 +115,9 @@ export default function PostcardTile({ card, onPlay }) {
     };
     spin.current = requestAnimationFrame(step);
   };
-  const flipOver = () => turn(Math.round(at.current / 180) * 180 + 180);
   const down = (e) => {
     cancelAnimationFrame(spin.current);
+    dragged.current = false;
     drag.current = { x: e.clientX, y: e.clientY, from: at.current, moved: false, v: 0, t: e.timeStamp, last: e.clientX };
   };
   const move = (e) => {
@@ -123,7 +127,7 @@ export default function PostcardTile({ card, onPlay }) {
     if (!d.moved) {
       if (Math.abs(dx) < 8) return;
       if (Math.abs(e.clientY - d.y) > Math.abs(dx)) { drag.current = null; return; } // a scroll
-      d.moved = true;
+      d.moved = true; dragged.current = true;
       box.current.setPointerCapture(e.pointerId);
     }
     const dt = e.timeStamp - d.t;
@@ -134,20 +138,20 @@ export default function PostcardTile({ card, onPlay }) {
   const up = () => {
     const d = drag.current;
     drag.current = null;
-    if (!d) return;
-    if (!d.moved) { flipOver(); return; }
+    if (!d?.moved) return;
     const to = Math.round((at.current + d.v * 140) / 180) * 180;
     turn(Math.max(d.from - 180, Math.min(d.from + 180, to)), d.v * 1000);
   };
   return (
-    <div className="pt-pc-tile" ref={box} role="button" tabIndex={0} aria-label="พลิกโปสการ์ด"
+    <div className="pt-pc-tile" ref={box} role="button" tabIndex={0} aria-label="ดูหนังสรุปทริป"
       onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={() => { drag.current = null; turn(Math.round(at.current / 180) * 180); }}
-      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); flipOver(); } }}>
+      onClick={() => { if (!dragged.current) onPlay(); }}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onPlay(); }
+        if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') turn(Math.round(at.current / 180) * 180 + (e.key === 'ArrowRight' ? 180 : -180));
+      }}>
       <InkDefs />
-      {w > 0 && <Postcard card={card} w={w} press cardRef={face} />}
-      <button className="pt-pc-play" aria-label="ดูหนังสรุปทริป" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); onPlay(); }}>
-        <Icon name="play" size={18} />
-      </button>
+      {w > 0 && <Postcard card={card} w={w} press play cardRef={face} />}
     </div>
   );
 }

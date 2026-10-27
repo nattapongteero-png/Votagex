@@ -366,7 +366,7 @@ export default function TodayPage() {
 
         {/* one block for the whole sheet, so a drag anywhere on it (gaps and handle too) moves it */}
         <div className="pt-home-sheet">
-          {/* the trip to look back on (this day in a past year, else the latest), as a postcard; its button plays its film */}
+          {/* the trip to look back on (this day in a past year, else the latest), as a postcard; a tap plays its film */}
           {card && <PostcardTile card={card} onPlay={() => setRecapOf(looks[0].plan.id)} />}
 
           {/* the selected day's weather, its own card */}

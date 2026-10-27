@@ -2264,9 +2264,16 @@ body::after { content: ''; position: fixed; inset: 0; z-index: 9998; pointer-eve
 .pt-pc-to { position: absolute; left: 14.5em; right: 1.3em; top: 8.5em; display: flex; flex-direction: column; color: #2B2721; }
 .pt-pc-to > * { display: block; padding: .2em 0 .1em; border-bottom: .05em solid rgba(60, 45, 25, .26); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .pt-pc-to b { font-family: var(--font-display); font-size: .98em; line-height: 1.45; font-weight: 700; }
-.pt-pc-to span { font-size: .7em; line-height: 1.9; font-weight: 500; color: #5E5648; }
+.pt-pc-to > span { font-size: .7em; line-height: 1.9; font-weight: 500; color: #5E5648; }
 .pt-pc-to .en { font-size: .56em; line-height: 2.3; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
 .pt-pc-stamp { position: absolute; right: 1.15em; top: 1.1em; }
+/* the play mark, printed: a thin ring in the card's ink beside the trip's name (white over the photo) */
+.pt-pc-to b { display: flex; align-items: center; justify-content: space-between; gap: .4em; }
+.pt-pc-cue { flex-shrink: 0; width: 1.32em; height: 1.32em; display: grid; place-items: center; border-radius: 50%; box-shadow: inset 0 0 0 .07em currentColor; }
+.pt-pc-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.pt-pc-to .pt-pc-cue { font-size: 1.02em; }
+.pt-pc-cue .pt-icon { margin-left: .1em; }
+.pt-pc-front .pt-pc-cue { position: absolute; z-index: 1; right: 1.3em; bottom: 1.1em; font-size: 1.15em; color: #fff; }
 /* struck across the stamp's left edge onto the card: the ring on the card, the waves over the stamp */
 .pt-postmark.pt-pc-mark { right: auto; left: 15.1em; top: 2.5em; width: 7.2em; rotate: -7deg; }
 .pt-pc.press .pt-pc-mark, .pt-pc.sent .pt-pc-mark { animation: pt-postmark .46s cubic-bezier(.2, 0, .1, 1) both; }
@@ -2274,13 +2281,10 @@ body::after { content: ''; position: fixed; inset: 0; z-index: 9998; pointer-eve
 .pt-pc.sent .pt-pc-card { animation: pt-pc-thud .32s cubic-bezier(.3, 0, .2, 1); }
 @keyframes pt-pc-thud { 30% { scale: .985; } }
 @media (prefers-reduced-motion: reduce) { .pt-pc.press .pt-pc-mark, .pt-pc.sent .pt-pc-mark, .pt-pc.sent .pt-pc-card { animation: none; } }
-/* on the home page: lying a little turned on the sheet, the play button on its corner */
-.pt-pc-tile { position: relative; aspect-ratio: 3 / 2; margin: 4px 6px 14px; rotate: -1.2deg; touch-action: pan-y; cursor: pointer; -webkit-tap-highlight-color: transparent; outline: none;
+/* on the home page: lying a little turned on the sheet */
+.pt-pc-tile { position: relative; aspect-ratio: 3 / 2; margin: 4px 6px 10px; rotate: -1.2deg; touch-action: pan-y; cursor: pointer; -webkit-tap-highlight-color: transparent; outline: none;
   user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
 .pt-pc-tile:focus-visible .pt-pc-face { box-shadow: 0 0 0 3px var(--tw-brand); }
-.pt-pc-play { position: absolute; right: -8px; bottom: -8px; width: 44px; height: 44px; display: grid; place-items: center; border: 0; border-radius: 50%; cursor: pointer;
-  background: var(--tw-btn-primary); color: #fff; box-shadow: 0 6px 16px -4px rgba(15, 23, 42, .4); }
-.pt-pc-play .pt-icon { margin-left: 2px; }
 /* the sheet that writes one */
 .pt-pc-compose { position: relative; padding: 6px 0 10px; }
 
