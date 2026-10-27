@@ -31,6 +31,12 @@
 /* long content scrolls; it never squeezes what's in it (a search box shrank to 29px once results came in) */
 .pt-scroll > *, .pt-sheet-body > * { flex-shrink: 0; }
 .pt-scroll.flush { padding: 0 0 48px; }
+/* page lists fade out under their header as they scroll, like the home page's cards under the sheet's handle;
+   the band grows with the first 16px of scroll (ProtoApp), and there's no mask at all at rest */
+:is(.pt-scroll, .pt-me .me-content)[data-fade]:not([data-fade="0"]) {
+  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 var(--fade-top));
+  mask-image: linear-gradient(180deg, transparent 0, #000 var(--fade-top));
+}
 .pt-pad { padding: 0 20px 12px; }
 .pt-pad-x { padding: 0 16px 12px; display: flex; flex-direction: column; gap: 8px; }
 

@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Routes, Route, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { ProtoProvider } from './store';
 import { useProto } from './useProto';
@@ -63,8 +63,28 @@ function Toast() {
   );
 }
 
+// page lists fade out under their header as they scroll, as the home page's cards fade under the sheet's
+// handle: the band grows with the first 16px of scroll (data-fade, --fade-top in proto.css), so nothing fades
+// at rest. One listener for every page; the home page's list has its own.
+const FADES = '.pt-scroll:not(.flush), .pt-me .me-content';
+function useScrollFade() {
+  useEffect(() => {
+    const onScroll = (e) => {
+      const el = e.target;
+      if (!(el instanceof Element) || !el.matches(FADES)) return;
+      const v = String(Math.round(Math.min(16, Math.max(0, el.scrollTop))));
+      if (el.dataset.fade === v) return;
+      el.dataset.fade = v;
+      el.style.setProperty('--fade-top', `${v}px`);
+    };
+    document.addEventListener('scroll', onScroll, { capture: true, passive: true });
+    return () => document.removeEventListener('scroll', onScroll, { capture: true });
+  }, []);
+}
+
 export default function ProtoApp() {
   useRates(); // live exchange rates; the app re-renders when they land
+  useScrollFade();
   const session = useSession();
   const { pathname } = useLocation();
   const user = session.status === 'in' ? session.user : null;
