@@ -1808,11 +1808,10 @@ button.pt-exp:active { background: var(--tw-sunken); }
 .pt-scope-btn.active { color: var(--tw-text, #111827); font-weight: 600; }
 .pt-group-badge { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; color: #fff; flex-shrink: 0; }
 .pt-scope-btn .pt-group-badge { width: 52px; height: 52px; }
-.pt-scope-me { overflow: hidden; background: var(--tw-brand-subtle, #E6F7F4); }
+.pt-scope-me { overflow: hidden; background: var(--tw-accent, #E9B526); } /* solid, as the groups beside it are */
 .pt-scope-me img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .pt-group-badge.lg { width: 48px; height: 48px; }
-.pt-scope-btn .pt-group-badge { opacity: .6; transition: opacity .2s, box-shadow .2s; }
-.pt-scope-btn.active .pt-group-badge { opacity: 1; }
+.pt-scope-btn .pt-group-badge { transition: box-shadow .2s; } /* solid, picked or not: the ring marks the picked one */
 .pt-scope-btn.active .pt-group-badge { box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--tw-text, #111827); }
 .pt-day-who { display: flex; align-items: center; gap: 8px; width: 100%; padding: 0 0 12px; border: none; background: none; font: inherit; text-align: left; cursor: pointer; min-width: 0; }
 .pt-group-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
@@ -2318,22 +2317,15 @@ body::after { content: ''; position: fixed; inset: 0; z-index: 9998; pointer-eve
 .ds-world { position: absolute; left: 0; right: 0; bottom: 0; top: calc(-1 * var(--hp-stage-top, 0px)); overflow: hidden; pointer-events: none; color: #18181B;
   --fade: linear-gradient(to bottom, rgba(0, 0, 0, .16), rgba(0, 0, 0, .16) calc(var(--hp-stage-top, 0px) - 20px), #000 calc(var(--hp-stage-top, 0px) + 50px));
   -webkit-mask-image: var(--fade); mask-image: var(--fade); }
-.ds-person, .ds-prop { position: absolute; left: var(--x); bottom: calc(var(--ground) + var(--d, 0px)); translate: -50% 0; pointer-events: none; }
-/* what stands on the ground has a short pen stroke of ground under it, people and park alike (no soft shadows) */
-.ds-floor { position: absolute; left: -8%; bottom: -2px; width: 116%; height: 4px; overflow: visible; color: #18181B; }
-.ds-floor path { stroke-width: 1.5px; }
-.ds-prop-floor { left: var(--x); right: auto; bottom: calc(var(--ground) + var(--d, 0px) - 2px); translate: -50% 0; }
+.ds-person, .ds-prop { position: absolute; left: var(--x); bottom: var(--ground); translate: -50% 0; pointer-events: none; }
 .ds-prop { overflow: visible; }
 .ds-prop.ds-sky { bottom: auto; }
-/* far off: the hills sit on the horizon */
-.ds-hills { position: absolute; left: 0; bottom: calc(var(--ground) + var(--horizon) - 2px); width: 100%; height: 26px; overflow: visible; }
-.ds-hills path { stroke-width: 1.2px; }
-.ds-far .ds-leaves > path:last-child { display: none; } /* leaf marks would only be specks that far off */
-.ds-sitter { bottom: calc(var(--ground) + var(--d, 0px) + var(--tall) * var(--lift, 0)); }
+.ds-ground { position: absolute; left: 0; bottom: calc(var(--ground) - 3px); width: 100%; height: 6px; overflow: visible; }
+.ds-ground path { stroke-width: 1.5px; }
+.ds-hills { position: absolute; left: 0; bottom: var(--ground); width: 100%; height: 72px; overflow: visible; }
+.ds-hills path { stroke-width: 1.2px; opacity: .5; }
+.ds-sitter { bottom: calc(var(--ground) + var(--tall) * var(--lift, 0)); }
 .ds-pose { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
-/* walking in, I've no ground under me till I stop: then it's drawn, out from my feet */
-.ds-me .ds-floor { animation: ds-floor-in .35s 1.45s ease-out both; }
-@keyframes ds-floor-in { from { opacity: 0; scale: .3 1; } }
 /* the park, alive a little: the leaves sway, the clouds and birds drift */
 .ds-leaves { transform-box: fill-box; transform-origin: 50% 100%; animation: ds-sway 8s ease-in-out infinite; }
 @keyframes ds-sway { 0%, 100% { rotate: 0deg; } 50% { rotate: .8deg; } }
@@ -2364,24 +2356,15 @@ body::after { content: ''; position: fixed; inset: 0; z-index: 9998; pointer-eve
 .ds-greeter .ds-pose-1 { opacity: 0; animation: ds-greet-b 3.6s both; }
 @keyframes ds-greet-a { 0%, 45.8% { opacity: 1; } 46%, 99.8% { opacity: 0; } 100% { opacity: 1; } }
 @keyframes ds-greet-b { 0%, 45.8% { opacity: 0; } 46%, 99.8% { opacity: 1; } 100% { opacity: 0; } }
-.ds-say { position: absolute; left: calc(var(--x) - 8%); bottom: calc(var(--ground) + var(--d, 0px) + var(--tall) * var(--s, 1) * .8); translate: -100% 0; padding: 6px 12px;
+.ds-say { position: absolute; left: calc(var(--x) - 8%); bottom: calc(var(--ground) + var(--tall) * .8); translate: -100% 0; padding: 6px 12px;
   border-radius: 16px 16px 4px 16px; background: #fff; font-size: 13px; font-weight: 700; line-height: 1.4; white-space: nowrap; pointer-events: none;
   box-shadow: 0 4px 14px rgba(15, 23, 42, .1); opacity: 0; transform-origin: 100% 100%; animation: ds-say 2.4s 1.7s both; }
 @keyframes ds-say { 0% { opacity: 0; scale: .4; } 14% { opacity: 1; scale: 1.08; } 22%, 84% { opacity: 1; scale: 1; } 100% { opacity: 0; scale: .92; } }
-/* the day's stops pop up over us, one after another: one row, on a narrow screen the names give way first */
-.ds-stops { position: absolute; top: 12px; left: 16px; right: 16px; display: flex; justify-content: center; gap: 6px; pointer-events: none; }
-.ds-stop { display: inline-flex; align-items: center; gap: 5px; min-width: 0; height: 28px; padding: 0 11px 0 4px; border-radius: 999px; background: #fff; white-space: nowrap;
-  font-size: 12px; font-weight: 500; box-shadow: 0 1px 2px rgba(15, 23, 42, .06), 0 4px 12px rgba(15, 23, 42, .08);
-  opacity: 0; transform-origin: 50% 100%; animation: ds-chip .55s calc(2.1s + var(--i) * .14s) cubic-bezier(.3, 1.5, .5, 1) both; }
-.ds-stop b { font-weight: 700; flex-shrink: 0; }
-.ds-stop-icon { width: 20px; height: 20px; flex-shrink: 0; display: grid; place-items: center; border-radius: 50%; }
-.ds-stop-name { min-width: 0; max-width: 108px; overflow: hidden; text-overflow: ellipsis; }
-@keyframes ds-chip { from { opacity: 0; translate: 0 10px; scale: .6; } to { opacity: 1; } }
 /* a free day: on the bench, the head tilting now and then */
 .ds-sitter .pp-head { transform-box: fill-box; transform-origin: 50% 85%; animation: ds-tilt 6s ease-in-out infinite; }
 @keyframes ds-tilt { 0%, 100% { transform: rotate(0deg); } 30% { transform: rotate(-4deg); } 60% { transform: rotate(2deg); } }
 /* what I say (SpeechNotes, once the hellos are done): a small bubble over my head, two dots trailing down to it */
-.ds-note { position: absolute; left: calc(var(--x) - 14px); bottom: calc(var(--ground) + var(--d, 0px) + var(--tall) * var(--head) + 18px); z-index: 1; }
+.ds-note { position: absolute; left: calc(var(--x) - 14px); bottom: calc(var(--ground) + var(--tall) * var(--head) + 18px); z-index: 1; }
 .ds-note .pt-speech-wrap { display: block; width: max-content; max-width: 210px; padding: 0; }
 .ds-note .pt-speech {
   display: block; min-width: 72px; max-width: 150px; min-height: 0; padding: 7px 13px; border-radius: 18px;
@@ -2406,7 +2389,7 @@ body::after { content: ''; position: fixed; inset: 0; z-index: 9998; pointer-eve
   .ds-me .ds-pose-0, .ds-me .ds-pose-1, .ds-greeter .ds-pose-1, .ds .pp-shut { opacity: 0; }
   .ds-me .ds-pose-2 { opacity: 1; }
   .ds-say { display: none; }
-  .ds-stop, .ds .pt-speech-text { opacity: 1; }
+  .ds .pt-speech-text { opacity: 1; }
   .ds .pt-speech-dots { display: none; }
 }
 

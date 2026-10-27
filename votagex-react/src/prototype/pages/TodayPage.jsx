@@ -264,7 +264,7 @@ export default function TodayPage() {
   const canShuffle = selected >= today && shufflePool(places, allPlans, selected, group).length > 0;
 
   // the day as a scene (DayScene): the next of its plans (the first with a stop still to come, else the last),
-  // with whoever's going and its stops; with nothing on, a free day
+  // with whoever's going; with nothing on, a free day
   const scene = (() => {
     const me = lookOf(ME);
     const next = sections.find((x) => x.stops.some((s) => !s.skip && (s.time || '99') >= nowHM)) || sections[sections.length - 1];
@@ -272,7 +272,6 @@ export default function TodayPage() {
     return {
       kind: 'meet', me, label: next.p.name, planId: next.p.id,
       friends: next.p.members.filter((id) => id !== ME).slice(0, 3).map(lookOf),
-      stops: next.stops.filter((s) => !s.skip).slice(0, 3).map((s) => ({ cat: s.cat, time: s.time, name: s.name })),
     };
   })();
 
