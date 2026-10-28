@@ -248,14 +248,14 @@ export function Land() {
 // What the people have about them for the weather, drawn in a person's own units over their pose. The head is
 // always at the same place on a pose (peeps.js HEAD_AT: the face 440–620 across, 210–400 down, the chin about
 // 480, the neck under it 370–590 across, down to the collar at about 530), so they sit right on any of them.
-// beads of sweat on the face, small, high up (lower down, by the eye, they'd read as tears): one on the brow,
-// one at the temple, running a little way down
+// beads of sweat by the face, small, just off the cheek in front of it, running a little way down: on the face
+// they'd land on glasses, a hijab, a turban, a cap or a fringe, and under the eye they'd read as tears
 export function Sweat() {
   const drop = 'M0 -60 C22 -20 38 6 38 26 A38 38 0 0 1 -38 26 C-38 6 -22 -20 0 -60 Z';
   return (
     <g className="ds-sweat">
-      <path {...shape} strokeWidth={14} transform="translate(596 232) scale(.42)" d={drop} />
-      <path {...shape} strokeWidth={14} transform="translate(452 250) scale(.36)" d={drop} />
+      <path {...shape} strokeWidth={14} transform="translate(684 324) scale(.42)" d={drop} />
+      <path {...shape} strokeWidth={14} transform="translate(700 394) scale(.34)" d={drop} />
     </g>
   );
 }
