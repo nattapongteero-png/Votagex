@@ -11,23 +11,22 @@ const SceneWeather = lazy(() => import('./SceneWeather'));
 // I'm always the one on the left; my notes (what used to float over my picture) are my thoughts, one at a time
 // in a bubble over my head: the first comes by itself once the hellos are done, then each tap on me brings
 // the next, and each goes again after a few seconds.
-// Each pose of the library comes in its own clothes, so only the long-sleeved ones are used (standing easy,
-// a hand out, arms crossed: as on my picture), and no one changes clothes as they move.
-// A day out: the friends going wait on the right, I come in from the left (standing easy, a step bounce),
-// stop by them, the first of them holds out a hand and says hi (where we're off to and when is in the cards
-// below). On my own page (no group picked) it's only me: I come in to the middle and stand there.
-// A day with nothing on: I stand with my arms crossed by the signpost, my head tilting now and then,
-// wondering where to go; the bench behind me empty.
+// Each pose of the library comes in its own clothes, so we're dressed for the weather by the pose (WEAR), each
+// of us in something different, and keep to it: no walking in, no gestures.
+// A day out: me on the left, the friends going on the right, the first of them says hi (where we're off to and
+// when is in the cards below). On my own page (no group picked) it's only me, in the middle.
+// A day with nothing on: I'm by the signpost (on a fair day, arms crossed), my head tilting now and then,
+// wondering where to go; the bench behind me empty. A change of scene (another profile picked) is a Remotion
+// transition (SceneSwap.jsx).
 // The day's weather (where I am today) plays on it all: the sky and the land take its colour, the sun or the
 // clouds are up (sailing across), rain falls in depth with ripples on the land, a storm flashes, fog drifts
 // (SceneWeather.jsx, a Remotion loop, behind the park so a bush or a tree keeps the rain off what's behind it).
 // On a wet day we're under a shelter, dry, the rain all round and running off the roof; on a hot one we sweat;
 // on a cold one we've scarves on and the trees have lost most of their leaves.
-// It plays once as it shows (CSS, about four seconds) and then only breathes and blinks; tap it for the plan,
-// or for ideas on a free day.
+// We fade in as it shows, then only breathe and blink; tap it for the plan, or for ideas on a free day.
 
 const FULL = 3000; // a standing person's height in the library's units, feet to above the hair
-// a person's box: `poses` share one, so swapping between them keeps the head where it was; feet on the bottom
+// a person's box (round all their `poses`, should they have more than one); feet on the bottom
 const footOf = (poses) => Math.max(...poses.map((p) => POSE_BOX[p][1] + POSE_BOX[p][3])) + 12;
 const boxOf = (poses) => {
   const bs = poses.map((p) => POSE_BOX[p]);
@@ -64,17 +63,20 @@ function Person({ look, poses, flip, onTap, label, gear = {}, far = 0, className
   );
 }
 
-const pose = (look, kind) => `${kind}${look.tone || 'BW'}`;
-// what we wear, by the weather: each of the library's poses comes in its own clothes, so the clothes are the
-// pose. Long sleeves on a fair day: standing easy, a hand out to say hi, arms crossed wondering on a free day.
-// An open jacket in the rain, a blazer in the cold, a T-shirt in the heat, sat on the ground (the T-shirt's
-// only standing pose is mid-stride). Only the long sleeves come in more than one pose, so only then do we move
-// from one to another (no one changes clothes as they move). [me, then each friend]
+// a pose in a person's tone (BW: a dark top over light trousers, WB the other way round; some come in one only)
+const ONE_TONE = new Set(['standing/PolkaDots']);
+const pose = (look, kind) => (ONE_TONE.has(kind) ? kind : `${kind}${look.tone || 'BW'}`);
+// what we wear, by the weather, each of us something different (me, then each friend): each of the library's
+// poses comes in its own clothes, so the clothes are the pose, and we each keep to one (no one changes clothes,
+// no gestures). Long sleeves, a shirt, polka dots on a fair day (on a free day I've my arms crossed, wondering);
+// jackets in the rain; a blazer, arms hugged round, a jacket in the cold; T-shirts in the heat, sat on the
+// ground (a T-shirt's only standing pose is mid-stride). Not the poses with a prosthetic leg, a wheelchair or a
+// doctor's clothes: those are who someone is, not the weather
 const WEAR = {
-  fair: { stand: 'standing/Resting', greet: 'standing/RoboDance', wonder: 'standing/CrossedArms' },
-  wet: { each: ['standing/Easing'] },
-  cold: { each: ['standing/BlazerPants'] },
-  hot: { each: ['sitting/OneLegUp', 'sitting/HandsBack', 'sitting/Medium'] },
+  fair: ['standing/Resting', 'standing/ShirtPants', 'standing/PolkaDots'],
+  wet: ['standing/Easing', 'standing/BlazerPants', 'standing/ShirtPants'],
+  cold: ['standing/BlazerPants', 'standing/CrossedArms', 'standing/Easing'],
+  hot: ['sitting/OneLegUp', 'sitting/HandsBack', 'sitting/Medium'],
 };
 
 // Seen from a little over our heads, as the people are drawn (the tops of their shoes show, a foot set back sits
@@ -129,26 +131,21 @@ const reduced = () => typeof window !== 'undefined' && window.matchMedia?.('(pre
 // scene: { kind: 'meet' | 'free', me, friends: [look], label, ask (free) }; a free day with friends (a group
 // picked) has us stood as on a day out;
 // notes: what I say (SpeechNotes), after the hellos
-export default function DayScene({ scene, notes = [], weather = { kind: 'partly' }, onTap }) {
+export default function DayScene({ scene, notes = [], weather = { kind: 'partly' }, onTap, onReady }) {
   const { me, kind } = scene;
   const friends = scene.friends || [];
   const n = friends.length;
   const free = kind === 'free';
   const wet = weather.kind === 'rain' || weather.kind === 'storm';
   const sky = weather.hot ? 'hot' : weather.kind;
-  // dressed for the day (WEAR; the rain before the cold before the heat). On a fair day I come in standing
-  // easy and, meeting friends, hold out a hand and stand easy again; the first friend the same; on a free day,
-  // arms crossed. Any other day, each of us in the one pose the clothes come in; sat down, I don't walk in
-  const wear = WEAR[wet ? 'wet' : weather.cold ? 'cold' : weather.hot ? 'hot' : 'fair'];
-  const dress = (look, kinds) => kinds.map((k) => pose(look, k));
-  const one = (i) => [wear.each?.[Math.min(i, wear.each.length - 1)]];
-  const cast = wear.each ? [me, ...friends].map((look, i) => [look, dress(look, one(i))])
-    : [[me, dress(me, free ? [wear.wonder] : n ? [wear.stand, wear.greet] : [wear.stand])],
-      ...friends.map((f, i) => [f, dress(f, free || i ? [wear.stand] : [wear.stand, wear.greet])])];
-  const seated = cast[0][1][0].startsWith('sitting');
+  // dressed for the day (WEAR; the rain before the cold before the heat), one pose each
+  const day = wet ? 'wet' : weather.cold ? 'cold' : weather.hot ? 'hot' : 'fair';
+  const cast = [me, ...friends].map((look, i) => [look, [pose(look, day === 'fair' && free && !i ? 'standing/CrossedArms' : WEAR[day][i])]]);
   // dressed for it: a scarf against the cold (dark on a light top), sweat in the heat
   const gear = (look) => ({ sweat: weather.hot, scarf: weather.cold && ((look.tone || 'BW') === 'WB' ? 'dark' : 'light') });
   const ready = usePeeps(['face/EyesClosed', ...cast.flatMap(([look, poses]) => poses.flatMap((p) => piecesOf(look, p)))]);
+  // (for a change of scene, SceneSwap.jsx: it goes once our people are drawn)
+  useEffect(() => { if (ready) onReady?.(); }, [ready, onReady]);
   // where we stand (a free day on my own, by the signpost)
   const meAt = free && !n ? 40 : LAYOUT[n].me;
   const at = (i) => LAYOUT[n].at[i][0];
@@ -167,7 +164,7 @@ export default function DayScene({ scene, notes = [], weather = { kind: 'partly'
   const said = free ? [{ key: 'ask', text: scene.ask, onClick: onTap }, ...notes] : notes;
   const [thought, setThought] = useState({ i: -1, k: 0, on: false });
   useEffect(() => {
-    const t = setTimeout(() => setThought((x) => (x.i < 0 ? { i: 0, k: 1, on: true } : x)), reduced() ? 0 : !free && n ? 4100 : 900);
+    const t = setTimeout(() => setThought((x) => (x.i < 0 ? { i: 0, k: 1, on: true } : x)), reduced() ? 0 : !free && n ? 3200 : 900);
     return () => clearTimeout(t);
   }, [free, n]);
   const think = () => said.length && setThought((x) => ({ i: (x.i + 1) % said.length, k: x.k + 1, on: true }));
@@ -208,16 +205,12 @@ export default function DayScene({ scene, notes = [], weather = { kind: 'partly'
         <>
           {/* the furthest back first, so the nearer ones stand in front */}
           {friends.map((look, i) => (
-            <Person key={i} look={look} poses={cast[i + 1][1]} flip gear={gear(look)} far={back(i)} className={`ds-friend${cast[i + 1][1].length > 1 ? ' ds-greeter' : ''}`}
+            <Person key={i} look={look} poses={cast[i + 1][1]} flip gear={gear(look)} far={back(i)} className="ds-friend"
               style={{ '--x': `${at(i)}%`, '--blink': `${1.1 + 0.9 * i}s` }} />
           )).reverse()}
-          {free ? (
-            <Person look={me} poses={cast[0][1]} onTap={think} label="ความคิดของฉัน" gear={gear(me)} className="ds-wonder" style={{ '--x': `${meAt}%`, '--blink': '1.6s' }} />
-          ) : (
-            /* coming in facing right, then a hand out to say hi, then standing easy (on my own, just standing) */
-            <Person look={me} poses={cast[0][1]} onTap={think} label="ความคิดของฉัน" gear={gear(me)}
-              className={`ds-me${seated ? ' ds-seated' : cast[0][1].length > 1 ? '' : ' ds-alone'}`} style={{ '--x': `${meAt}%`, '--blink': '2.4s' }} />
-          )}
+          {/* me, facing them (on a free day, my head tilting now and then, wondering) */}
+          <Person look={me} poses={cast[0][1]} onTap={think} label="ความคิดของฉัน" gear={gear(me)} className={`ds-me${free ? ' ds-wonder' : ''}`}
+            style={{ '--x': `${meAt}%`, '--blink': free ? '1.6s' : '2.4s' }} />
           {!free && n > 0 && <span className="ds-say" style={{ '--x': `${at(0)}%`, '--head': headOf(cast[1][1]) }}>หวัดดี!</span>}
         </>
       )}

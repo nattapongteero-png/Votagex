@@ -24,7 +24,7 @@ export const POSE_BOX = {
   'standing/PointingFingerBW': [-15, 62, 1300, 2607], 'standing/PointingFingerWB': [-16, 62, 1300, 2607],
   'standing/RestingBW': [7, 62, 1274, 2880], 'standing/RestingWB': [7, 62, 1274, 2879],
   'standing/RoboDanceBW': [-146, 62, 1350, 2926], 'standing/RoboDanceWB': [-146, 62, 1350, 2927],
-  'standing/BlazerPantsBW': [-75, 62, 1046, 2826], 'standing/BlazerPantsWB': [-75, 62, 1046, 2827],
+  'standing/BlazerPantsBW': [-75, 62, 1046, 2826], 'standing/BlazerPantsWB': [-75, 62, 1046, 2827], 'standing/PolkaDots': [42, 62, 830, 2837],
   'standing/ShirtPantsBW': [44, 62, 894, 2934], 'standing/ShirtPantsWB': [44, 62, 894, 2934],
   'standing/WalkingBW': [-83, 62, 1035, 2848], 'standing/WalkingWB': [-83, 62, 1035, 2848],
   'sitting/OneLegUpBW': [-72, 62, 1305, 1920], 'sitting/OneLegUpWB': [-72, 62, 1305, 1920],
@@ -108,14 +108,16 @@ export function avatarOf(id) {
   return BLANK;
 }
 
-// true once every piece given has loaded (false again while a new set loads)
+// true once every piece given has loaded (false again while a new set loads; at once if they all have, so a
+// scene of people already seen draws them straight away)
 export function usePeeps(keys) {
   const list = [...new Set(keys)].join('|');
   const [doneFor, setDoneFor] = useState(null);
+  const all = list.split('|').every((k) => !k || treeOf(k));
   useEffect(() => {
     let live = true;
     Promise.all(list.split('|').filter(Boolean).map(load)).then(() => { if (live) setDoneFor(list); }).catch(() => {});
     return () => { live = false; };
   }, [list]);
-  return doneFor === list;
+  return all || doneFor === list;
 }

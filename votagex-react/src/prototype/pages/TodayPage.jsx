@@ -12,6 +12,7 @@ import RecapViewer from '../RecapViewer';
 import PostcardTile from '../Postcard';
 import HomeBar from '../HomeBar';
 import DayScene from '../DayScene';
+import SceneSwap from '../SceneSwap';
 import { avatarOf, lookOf } from '../peeps';
 import { postcardOf, stampOfTrip, useStamps } from '../stamps';
 import { pm25Level, sceneWeather, useWeather, weatherKind } from '../weather';
@@ -379,8 +380,11 @@ export default function TodayPage() {
             <MonthCalendar selected={selected} today={today} onSelect={setSelected} stopsOn={stopsOn} eventsOn={eventsOn} groupsOn={groupsOn} plans={plans} />
           </div>
         ) : (
-          <DayScene scene={scene} notes={notes} weather={sceneWeather(wxToday, !cloud && settings.simWeather)} onTap={() => (scene.kind === 'meet' ? navigate(`/proto/plan/${scene.planId}`)
-            : openSheet(canShuffle ? 'shuffle' : 'createPlan', { date: selected }))} />
+          /* another profile picked: the scene changes over from the side it was picked on */
+          <SceneSwap at={group ? groups.indexOf(group) + 1 : 0} kind={settings.sceneSwap || 'slide'}>
+            <DayScene scene={scene} notes={notes} weather={sceneWeather(wxToday, !cloud && settings.simWeather)} onTap={() => (scene.kind === 'meet' ? navigate(`/proto/plan/${scene.planId}`)
+              : openSheet(canShuffle ? 'shuffle' : 'createPlan', { date: selected }))} />
+          </SceneSwap>
         )}
       </div>
 
