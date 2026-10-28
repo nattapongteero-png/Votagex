@@ -2327,14 +2327,14 @@ body::after { content: ''; position: fixed; inset: 0; z-index: 9998; pointer-eve
 .ds-swap-page .ds { pointer-events: auto; }
 .ds-swap-out .ds, .ds-swap-out .ds * { pointer-events: none !important; }
 .ds-swap-out :is(.ds-say, .ds-note) { visibility: hidden; }
-/* through it, I stay where I am on the page (against the park sliding by), gliding to my place in the next;
-   the friends going walk off to the right; the next ones wait off stage until it's in, then come in from the
-   right, and only then say hi */
-.ds-swap-page .ds-me { transform: translateX(calc(var(--me-shift, 0px) - var(--swap-off, 0px))); }
+/* park to park (.ds-swap-stay), I stay where I am on the page (against the park sliding by), gliding to my place
+   in the next, and the friends going walk off to the right; anywhere else we go with our scene. The next ones
+   wait off stage until it's in, then come in from the right, and only then say hi */
+.ds-swap-stay .ds-me { transform: translateX(calc(var(--me-shift, 0px) - var(--swap-off, 0px))); }
 /* (I'm there all along, so the next scene's me doesn't fade in: its fade's already over, not none, or it would
    start again once the change is done) */
 .ds-swap-coming .ds-me .ds-pose { animation-delay: -1s; }
-.ds-swap-out .ds-friend { transform: translateX(calc(var(--swap-k, 0) * 70cqw - var(--swap-off, 0px))); }
+.ds-swap-stay.ds-swap-out .ds-friend { transform: translateX(calc(var(--swap-k, 0) * 70cqw - var(--swap-off, 0px))); }
 .ds-swap-coming .ds-friend { visibility: hidden; }
 .ds-swap-coming .ds-say { animation: none; }
 .ds-swap-arrived .ds-friend .ds-pose { animation: ds-appear .2s ease-out both, ds-friend-in .55s cubic-bezier(.22, 1, .36, 1) both; }
@@ -2350,7 +2350,9 @@ body::after { content: ''; position: fixed; inset: 0; z-index: 9998; pointer-eve
 .ds-world { position: absolute; left: 0; right: 0; bottom: 0; top: calc(-1 * var(--hp-stage-top, 0px)); overflow: hidden; pointer-events: none; color: #18181B;
   --fade: linear-gradient(to bottom, rgba(0, 0, 0, .16), rgba(0, 0, 0, .16) calc(var(--hp-stage-top, 0px) - 20px), #000 calc(var(--hp-stage-top, 0px) + 50px));
   -webkit-mask-image: var(--fade); mask-image: var(--fade); }
-.ds-person, .ds-prop { position: absolute; left: var(--x); bottom: calc(var(--ground) + var(--far, 0px)); translate: -50% 0; pointer-events: none; }
+.ds-person, .ds-prop { position: absolute; left: var(--x); bottom: calc(var(--ground) + var(--far, 0px) + var(--up, 0px)); translate: -50% 0; pointer-events: none; }
+/* (a bust sat at a table starts off the floor) */
+.ds-person { bottom: calc(var(--ground) + var(--far, 0px) + var(--tall) * var(--lift, 0)); }
 .ds-prop { overflow: visible; }
 .ds-prop.ds-sky { bottom: auto; }
 /* the land (behind the park, under the header's fade): a light tint from the horizon down past our feet, on
@@ -2385,7 +2387,7 @@ body::after { content: ''; position: fixed; inset: 0; z-index: 9998; pointer-eve
 .ds-person.ds-tappable { pointer-events: auto; cursor: pointer; -webkit-tap-highlight-color: transparent; outline: none; }
 .ds-person.ds-tappable:active .ds-pose { scale: .98; transform-origin: 50% 100%; }
 /* the first friend says hi (from their side, to me), once the scene has come in */
-.ds-say { position: absolute; left: calc(var(--x) - 8%); bottom: calc(var(--ground) + var(--tall) * (var(--head, .96) - .16)); translate: -100% 0; padding: 6px 12px;
+.ds-say { position: absolute; left: calc(var(--x) - 8%); bottom: calc(var(--ground) + var(--far, 0px) + var(--tall) * (var(--head, .96) - .16)); translate: -100% 0; padding: 6px 12px;
   border-radius: 16px 16px 4px 16px; background: #fff; font-size: 13px; font-weight: 700; line-height: 1.4; white-space: nowrap; pointer-events: none;
   box-shadow: 0 4px 14px rgba(15, 23, 42, .1); opacity: 0; transform-origin: 100% 100%; animation: ds-say 2.4s .7s both; }
 @keyframes ds-say { 0% { opacity: 0; scale: .4; } 14% { opacity: 1; scale: 1.08; } 22%, 84% { opacity: 1; scale: 1; } 100% { opacity: 0; scale: .92; } }
@@ -2395,7 +2397,7 @@ body::after { content: ''; position: fixed; inset: 0; z-index: 9998; pointer-eve
 /* my thoughts (SpeechNotes, once the hellos are done): a small bubble just over my head, out to the side
    where there's room (towards the friends, or on a free day alone the other way, the signpost's there), two
    dots rising from my head to it. Over our heads, it's never across a face */
-.ds-note { position: absolute; bottom: calc(var(--ground) + var(--tall) * var(--head) + 16px); z-index: 1; animation: ds-note-life 5.2s both; }
+.ds-note { position: absolute; bottom: calc(var(--ground) + var(--far, 0px) + var(--tall) * var(--head) + 16px); z-index: 1; animation: ds-note-life 5.2s both; }
 .ds-note.right { left: calc(var(--x) + 12px); }
 .ds-note.left { left: calc(var(--x) - 12px); translate: -100% 0; }
 /* a thought stays a while, then goes */
@@ -2433,6 +2435,33 @@ body::after { content: ''; position: fixed; inset: 0; z-index: 9998; pointer-eve
 .ds-skytint { position: absolute; left: 0; right: 0; top: 0; bottom: calc(var(--ground) + var(--horizon) - 4px);
   background: linear-gradient(to bottom, var(--sky-top), var(--sky-low)); }
 .ds-wx { position: absolute; inset: 0; pointer-events: none; }
+/* indoors (scenery.jsx Room, Window): the back wall down to a skirting board where it meets the floor, the floor
+   a tint from there down past our feet (as the land is outdoors, fading out under the card sheet's top);
+   warm in a restaurant, soft at home. The day outside is in the window: the sky's colour, the sun or a cloud,
+   rain running down the glass (a storm's harder), fog */
+.ds-at-eat { --wall: #F4E9DA; --floor-far: #E9D8C2; --floor-near: #E2CCB0; }
+/* (at the table we're seen close up: bigger, the floor sunk out of sight under the stage, so the table's edge
+   runs along the foot of the scene and its cloth on down under the card sheet) */
+.homepage.pt-today .ds.ds-at-eat { --tall: 290px; --ground: calc(30px - var(--tall) * .428); }
+.ds-at-home { --wall: #EEF0EA; --floor-far: #E8E2D6; --floor-near: #E1D8C7; }
+.ds-room { position: absolute; inset: 0; background: var(--wall); }
+.ds-room::before { content: ''; position: absolute; left: 0; right: 0; bottom: -22px; height: calc(22px + var(--ground) + var(--wall-at));
+  background: linear-gradient(to bottom, var(--floor-far), var(--floor-near));
+  -webkit-mask-image: linear-gradient(to top, transparent, #000 34px); mask-image: linear-gradient(to top, transparent, #000 34px); }
+.ds-room::after { content: ''; position: absolute; left: 0; right: 0; bottom: calc(var(--ground) + var(--wall-at) - 1px); height: 7px;
+  background: #fff; border-top: 1.5px solid #18181B; border-bottom: 1px solid #18181B; }
+.ds-window { position: absolute; left: var(--x); translate: -50% 0; pointer-events: none; }
+.ds-window-frame { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.ds-pane { position: absolute; overflow: hidden; background: linear-gradient(to bottom, var(--sky-top), var(--sky-low)); }
+.ds-pane-sun { position: absolute; right: 16%; top: 14%; width: 26%; aspect-ratio: 1; border-radius: 50%; background: #FFD964; box-shadow: 0 0 0 1.5px #18181B; }
+.ds-pane-sun.hot { width: 36%; background: #FFF2C4; box-shadow: 0 0 0 1.5px #18181B, 0 0 18px 6px rgba(255, 214, 102, .7); }
+.ds-pane-cloud { position: absolute; left: 4%; top: 30%; width: 70%; color: #18181B; animation: ds-pane-drift 16s ease-in-out infinite alternate; }
+@keyframes ds-pane-drift { to { translate: 24% 0; } }
+.ds-pane-rain { position: absolute; inset: -40px 0 0; background-image: linear-gradient(105deg, transparent 46%, rgba(24, 24, 27, .32) 46% 54%, transparent 54%);
+  background-size: 9px 26px; animation: ds-pane-rain .5s linear infinite; }
+.ds-pane-rain.storm { background-size: 7px 22px; animation-duration: .3s; }
+@keyframes ds-pane-rain { to { background-position: -6px 26px; } }
+.ds-pane-fog { position: absolute; inset: 0; background: rgba(255, 255, 255, .7); }
 /* the sun: yellow, glowing, its rays turning; on a scorcher white-hot and glaring */
 .ds-rays { transform-box: fill-box; transform-origin: center; animation: ds-turn 60s linear infinite; }
 @keyframes ds-turn { to { rotate: 360deg; } }
@@ -2479,9 +2508,9 @@ body::after { content: ''; position: fixed; inset: 0; z-index: 9998; pointer-eve
 .ds-mist-low { bottom: -24px; height: 76px; z-index: 1; opacity: .8; animation-duration: 9s; }
 @keyframes ds-mist { from { translate: -6% 0; } to { translate: 6% 0; } }
 .ds-wx-fog .ds-hills { opacity: .3; }
-.ds-wx-fog .ds-prop:not(.ds-sky) { opacity: .62; }
+.ds-at-park.ds-wx-fog .ds-prop:not(.ds-sky) { opacity: .62; }
 /* the cold: we shiver now and then */
-.ds-cold .ds-person { transform-origin: 50% 100%; animation: ds-shiver 3.4s var(--blink, 0s) infinite; }
+.ds-at-park.ds-cold .ds-person { transform-origin: 50% 100%; animation: ds-shiver 3.4s var(--blink, 0s) infinite; }
 @keyframes ds-shiver { 0%, 84%, 100% { rotate: 0deg; } 86% { rotate: -1.2deg; } 88% { rotate: 1.2deg; } 90% { rotate: -1deg; } 92% { rotate: 1deg; } 94% { rotate: -.4deg; } 96% { rotate: 0deg; } }
 /* what we have about us, drawn on the pose: sweat running a little way down the face (a scarf, still) */
 .ds-sweat path { animation: ds-sweat 2.8s var(--blink, 0s) ease-in infinite both; }

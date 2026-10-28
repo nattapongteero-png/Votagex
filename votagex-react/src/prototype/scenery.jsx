@@ -216,7 +216,162 @@ const shelter = (w) => ({
   ),
 });
 
-const PROPS = { shelter: shelter(4600), butterfly: BUTTERFLY, leaf: LEAF, sun: SUN, tree: TREE, bareTree: BARE_TREE, lamp: LAMP, bench: BENCH, bush: BUSH, cloud: CLOUD, tuft: TUFT, birds: BIRDS, sign: SIGN };
+
+// ===== Indoors: a restaurant (a day out to eat) and home (a day with nothing on), drawn as the park is. A
+// room's back wall stands `far` up the floor; what hangs on it is `up` off the floor (DayScene)
+
+// a table across the front, its top seen from a little above with plates and glasses on it, a cloth down to
+// the floor (the people sat behind it are busts: it hides where they stop). Its top is 75 cm up, `w` across
+const table = (w, seats) => {
+  const plate = (x) => `M${x - 260} 150 a260 62 0 1 0 520 0 a260 62 0 1 0 -520 0 Z`;
+  const food = (x) => `M${x - 150} 146 C${x - 130} 40 ${x + 130} 40 ${x + 150} 146 Z`;
+  const glass = (x) => `M${x - 66} -230 L${x + 66} -230 L${x + 52} 150 L${x - 52} 150 Z`;
+  const plates = seats.map((f) => Math.round(w * f));
+  const glasses = seats.length > 1 ? [Math.round(w * 0.36), Math.round(w * 0.64)] : [Math.round(w * 0.8)];
+  return {
+    box: [0, -260, w, 1760],
+    art: (
+      <>
+        <path {...shape} d={`M140 40 H${w - 140} L${w} 240 H0 Z`} />
+        {plates.map((x) => <g key={x}><path {...shape} d={plate(x)} /><path {...shape} d={food(x)} /></g>)}
+        {glasses.map((x) => <g key={x}><path {...shape} d={glass(x)} /><path {...line} strokeWidth={14} d={`M${x - 58} -80 H${x + 58}`} /></g>)}
+        <path {...shape} d={`M0 240 H${w} L${w - 30} 1500 H30 Z`} />
+        <path {...line} d={Array.from({ length: Math.round(w / 520) - 1 }, (_, i) => {
+          const x = Math.round((w / Math.round(w / 520)) * (i + 1));
+          return `M${x} 330 C${x + 26} 760 ${x - 26} 1100 ${x + 10} 1470`;
+        }).join(' ')} />
+      </>
+    ),
+  };
+};
+
+// a lamp hung over the table on a long cord, from the ceiling out of sight above (stood by its shade's foot)
+const PENDANT = {
+  box: [0, 0, 900, 3980],
+  art: (
+    <>
+      <path {...line} d="M450 0 V3500" />
+      <path {...shape} d="M150 3900 C150 3630 300 3500 450 3500 C600 3500 750 3630 750 3900 Z" />
+      <path {...line} d="M110 3900 H790" />
+      <path {...shape} d="M385 3900 A65 65 0 0 0 515 3900" />
+    </>
+  ),
+};
+
+// a blackboard of the day's dishes, chalked
+const BOARD = {
+  box: [0, 0, 1300, 1600],
+  art: (
+    <>
+      <path {...shape} d="M40 40 H1260 V1560 H40 Z" />
+      <path fill={INK} d="M130 130 H1170 V1470 H130 Z" />
+      <path {...line} stroke="#fff" strokeWidth={30} d="M330 330 H970" />
+      <path {...line} stroke="#fff" strokeWidth={18} d="M260 620 H760 M260 820 H700 M260 1020 H780 M260 1220 H640 M940 620 H1040 M940 820 H1040 M940 1020 H1040 M940 1220 H1040" />
+    </>
+  ),
+};
+
+// a pot plant, big leaves on long stems (a room's corners, as the trees frame the park)
+const leaf = (bx, by, tx, ty, w) => {
+  const dx = tx - bx; const dy = ty - by; const l = Math.hypot(dx, dy); const nx = -dy / l; const ny = dx / l;
+  const p = (a, k) => `${Math.round(bx + dx * a + nx * w * k)} ${Math.round(by + dy * a + ny * w * k)}`;
+  return `M${bx} ${by} C${p(0.25, 1)} ${p(0.8, 0.7)} ${tx} ${ty} C${p(0.8, -0.7)} ${p(0.25, -1)} ${bx} ${by} Z`;
+};
+const LEAVES = [[900, 1560, 330, 640, 240], [900, 1560, 640, 260, 230], [900, 1560, 1120, 220, 240], [900, 1560, 1500, 620, 240], [900, 1560, 1600, 1180, 200], [900, 1560, 200, 1150, 200]];
+const PLANT = {
+  box: [0, 0, 1800, 2400],
+  art: (
+    <>
+      {LEAVES.map(([bx, by, tx, ty, w]) => {
+        const mx = Math.round(bx + (tx - bx) * 0.35); const my = Math.round(by + (ty - by) * 0.35);
+        return <g key={`${tx}${ty}`}><path {...line} d={`M${bx} ${by} L${mx} ${my}`} /><path {...shape} d={leaf(mx, my, tx, ty, w)} /><path {...line} strokeWidth={14} d={`M${mx} ${my} L${Math.round(mx + (tx - mx) * 0.8)} ${Math.round(my + (ty - my) * 0.8)}`} /></g>;
+      })}
+      <path {...shape} d="M600 1700 H1200 L1130 2400 H670 Z" />
+      <path {...shape} d="M540 1600 H1260 V1720 H540 Z" />
+    </>
+  ),
+};
+
+// home: a sofa for three, seen from a little above (its seat 40 cm up), a standard lamp, a picture, a rug
+const SOFA = {
+  box: [0, 0, 3800, 1600],
+  art: (
+    <>
+      <path {...shape} d="M300 300 C300 200 380 160 480 160 H3320 C3420 160 3500 200 3500 300 V900 H300 Z" />
+      <path {...line} d="M1400 230 V820 M2400 230 V820" />
+      <path {...shape} d="M300 820 H3500 L3560 960 H240 Z" />
+      <path {...shape} d="M240 960 H3560 V1420 H240 Z" />
+      <path {...line} d="M1400 820 L1390 1420 M2400 820 L2410 1420" />
+      <path {...shape} d="M60 700 C60 600 140 560 240 560 H380 C460 560 520 620 520 700 V1440 H60 Z" />
+      <path {...shape} d="M3740 700 C3740 600 3660 560 3560 560 H3420 C3340 560 3280 620 3280 700 V1440 H3740 Z" />
+      <path fill={INK} d="M150 1440 h110 l-14 160 h-82 Z M3540 1440 h110 l-14 160 h-82 Z" />
+    </>
+  ),
+};
+const FLOOR_LAMP = {
+  box: [0, 0, 1000, 2800],
+  art: (
+    <>
+      <path fill={INK} d="M486 900 h28 v1860 h-28 Z" />
+      <path {...shape} d="M270 2800 Q500 2680 730 2800 Z" />
+      <path {...shape} d="M230 960 L770 960 L650 420 L350 420 Z" />
+    </>
+  ),
+};
+const PICTURE = {
+  box: [0, 0, 1000, 800],
+  art: (
+    <>
+      <path {...shape} d="M30 30 H970 V770 H30 Z" />
+      <path {...line} d="M120 120 H880 V680 H120 Z" />
+      <path {...line} d="M170 640 L400 360 L540 520 L640 420 L830 640" />
+      <circle {...line} cx="700" cy="250" r="60" />
+    </>
+  ),
+};
+const RUG = {
+  box: [0, 0, 4400, 600],
+  art: (
+    <>
+      <path {...shape} d="M300 100 H4100 C4300 100 4400 200 4400 300 C4400 400 4300 500 4100 500 H300 C100 500 0 400 0 300 C0 200 100 100 300 100 Z" />
+      <path {...line} strokeWidth={14} d="M380 180 H4020 C4170 180 4250 240 4250 300 C4250 360 4170 420 4020 420 H380 C230 420 150 360 150 300 C150 240 230 180 380 180 Z" />
+    </>
+  ),
+};
+
+// the room's back wall and floor: the wall down to where it meets the floor (a skirting board), the floor a
+// tint from there down past our feet, as the land is outdoors
+export function Room({ wallAt }) {
+  return <div className="ds-room" style={{ '--wall-at': `${wallAt}px` }} />;
+}
+
+// a window in the back wall, the day outside in it: the sky's colour, the sun or a cloud, rain running down
+// the glass, fog. `size` its scale by how far back it is; `up` its sill off the floor (people's units)
+const WIN = [2600, 2000, 120]; // w, h, frame
+export function Window({ x, far, size, up, weather }) {
+  const [w, h, f] = WIN;
+  const u = (n) => `calc(var(--tall) * ${(n * size) / 3000})`;
+  const wet = weather.kind === 'rain' || weather.kind === 'storm';
+  const cloudy = wet || weather.kind === 'cloud' || weather.kind === 'partly';
+  const sunny = !wet && weather.kind !== 'fog' && weather.kind !== 'cloud';
+  return (
+    <div className="ds-window" style={{ '--x': x, bottom: `calc(var(--ground) + ${far}px + ${u(up)})`, width: u(w + 240), height: u(h + 140) }}>
+      <div className="ds-pane" style={{ left: `${(120 + f) / (w + 240) * 100}%`, right: `${(120 + f) / (w + 240) * 100}%`, top: `${(f / (h + 140)) * 100}%`, bottom: `${((140 + f) / (h + 140)) * 100}%` }}>
+        {sunny && <i className={`ds-pane-sun${weather.hot ? ' hot' : ''}`} />}
+        {cloudy && <svg className="ds-pane-cloud" viewBox={CLOUD.box.join(' ')}>{CLOUD.art}</svg>}
+        {wet && <i className={`ds-pane-rain${weather.kind === 'storm' ? ' storm' : ''}`} />}
+        {weather.kind === 'fog' && <i className="ds-pane-fog" />}
+      </div>
+      <svg className="ds-window-frame" viewBox={`-120 0 ${w + 240} ${h + 140}`} preserveAspectRatio="none">
+        <path {...shape} fillRule="evenodd" d={`M0 0 H${w} V${h} H0 Z M${f} ${f} H${w / 2 - 30} V${h - f} H${f} Z M${w / 2 + 30} ${f} H${w - f} V${h - f} H${w / 2 + 30} Z`} />
+        <path {...shape} d={`M-110 ${h} H${w + 110} V${h + 120} H-110 Z`} />
+      </svg>
+    </div>
+  );
+}
+
+const PROPS = { shelter: shelter(4600), butterfly: BUTTERFLY, leaf: LEAF, sun: SUN, tree: TREE, bareTree: BARE_TREE, lamp: LAMP, bench: BENCH, bush: BUSH, cloud: CLOUD, tuft: TUFT, birds: BIRDS, sign: SIGN,
+  tableLong: table(4200, [0.22, 0.5, 0.78]), tableSmall: table(1800, [0.42]), pendant: PENDANT, board: BOARD, plant: PLANT, sofa: SOFA, floorLamp: FLOOR_LAMP, picture: PICTURE, rug: RUG };
 
 // one prop at --x (its centre), feet on the ground line; `size` scales it from life size
 export function Prop({ kind, x, size = 1, className = '', style }) {

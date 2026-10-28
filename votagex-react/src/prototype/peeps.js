@@ -17,7 +17,7 @@ export const treeOf = (key) => (loaded(key) ? cache.get(key) : null);
 export const piecesOf = (look, pose, face) => [pose, look.hair && `hair/${look.hair}`, `face/${face || look.face}`,
   look.beard && look.beard !== 'None' && `facialHair/${look.beard}`, look.glasses && look.glasses !== 'None' && `accessories/${look.glasses}`].filter(Boolean);
 
-// each full-body pose's box in the library's units with a short-haired head on it, [x, y, width, height]
+// each pose's box (full-body, or a bust) in the library's units with a short-haired head on it, [x, y, width, height]
 // (measured from the drawings), to stand people on one line at one size
 export const POSE_BOX = {
   'standing/CrossedArmsBW': [-199, 62, 1071, 2871], 'standing/CrossedArmsWB': [-199, 62, 1071, 2871], 'standing/EasingBW': [-190, 62, 1075, 2884], 'standing/EasingWB': [-190, 62, 1075, 2884],
@@ -28,6 +28,10 @@ export const POSE_BOX = {
   'standing/ShirtPantsBW': [44, 62, 894, 2934], 'standing/ShirtPantsWB': [44, 62, 894, 2934],
   'standing/WalkingBW': [-83, 62, 1035, 2848], 'standing/WalkingWB': [-83, 62, 1035, 2848],
   'sitting/OneLegUpBW': [-72, 62, 1305, 1920], 'sitting/OneLegUpWB': [-72, 62, 1305, 1920],
+  'bust/ButtonShirt': [24, 62, 792, 1129], 'bust/StripedShirt': [30, 62, 761, 1102], 'bust/Dress': [16, 62, 786, 1123],
+  'bust/Hoodie': [2, 62, 813, 1133], 'bust/ShirtCoat': [37, 62, 770, 1129], 'bust/BlazerBlackTee': [38, 62, 792, 1111],
+  'bust/Sweater': [31, 62, 821, 1129], 'bust/Turtleneck': [14, 62, 817, 1123], 'bust/FurJacket': [12, 62, 797, 1126],
+  'bust/Shirt': [19, 62, 783, 1103], 'bust/SportyShirt': [14, 62, 806, 1118], 'bust/Selena': [-11, 62, 822, 1122], 'bust/Coffee': [24, 62, 784, 1098],
   'sitting/MediumBW': [-285, 62, 1322, 1833], 'sitting/MediumWB': [-285, 62, 1322, 1833],
   'sitting/HandsBackBW': [-88, 62, 1258, 1807], 'sitting/HandsBackWB': [-88, 62, 1258, 1807], 'sitting/ClosedLegBW': [-2, 62, 1347, 1966], 'sitting/ClosedLegWB': [-2, 62, 1347, 1966], 'sitting/CrossedLegs': [89, 62, 1421, 2243],
 };

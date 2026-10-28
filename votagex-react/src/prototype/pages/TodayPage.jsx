@@ -276,7 +276,9 @@ export default function TodayPage() {
       return group ? { kind: 'free', me, friends: together([]), ask: 'ว่างกันนะ ไปไหนดี?', label: `${group.name} วันนี้ว่าง ไปไหนดี` }
         : { kind: 'free', me, friends: [], ask: 'ว่างนะ ไปไหนดี?', label: 'วันนี้ว่าง ไปไหนดี' };
     }
-    return { kind: 'meet', me, label: next.p.name, planId: next.p.id, friends: together(next.p.members) };
+    // (where to: the next stop still to come, else the last; its kind sets the scene, a restaurant or the park)
+    const stop = next.stops.find((s) => !s.skip && (s.time || '99') >= nowHM) || next.stops[next.stops.length - 1];
+    return { kind: 'meet', me, label: next.p.name, planId: next.p.id, friends: together(next.p.members), cat: stop?.cat };
   })();
 
   // past trips to look back on (this page's own, with photos), the one from this day in a past year (±3 days)

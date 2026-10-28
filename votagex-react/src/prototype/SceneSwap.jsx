@@ -8,9 +8,10 @@ const meAt = (box, page) => box?.querySelector(`${page} .ds-me`)?.offsetLeft;
 
 // The day scene (DayScene.jsx), changing over to the next when another profile is picked: the park slides
 // across (Remotion's slide, @remotion/transitions, driven here frame by frame as its TransitionSeries would),
-// in from the side the profile was picked on. I stay where I am on the page through it, gliding to my place in
-// the next; the friends of the one going walk off to the right as it goes; once the next is in, its friends
-// come in from the right, and only then say hi (CSS, .ds-swap-*). The next waits, unseen, until its people are
+// in from the side the profile was picked on. From one day in the park to another, I stay where I am on the
+// page through it, gliding to my place in the next, and the friends of the one going walk off to the right as
+// it goes (somewhere else, a table or a sofa, we go with our scene: a bust or someone sat down can't walk off
+// without it); once the next is in, its friends come in from the right, and only then say hi (CSS, .ds-swap-*). The next waits, unseen, until its people are
 // drawn (onReady: at once if they've been seen before, never more than 0.7 s). Anything else (the weather
 // coming in, a new note) changes the scene on show in place. With reduced motion, it just changes.
 export default function SceneSwap({ at, children }) {
@@ -20,6 +21,7 @@ export default function SceneSwap({ at, children }) {
   const [out, setOut] = useState(null); // { at, el, from }: the one going
   const [p, setP] = useState(1); // how far the change has come, 0–1
   const [shift, setShift] = useState(0); // px from where I'll be to where I was
+  const [stay, setStay] = useState(false); // park to park: I stay put, the friends going walk off
   const [arrived, setArrived] = useState(false); // the change just done: the next one's friends come in
   const frame = useRef(0);
   const run = useRef(0); // which change is going (a quick second pick starts another)
@@ -39,6 +41,7 @@ export default function SceneSwap({ at, children }) {
     waiting.current = 0;
     const was = meAt(clip.current, '.ds-swap-out'); const will = meAt(clip.current, '.ds-swap-coming');
     setShift(was != null && will != null ? was - will : 0);
+    setStay(Boolean(clip.current?.querySelector('.ds-swap-out .ds-at-park') && clip.current?.querySelector('.ds-swap-coming .ds-at-park')));
     const t0 = performance.now();
     const tick = (t) => {
       if (run.current !== id) return;
@@ -88,14 +91,14 @@ export default function SceneSwap({ at, children }) {
     <div className="ds-swap">
       <div className="ds-swap-clip" ref={clip}>
         <Slide key={`s${shown.at}`} presentationDirection="entering" presentationProgress={out ? p : 1} passedProps={props}>
-          <div className={`ds-swap-page${out ? ' ds-swap-coming' : arrived ? ' ds-swap-arrived' : ''}`}
+          <div className={`ds-swap-page${out ? ` ds-swap-coming${stay ? ' ds-swap-stay' : ''}` : arrived ? ' ds-swap-arrived' : ''}`}
             style={out ? { '--swap-off': `${side * (1 - p) * width}px`, '--me-shift': `${shift * (1 - p)}px` } : undefined}>
             {cloneElement(children, { onReady })}
           </div>
         </Slide>
         {out && (
           <Slide key={`s${out.at}`} presentationDirection="exiting" presentationProgress={p} passedProps={props}>
-            <div className="ds-swap-page ds-swap-out"
+            <div className={`ds-swap-page ds-swap-out${stay ? ' ds-swap-stay' : ''}`}
               style={{ '--swap-off': `${-side * p * width}px`, '--swap-k': 1 - Math.cbrt(1 - p), '--me-shift': `${-shift * p}px` }}>{out.el}</div>
           </Slide>
         )}
