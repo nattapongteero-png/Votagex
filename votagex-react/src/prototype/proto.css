@@ -2365,18 +2365,8 @@ body::after { content: ''; position: fixed; inset: 0; z-index: 9998; pointer-eve
 .homepage.pt-today .ds.ds-at-home { --ground: calc(var(--shown) * .618 - 2px - var(--tall) * .67); }
 .ds-prop { overflow: visible; }
 .ds-prop.ds-sky { bottom: auto; }
-/* the land (behind the park, under the header's fade): a light tint from the horizon down past our feet, on
-   under the top of the card sheet, fading out there */
-.ds-land { position: absolute; left: 0; right: 0; bottom: -22px; height: calc(22px + var(--ground) + var(--horizon) - 1px); pointer-events: none;
-  background: linear-gradient(to bottom, var(--land-far), var(--land-near));
-  -webkit-mask-image: linear-gradient(to top, transparent, #000 34px); mask-image: linear-gradient(to top, transparent, #000 34px); }
-.ds-hills { position: absolute; left: 0; bottom: calc(var(--ground) + var(--horizon) - 2px); width: 100%; height: 26px; overflow: visible; color: #18181B; pointer-events: none; }
-.ds-hills path { stroke-width: 1.2px; }
-.ds-hills .ds-land-fill { fill: var(--land-far); stroke: none; }
 .ds-pose { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; color: #18181B; }
 /* the park, alive a little: the leaves sway */
-.ds-leaves { transform-box: fill-box; transform-origin: 50% 100%; animation: ds-sway 8s ease-in-out infinite; }
-@keyframes ds-sway { 0%, 100% { rotate: 0deg; } 50% { rotate: .8deg; } }
 /* clouds and birds go across, off one side and in at the other (still, where they're placed, with reduced
    motion) */
 @media (prefers-reduced-motion: no-preference) {
@@ -2434,51 +2424,22 @@ body::after { content: ''; position: fixed; inset: 0; z-index: 9998; pointer-eve
    the horizon is all but the land's there, the land a touch deeper nearer us, so there's never a line of two
    colours meeting; each weather keeps its own light. The lines stay ink. The rain, heat and fog in the air are
    SceneWeather.jsx; the rest here ===== */
-.ds { --sky-top: #E7EEF5; --sky-low: #EBEFE7; --land-far: #EBEFE7; --land-near: #E4E9DE; } /* a fair day with some cloud */
-.ds.ds-wx-sun { --sky-top: #DFEBF6; --sky-low: #EAEFE4; --land-far: #EAEFE4; --land-near: #E2EAD9; }
-.ds.ds-wx-cloud, .ds.ds-wx-snow { --sky-top: #E3E7EC; --sky-low: #E7EAE6; --land-far: #E7EAE6; --land-near: #DFE4DE; }
-.ds.ds-wx-fog { --sky-top: #EDEFF0; --sky-low: #EDEFEE; --land-far: #EDEFEE; --land-near: #E6E9E8; }
-.ds.ds-wx-rain { --sky-top: #E5EAF0; --sky-low: #E2E8EB; --land-far: #E2E8EB; --land-near: #DCE3E7; }
-.ds.ds-wx-storm { --sky-top: #D7DEE6; --sky-low: #D9DFE4; --land-far: #D9DFE4; --land-near: #D2D9DE; }
-.ds.ds-hot { --sky-top: #FCF3DF; --sky-low: #F4EAD4; --land-far: #F4EAD4; --land-near: #EEDFC3; }
-.ds.ds-cold { --sky-top: #E4ECF5; --sky-low: #E9EEF1; --land-far: #E9EEF1; --land-near: #E1E8EC; }
+.ds { --sky-top: #E7EEF5; --sky-low: #EBEFE7; } /* a fair day with some cloud */
+.ds.ds-wx-sun { --sky-top: #DFEBF6; --sky-low: #EAEFE4; }
+.ds.ds-wx-cloud, .ds.ds-wx-snow { --sky-top: #E3E7EC; --sky-low: #E7EAE6; }
+.ds.ds-wx-fog { --sky-top: #EDEFF0; --sky-low: #EDEFEE; }
+.ds.ds-wx-rain { --sky-top: #E5EAF0; --sky-low: #E2E8EB; }
+.ds.ds-wx-storm { --sky-top: #D7DEE6; --sky-low: #D9DFE4; }
+.ds.ds-hot { --sky-top: #FCF3DF; --sky-low: #F4EAD4; }
+.ds.ds-cold { --sky-top: #E4ECF5; --sky-low: #E9EEF1; }
 .ds-skytint { position: absolute; left: 0; right: 0; top: 0; bottom: calc(var(--ground) + var(--horizon) - 4px);
   background: linear-gradient(to bottom, var(--sky-top), var(--sky-low)); }
 .ds-wx { position: absolute; inset: 0; pointer-events: none; }
-/* the place in perspective (scenery.jsx Space): a room's planes or the park's path, drawn in px off the stage's
-   measure (.ds-probe: where the ground is, how tall a person is), the floor fading out under the card sheet's
-   top as the land does. Indoors warm in a restaurant, soft at home, the side walls a shade darker than the back,
-   the light coming from in front; what's on a plane (tiles, boards, slats, the paving) fainter than its edges.
-   The day outside is in the glass: the sky's colour, the sun or a cloud, rain running down it (a storm's
-   harder), fog */
-.ds-space { position: absolute; inset: 0; pointer-events: none;
-  -webkit-mask-image: linear-gradient(to top, transparent, #000 34px); mask-image: linear-gradient(to top, transparent, #000 34px); }
+/* (Scene3D's probe: where the ground is, how tall a person is) */
 .ds-probe { position: absolute; left: 0; bottom: var(--ground); width: 1px; height: var(--tall); visibility: hidden; }
-.ds-space-art { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
-.ds-texture { stroke-opacity: .34; }
-.ds-path { fill: rgba(255, 255, 255, .55); }
-.ds-plane-wall { fill: var(--wall); }
-.ds-plane-side { fill: var(--wall-side); }
-.ds-plane-ceiling { fill: var(--ceiling); }
-.ds-floor-far { stop-color: var(--floor-far); }
-.ds-floor-near { stop-color: var(--floor-near); }
-.ds-rug { fill: #FBF8F2; }
-.ds-glass { position: absolute; overflow: hidden; background: linear-gradient(to bottom, var(--sky-top), var(--sky-low)); }
-.ds-glass .ds-pane-sun { right: auto; }
-.ds-at-eat { --wall: #F4E9DA; --wall-side: #EEDFCB; --ceiling: #EADBC6; --floor-far: #E9D8C2; --floor-near: #E2CCB0; }
 /* (at the table we're seen close up, bigger, the table's edge along the foot of the scene and its cloth on down
    under the card sheet) */
 .homepage.pt-today .ds.ds-at-eat { --tall: 290px; --ground: calc(var(--shown) * .382 - 2px - var(--tall) * .676); }
-.ds-at-home { --wall: #EEF0EA; --wall-side: #E5E9E1; --ceiling: #F4F5F1; --floor-far: #E8E2D6; --floor-near: #E1D8C7; }
-.ds-pane-sun { position: absolute; right: 16%; top: 14%; width: 26%; aspect-ratio: 1; border-radius: 50%; background: #FFD964; box-shadow: 0 0 0 1.5px #18181B; }
-.ds-pane-sun.hot { width: 36%; background: #FFF2C4; box-shadow: 0 0 0 1.5px #18181B, 0 0 18px 6px rgba(255, 214, 102, .7); }
-.ds-pane-cloud { position: absolute; left: 4%; top: 30%; width: 70%; color: #18181B; animation: ds-pane-drift 16s ease-in-out infinite alternate; }
-@keyframes ds-pane-drift { to { translate: 24% 0; } }
-.ds-pane-rain { position: absolute; inset: -40px 0 0; background-image: linear-gradient(105deg, transparent 46%, rgba(24, 24, 27, .32) 46% 54%, transparent 54%);
-  background-size: 9px 26px; animation: ds-pane-rain .5s linear infinite; }
-.ds-pane-rain.storm { background-size: 7px 22px; animation-duration: .3s; }
-@keyframes ds-pane-rain { to { background-position: -6px 26px; } }
-.ds-pane-fog { position: absolute; inset: 0; background: rgba(255, 255, 255, .7); }
 /* the sun: yellow, glowing, its rays turning; on a scorcher white-hot and glaring */
 .ds-rays { transform-box: fill-box; transform-origin: center; animation: ds-turn 60s linear infinite; }
 @keyframes ds-turn { to { rotate: 360deg; } }
@@ -2499,18 +2460,10 @@ body::after { content: ''; position: fixed; inset: 0; z-index: 9998; pointer-eve
 .ds-wx-rain .ds-cloud-under { stop-color: #CFD6DE; }
 .ds-wx-storm .ds-cloud-top { stop-color: #E3E8ED; }
 .ds-wx-storm .ds-cloud-under { stop-color: #B9C2CC; }
-.ds-wx-storm .ds-leaves { animation: ds-sway-hard 2.4s ease-in-out infinite; }
-@keyframes ds-sway-hard { 0%, 100% { rotate: -1.2deg; } 50% { rotate: 2.2deg; } }
-.ds-wx-cloud .ds-leaves { animation-duration: 3.6s; }
 /* birds beating their wings as they cross; butterflies looping about the bushes */
 .ds-wing { transform-box: fill-box; transform-origin: 50% 70%; animation: ds-flap .42s ease-in-out infinite alternate; }
 .ds-wing-2 { animation-delay: -.2s; }
 @keyframes ds-flap { to { scale: 1 .3; } }
-.ds-bfly { animation: ds-bfly 9s ease-in-out infinite; }
-.ds-bfly-1 { animation-duration: 11s; animation-direction: reverse; }
-@keyframes ds-bfly { 0%, 100% { translate: -50% 0; } 25% { translate: calc(-50% + 26px) -20px; } 50% { translate: calc(-50% + 6px) -38px; } 75% { translate: calc(-50% - 22px) -16px; } }
-.ds-flutter { transform-box: fill-box; transform-origin: center; animation: ds-flutter .2s ease-in-out infinite alternate; }
-@keyframes ds-flutter { to { scale: .3 1; } }
 /* leaves falling from the trees in the cold */
 .ds-falling { opacity: 0; animation: ds-fall 8.5s ease-in var(--delay, 0s) infinite; }
 @keyframes ds-fall { 0% { opacity: 0; translate: -50% 0; rotate: 0deg; } 8%, 88% { opacity: 1; } 50% { translate: calc(-50% + 20px) 28cqh; rotate: 170deg; }
@@ -2524,8 +2477,6 @@ body::after { content: ''; position: fixed; inset: 0; z-index: 9998; pointer-eve
 .ds-mist-2 { bottom: calc(var(--ground) + 26px); height: 80px; animation-duration: 11s; }
 .ds-mist-low { bottom: -24px; height: 76px; z-index: 1; opacity: .8; animation-duration: 9s; }
 @keyframes ds-mist { from { translate: -6% 0; } to { translate: 6% 0; } }
-.ds-wx-fog .ds-hills { opacity: .3; }
-.ds-at-park.ds-wx-fog .ds-prop:not(.ds-sky) { opacity: .62; }
 /* the cold: we shiver now and then */
 .ds-at-park.ds-cold .ds-person { transform-origin: 50% 100%; animation: ds-shiver 3.4s var(--blink, 0s) infinite; }
 @keyframes ds-shiver { 0%, 84%, 100% { rotate: 0deg; } 86% { rotate: -1.2deg; } 88% { rotate: 1.2deg; } 90% { rotate: -1deg; } 92% { rotate: 1deg; } 94% { rotate: -.4deg; } 96% { rotate: 0deg; } }

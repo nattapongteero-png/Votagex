@@ -153,4 +153,79 @@ export function glass(parent, at) {
   return g;
 }
 
+// a park tree, round-crowned: a tapering trunk forking into the crown, the leaves in clumps (smooth, so only
+// their outlines are drawn, as the people's hair is); bare in the cold, its branches showing. `seed` varies it
+export function tree(parent, at, { size = 1, cold = false, trunk = '#D8C3A5', leaf = '#D9E6C9', seed = 1 } = {}) {
+  const g = group(parent, at, seed * 1.7);
+  g.scale.setScalar(size);
+  const bark = inkMaterial(trunk);
+  add(g, new THREE.CylinderGeometry(0.14, 0.24, 3.0, 12), bark, [0, 1.5, 0]);
+  let r = seed * 7919;
+  const rand = () => { r = (r * 16807) % 2147483647; return r / 2147483647; };
+  const limbs = [[0.9, 0.35], [-0.8, -0.3], [0.2, -0.9], [-0.3, 0.85]];
+  limbs.forEach(([x, z]) => {
+    const l = add(g, new THREE.CylinderGeometry(0.05, 0.11, 1.9, 8), bark, [x * 0.45, 3.6, z * 0.45]);
+    l.rotation.set(z * 0.55, 0, -x * 0.55);
+  });
+  if (cold) {
+    limbs.forEach(([x, z]) => [0.6, -0.5].forEach((k) => {
+      const t = add(g, new THREE.CylinderGeometry(0.015, 0.04, 1.1, 6), bark, [x * 0.95 + k * z * 0.3, 4.6, z * 0.95 - k * x * 0.3]);
+      t.rotation.set(z * 0.5 + k * 0.4, 0, -x * 0.5 + k * 0.3);
+    }));
+    return g;
+  }
+  const crown = inkMaterial(leaf, { hatch: 0.35 });
+  const clumps = [[0, 5.3, 0, 1.55], [1.15, 4.7, 0.3, 1.15], [-1.1, 4.8, -0.2, 1.2], [0.2, 4.5, 1.05, 1.05], [-0.3, 4.6, -1.05, 1.05], [0.7, 5.9, -0.4, 0.95], [-0.6, 5.8, 0.5, 0.9]];
+  clumps.forEach(([x, y, z, s]) => add(g, new THREE.IcosahedronGeometry(s * (0.92 + rand() * 0.16), 2), crown, [x, y, z]));
+  return g;
+}
+
+// a park bench, slatted, on iron legs (seat 45 cm up), facing +z unless turned
+export function bench(parent, at, turn, { wood = '#D9B98F', iron = '#2E2E33' } = {}) {
+  const g = group(parent, at, turn);
+  const w = inkMaterial(wood); const i = inkMaterial(iron, { hatch: 0 });
+  [-0.12, 0.02, 0.16].forEach((z) => add(g, box(1.7, 0.035, 0.1), w, [0, 0.45, z]));
+  [0.62, 0.76].forEach((y) => add(g, box(1.7, 0.09, 0.03), w, [0, y, -0.2 - (y - 0.62) * 0.3]));
+  [-0.72, 0.72].forEach((x) => {
+    add(g, box(0.05, 0.45, 0.05), i, [x, 0.225, 0.14]);
+    add(g, box(0.05, 0.85, 0.05), i, [x, 0.425, -0.18]);
+    add(g, box(0.05, 0.04, 0.4), i, [x, 0.43, -0.02]);
+  });
+  return g;
+}
+
+// a park lamp: a slim post, a lantern on top (3.4 m)
+export function lamp(parent, at, { iron = '#3A3A40', glow = '#FFF6D8' } = {}) {
+  const g = group(parent, at);
+  const i = inkMaterial(iron, { hatch: 0 });
+  add(g, new THREE.CylinderGeometry(0.06, 0.09, 0.4, 10), i, [0, 0.2, 0]);
+  add(g, rod(0.035, 3.0, 8), i, [0, 1.7, 0]);
+  add(g, new THREE.CylinderGeometry(0.11, 0.16, 0.36, 6), inkMaterial(glow, { hatch: 0 }), [0, 3.3, 0]);
+  add(g, new THREE.ConeGeometry(0.22, 0.18, 6), i, [0, 3.57, 0]);
+  return g;
+}
+
+// a bush: a few clumps, low and wide
+export function bush(parent, at, { size = 1, leaf = '#D3E2C3', seed = 2 } = {}) {
+  const g = group(parent, at, seed);
+  g.scale.set(size, size * 0.8, size);
+  const m = inkMaterial(leaf);
+  [[0, 0.45, 0, 0.62], [0.55, 0.35, 0.1, 0.45], [-0.5, 0.38, -0.05, 0.5], [0.15, 0.32, 0.45, 0.4]].forEach(([x, y, z, s]) => add(g, new THREE.IcosahedronGeometry(s, 2), m, [x, y, z]));
+  return g;
+}
+
+// a sala: a pavilion to sit out the rain in, four posts under a hipped tile roof, a bench along the back
+export function sala(parent, at, { w = 3.6, d = 3.0, eave = 2.5, roof = '#E3C3AE', post = '#E9DCC8', wood = '#D9B98F' } = {}) {
+  const g = group(parent, at);
+  const p = inkMaterial(post);
+  [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([x, z]) => add(g, box(0.16, eave, 0.16), p, [x * (w / 2 - 0.1), eave / 2, z * (d / 2 - 0.1)]));
+  add(g, box(w + 0.1, 0.18, d + 0.1), inkMaterial(wood), [0, eave + 0.09, 0]);
+  const top = add(g, new THREE.ConeGeometry(Math.hypot(w, d) / 2 + 0.5, 1.3, 4, 1), inkMaterial(roof, { grid: [0, 0.22], axes: 'xy' }), [0, eave + 0.18 + 0.65, 0]);
+  top.rotation.y = Math.PI / 4;
+  top.scale.set(1, 1, d / w);
+  add(g, box(w - 0.4, 0.06, 0.4), inkMaterial(wood), [0, 0.45, -d / 2 + 0.3]);
+  add(g, box(w - 0.4, 0.45, 0.06), inkMaterial(wood), [0, 0.225, -d / 2 + 0.12]);
+  return g;
+}
+
 export { box, rod, turned };

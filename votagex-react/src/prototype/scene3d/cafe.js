@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { inkMaterial } from './ink';
+import { glassPane, lights, sky, streetTree } from './outdoors';
 import { add, box, budVase, chair, cup, glass, group, inFront, pendant, plant, plate, rod, roundTable, smallPlant, stool } from './parts';
 
 // Out to eat: a café, deep and narrow as a shophouse one is, seen from our table at the front. Laid out as a
@@ -22,74 +23,14 @@ import { add, box, budVase, chair, cup, glass, group, inFront, pendant, plant, p
 const ROOM = { left: -2.5, right: 2.5, back: -11, high: 2.9 };
 const T = { wall: '#F5ECDF', side: '#F1E5D3', floor: '#EAD9C3', wood: '#D9B98F', woodPale: '#E6CFAE', white: '#FFFFFF', dark: '#2E2E33',
   metal: '#DFE1E4', cloth: '#FBF8F2', street: '#E3E1DC', facade: ['#EDE6DA', '#E4E7E9', '#EFE2D6', '#E7E3EC'] };
-// the sky out of the window, by the weather: [top, toward the horizon]
-const SKY = {
-  sun: ['#BFD9F2', '#E8F1F8'], partly: ['#CFE0EF', '#ECF2F6'], cloud: ['#D5DAE0', '#E8EAEC'], rain: ['#BAC3CC', '#D6DCE1'],
-  storm: ['#9AA5B1', '#C2CAD2'], fog: ['#E8EBEC', '#F0F1F1'], snow: ['#D5DAE0', '#E8EAEC'], hot: ['#F6E7C4', '#FBF3E2'],
-};
-
-function sky(kind) {
-  const [top, low] = SKY[kind] || SKY.partly;
-  return new THREE.ShaderMaterial({
-    uniforms: { uTop: { value: new THREE.Color(top) }, uLow: { value: new THREE.Color(low) } },
-    vertexShader: 'varying float vY; void main() { vY = (modelMatrix * vec4(position, 1.0)).y; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
-    fragmentShader: 'varying float vY; uniform vec3 uTop; uniform vec3 uLow; void main() { gl_FragColor = vec4(mix(uLow, uTop, smoothstep(0.0, 40.0, vY)), 1.0); }',
-  });
-}
-
-// the glass, drawn as an architect draws it: a few groups of fine diagonal strokes for the light on it; on a wet
-// day rain running down it too (thin streaks, leaning with the wind; a storm's thicker)
-function glassPane(rain, storm) {
-  return new THREE.ShaderMaterial({
-    transparent: true, depthWrite: false,
-    uniforms: { uInk: { value: new THREE.Color('#2B2B30') }, uRain: { value: rain ? 1 : 0 }, uDense: { value: storm ? 1.6 : 1 } },
-    vertexShader: 'varying vec2 vP; void main() { vP = position.xy; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
-    fragmentShader: `varying vec2 vP; uniform vec3 uInk; uniform float uRain; uniform float uDense;
-      float h(float n) { return fract(sin(n * 12.9898) * 43758.5453); }
-      void main() {
-        float u = vP.x * 0.9 + vP.y;
-        float q = u * 16.0;
-        float glint = (1.0 - smoothstep(0.0, 1.2, abs(fract(q) - 0.5) / fwidth(q))) * step(0.82, sin(u * 1.6 + 0.8) * 0.5 + 0.5);
-        vec2 p = vec2(vP.x * 9.0 * uDense + vP.y * 0.6, vP.y * 1.4);
-        float r = h(floor(p.x));
-        float drop = uRain * step(0.55, r) * smoothstep(0.08, 0.0, abs(fract(p.x) - 0.5)) * step(0.35, fract(p.y + r * 7.0));
-        gl_FragColor = vec4(uInk, max(glint * 0.32, drop * 0.38) + uRain * 0.05);
-      }`,
-  });
-}
-
-// a tree on the pavement outside, bare in the cold
-function streetTree(parent, at, cold) {
-  const g = group(parent, at);
-  add(g, rod(0.09, 3.2, 10), inkMaterial('#CDB79C'), [0, 1.6, 0]);
-  if (cold) {
-    [[0.6, 0.5], [-0.5, 0.7], [0.2, -0.6]].forEach(([x, z]) => { const b = add(g, rod(0.03, 1.4, 6), inkMaterial('#CDB79C'), [x * 0.5, 3.4, z * 0.5]); b.rotation.set(z * 0.6, 0, -x * 0.6); });
-    return g;
-  }
-  const leaf = inkMaterial('#D7E6C8');
-  [[0, 4.1, 0, 1.25], [0.8, 3.7, 0.3, 0.9], [-0.7, 3.8, -0.2, 0.95], [0.1, 3.5, 0.8, 0.85], [-0.2, 3.6, -0.8, 0.8]].forEach(([x, y, z, r]) => add(g, new THREE.IcosahedronGeometry(r, 1), leaf, [x, y, z]));
-  return g;
-}
-
-export function cafe({ at, f, wx, hot, cold }) {
+export function cafe({ at, f, wx, hot, cold, stage }) {
   const scene = new THREE.Scene();
   const { left, right, back, high } = ROOM;
   const len = 1 - back; // from just behind us to the back wall
 
   // the light: the day in through the glass front, from the left and above (none, and no shadows, on a dull
   // day: just the room's own light), and the room's light all round
-  const sunny = !['cloud', 'rain', 'storm', 'fog', 'snow'].includes(wx);
-  const fill = new THREE.HemisphereLight(hot ? '#FFF4DE' : '#FFFFFF', '#E8DCC9', 1.6);
-  const key = new THREE.DirectionalLight('#FFFFFF', sunny ? 2.2 : 1.2);
-  key.position.set(-4, 6, 6);
-  key.target.position.set(0, 0, -6);
-  key.castShadow = sunny;
-  Object.assign(key.shadow.camera, { left: -9, right: 9, top: 9, bottom: -9, near: 1, far: 30 });
-  key.shadow.mapSize.set(2048, 2048);
-  key.shadow.bias = -0.0008;
-  // (lit on both layers: what's in front of us is drawn on its own)
-  [fill, key].forEach((l) => l.layers.enableAll());
-  scene.add(fill, key, key.target);
+  const { sunny, key } = lights(scene, { wx, hot, ground: '#E8DCC9', from: [-4, 6, 6], to: [0, 0, -6], span: 9 });
 
   // the room: floor in big tiles, the back wall, the right wall, a ceiling of slats
   // (the room's shell takes shadows but casts none: the light's an illustrator's, falling on what's in it, not
@@ -118,9 +59,10 @@ export function cafe({ at, f, wx, hot, cold }) {
   // the left: the glass front (a low wall under it, mullions, a transom), a bar along it at elbow height with
   // stools, a little pot on it here and there
   const sill = 0.5; const head = 2.75;
-  shell(add(scene, box(0.25, sill, len), inkMaterial(T.side), [left - 0.12, sill / 2, (1 + back) / 2]));
-  shell(add(scene, box(0.25, high - head, len), inkMaterial(T.side), [left - 0.12, (high + head) / 2, (1 + back) / 2]));
-  const frame = inkMaterial(T.dark, { hatch: 0 });
+  // (the glass side lit from the room, lightly hatched; its frames drawn in outline, not filled dark)
+  shell(add(scene, box(0.25, sill, len), inkMaterial(T.side, { hatch: 0.45 }), [left - 0.12, sill / 2, (1 + back) / 2]));
+  shell(add(scene, box(0.25, high - head, len), inkMaterial(T.side, { hatch: 0.45 }), [left - 0.12, (high + head) / 2, (1 + back) / 2]));
+  const frame = inkMaterial('#A39C92', { hatch: 0.4 });
   for (let z = 0.2; z >= back; z -= 1.6) shell(add(scene, box(0.07, head - sill, 0.07), frame, [left, (sill + head) / 2, z]));
   shell(add(scene, box(0.07, 0.06, len), frame, [left, 2.25, (1 + back) / 2]));
   add(scene, new THREE.PlaneGeometry(len, head - sill), glassPane(wx === 'rain' || wx === 'storm', wx === 'storm'), [left, (sill + head) / 2, (1 + back) / 2], [0, Math.PI / 2, 0]).castShadow = false;
@@ -179,6 +121,22 @@ export function cafe({ at, f, wx, hot, cold }) {
   const corner = [-1, 1].map((k) => [k * (right - 0.42), back + 0.45]).find(([x, z]) => !behind(x, z));
   if (corner) plant(scene, [corner[0], 0, corner[1]], 1.35, { seed: 3 });
 
+  // (the photographer's framing being tried: me close in the foreground, cut by the frame, the friend across a
+  // round table further in, the table drawn over them but under me)
+  if (stage === 'art') {
+    const [[mx, mz], [fx, fz]] = at;
+    const d = Math.hypot(mx - fx, mz - fz);
+    const t = group(scene, [fx + ((mx - fx) / d) * 0.55, 0, fz + ((mz - fz) / d) * 0.55]);
+    add(t, rod(0.42, 0.035, 40), inkMaterial(T.white), [0, 0.74, 0]);
+    // (a cloth down to the floor: under a bare table we'd miss the friend's legs)
+    add(t, new THREE.CylinderGeometry(0.43, 0.5, 0.72, 40, 1, true), inkMaterial(T.cloth, { side: THREE.DoubleSide, hatch: 0.6 }), [0, 0.36, 0]);
+    cup(t, [0.16, 0.76, 0.12]); cup(t, [-0.18, 0.76, -0.08]);
+    plate(t, [0.02, 0.76, -0.16], '#E9C9A0');
+    budVase(t, [-0.1, 0.76, 0.16]);
+    inFront(t);
+    chair(scene, [fx - ((mx - fx) / d) * 0.12, 0, fz - ((mz - fz) / d) * 0.12], Math.atan2(mx - fx, mz - fz), T.wood);
+    return { scene, key: key.intensity };
+  }
   // ours, at the front (drawn over us): a table laid for us, a cloth to the floor, a flower in a vase
   const xs = at.map(([x]) => x);
   const zs = at.map(([, z]) => z);

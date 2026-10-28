@@ -173,12 +173,12 @@ export function draw(scene, camera, canvas, { w, h, dpr, key, fade = [30, 160] }
   ctx.drawImage(r.domElement, 0, 0, W, H, 0, 0, cw, ch);
 }
 
-// the camera the people are drawn for: level (upright things stay upright), from `eye` m up, the horizon
+// the camera the people are drawn for: level (upright things stay upright), turned `yaw` to the left, from `eye` m up, the horizon
 // `cy` px down the picture and the vanishing point `cx` px across it, `f` px for a metre at a metre off
-export function levelCamera({ w, h, f, cx, cy, eye }) {
+export function levelCamera({ w, h, f, cx, cy, eye, yaw = 0 }) {
   const cam = new THREE.PerspectiveCamera(50, w / h, 0.1, 120);
   cam.position.set(0, eye, 0);
-  cam.lookAt(0, eye, -1);
+  cam.rotation.set(0, yaw, 0);
   cam.updateMatrixWorld();
   const n = cam.near;
   cam.projectionMatrix.makePerspective((-cx * n) / f, ((w - cx) * n) / f, (cy * n) / f, (-(h - cy) * n) / f, n, cam.far);
