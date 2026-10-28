@@ -8,8 +8,8 @@ import { AbsoluteFill, random, useCurrentFrame, useVideoConfig } from 'remotion'
 // rain off what's behind it): rain in depth (far drops short and faint, landing near the horizon; near ones
 // longer and darker, landing by our feet), each ending in a ripple on the land, none under a wet day's
 // shelter (they end on its roof) and water running off the roof's front edge; a flash now and then in a
-// storm; heat rising off the land on a hot day; fog drifting along the horizon. The sun, the clouds and what
-// the people do about it (sweat, breath) are drawn with the park (scenery.jsx).
+// storm; fog drifting along the horizon. The sun, the clouds and what the people wear for it (sweat, a scarf)
+// are drawn with the park (scenery.jsx).
 
 const FPS = 30;
 const DUR = 240; // 8 s loop
@@ -70,29 +70,6 @@ function Rain({ level, storm, top, foot, cover }) {
   );
 }
 
-// a hot day: heat coming off the land, in threes, as a cartoonist draws it: wavy lines rising and fading
-function Heat({ top, foot }) {
-  const frame = useCurrentFrame();
-  const { width: W } = useVideoConfig();
-  const out = [];
-  for (let g = 0; g < 7; g += 1) {
-    const t = cycle(frame, 3, random(`h${g}`));
-    const cx = (0.08 + 0.84 * ((g + random(`hx${g}`) * 0.6) / 7)) * W;
-    const base = top + 30 + random(`hy${g}`) * (foot - top - 24);
-    const y0 = base - t * 46;
-    const op = Math.sin(t * Math.PI) * 0.55;
-    for (let k = -1; k <= 1; k += 1) {
-      let d = '';
-      for (let s = 0; s <= 8; s += 1) {
-        const yy = y0 - s * 3.6;
-        d += `${s ? 'L' : 'M'}${(cx + k * 6 + Math.sin(s * 1.1 + t * 10 + k) * 2.6).toFixed(1)} ${yy.toFixed(1)} `;
-      }
-      out.push(<path key={`${g}${k}`} d={d} fill="none" stroke={INK} strokeOpacity={op * (k ? 0.75 : 1)} strokeWidth={1.3} strokeLinecap="round" />);
-    }
-  }
-  return <svg width="100%" height="100%" style={{ position: 'absolute', inset: 0 }}>{out}</svg>;
-}
-
 // fog: soft bands drifting to and fro along the horizon
 function Fog({ top }) {
   const frame = useCurrentFrame();
@@ -106,12 +83,11 @@ function Fog({ top }) {
   });
 }
 
-function Weather({ kind, level, hot, top, foot, cover }) {
+function Weather({ kind, level, top, foot, cover }) {
   const wet = kind === 'rain' || kind === 'storm';
   return (
     <AbsoluteFill>
       {kind === 'fog' && <Fog top={top} />}
-      {hot && <Heat top={top} foot={foot} />}
       {wet && <Rain level={level || 2} storm={kind === 'storm'} top={top} foot={foot} cover={cover} />}
     </AbsoluteFill>
   );
@@ -121,7 +97,7 @@ const reducedMotion = () => typeof window !== 'undefined' && window.matchMedia?.
 
 // the layer, made at its own size (the whole backdrop, header and all) so nothing is scaled; horizon: px over
 // our feet; shelter: { at: its centre (0–1 across), w, h: its size in people's units }. Still with reduced motion
-export default function SceneWeather({ kind, level, hot, horizon, shelter }) {
+export default function SceneWeather({ kind, level, horizon, shelter }) {
   const box = useRef(null);
   const [size, setSize] = useState(null);
   useEffect(() => {
@@ -144,7 +120,7 @@ export default function SceneWeather({ kind, level, hot, horizon, shelter }) {
   } : null;
   return (
     <div ref={box} className="ds-wx" aria-hidden="true">
-      {size?.w > 0 && <Player component={Weather} inputProps={{ kind, level, hot, top: foot - horizon, foot, cover }} durationInFrames={DUR} fps={FPS}
+      {size?.w > 0 && <Player component={Weather} inputProps={{ kind, level, top: foot - horizon, foot, cover }} durationInFrames={DUR} fps={FPS}
         compositionWidth={size.w} compositionHeight={size.h} loop autoPlay={!reducedMotion()} initiallyMuted controls={false}
         clickToPlay={false} doubleClickToFullscreen={false} spaceKeyToPlayOrPause={false} acknowledgeRemotionLicense
         style={{ width: '100%', height: '100%' }} />}

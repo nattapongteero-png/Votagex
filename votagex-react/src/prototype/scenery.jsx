@@ -50,6 +50,28 @@ const TREE = {
   ),
 };
 
+// the same tree in the cold, its leaves mostly gone: the trunk and branches show, reaching up to a few small
+// clumps left at their tips, bare twigs between
+const BARE_TREE = {
+  box: TREE.box,
+  art: (
+    <>
+      <path {...shape} d="M2380 7800 C2560 7740 2640 7520 2660 7200 C2690 6400 2700 5200 2690 4300 C2690 3500 2760 2700 2800 2050 L2890 2050 C2930 2700 2990 3500 2990 4300 C3000 5200 3010 5800 3030 6400 C3050 7200 3140 7740 3330 7800" />
+      <path {...shape} d="M2700 4300 C2500 3900 2150 3600 1900 3200 C1780 3000 1700 2800 1640 2600 L1740 2575 C1800 2780 1880 2980 1990 3150 C2250 3550 2600 3800 2720 4020" />
+      <path {...shape} d="M2990 4150 C3200 3800 3550 3550 3800 3250 C3950 3060 4050 2850 4120 2650 L4220 2690 C4150 2900 4040 3130 3890 3320 C3640 3640 3300 3900 3000 4380" />
+      <path {...line} d="M1820 3060 C1700 2960 1580 2900 1440 2860 M3960 3060 C4100 3000 4230 2950 4380 2880 M2780 2700 C2680 2560 2580 2470 2460 2390 M2900 2500 C3000 2380 3100 2300 3230 2230" />
+      <path {...line} d="M2800 6500 l0 260 M2900 5600 l0 200 M2780 4800 l0 180 M2860 7300 l0 160" />
+      <path {...line} d="M2380 7800 Q2850 7880 3330 7800" />
+      <g className="ds-leaves">
+        <path {...shape} d={`${bumpy(1650, 2330, 500, 380, 10, 140, 5)} Z`} />
+        <path {...shape} d={`${bumpy(4190, 2400, 470, 360, 10, 140, 9)} Z`} />
+        <path {...shape} d={`${bumpy(2845, 1780, 620, 440, 12, 150, 13)} Z`} />
+        <path {...line} d={leaves([[1450, 2260, 140], [1780, 2420, 130], [4050, 2330, 130], [2650, 1700, 140], [3000, 1880, 130]])} />
+      </g>
+    </>
+  ),
+};
+
 // a street lamp, a lantern on a post (3.7 m)
 const LAMP = {
   box: [0, 0, 1200, 6400],
@@ -144,24 +166,6 @@ const LEAF = {
   art: <path {...shape} strokeWidth={16} d="M20 90 C80 10 220 10 280 90 C220 170 80 170 20 90 Z M20 90 L250 90" />,
 };
 
-// a patio umbrella stood in the ground, its canopy striped, for shade on a scorching day; about 2.6 m across,
-// its rim 2.1 m up (the shade it casts is drawn under it, CSS)
-const CANOPY = `M80 1240 C200 620 1200 300 2300 300 C3400 300 4400 620 4520 1240 ${[3780, 3040, 2300, 1560, 820, 80].map((x) => `Q${x + 370} 1140 ${x} 1240`).join(' ')} Z`;
-const PARASOL = {
-  box: [0, 0, 4600, 4800],
-  art: (
-    <>
-      <defs><clipPath id="ds-parasol-clip"><path d={CANOPY} /></clipPath></defs>
-      <path {...line} strokeWidth={34} d="M2300 4800 L2300 600" />
-      <path {...shape} d={CANOPY} />
-      <path fill={INK} clipPath="url(#ds-parasol-clip)" d="M2300 300 L-62 1300 L726 1300 Z M2300 300 L1513 1300 L2300 1300 Z M2300 300 L3087 1300 L3874 1300 Z" />
-      <path {...line} d="M2300 300 L820 1240 M2300 300 L1560 1240 M2300 300 L2300 1240 M2300 300 L3040 1240 M2300 300 L3780 1240" />
-      <path {...line} d={CANOPY} />
-      <path {...line} strokeWidth={30} d="M2300 300 L2300 180" />
-    </>
-  ),
-};
-
 // the sun, glowing, its rays turning slowly
 const SUN = {
   box: [0, 0, 1600, 1600],
@@ -212,7 +216,7 @@ const shelter = (w) => ({
   ),
 });
 
-const PROPS = { shelter: shelter(4600), parasol: PARASOL, butterfly: BUTTERFLY, leaf: LEAF, sun: SUN, tree: TREE, lamp: LAMP, bench: BENCH, bush: BUSH, cloud: CLOUD, tuft: TUFT, birds: BIRDS, sign: SIGN };
+const PROPS = { shelter: shelter(4600), butterfly: BUTTERFLY, leaf: LEAF, sun: SUN, tree: TREE, bareTree: BARE_TREE, lamp: LAMP, bench: BENCH, bush: BUSH, cloud: CLOUD, tuft: TUFT, birds: BIRDS, sign: SIGN };
 
 // one prop at --x (its centre), feet on the ground line; `size` scales it from life size
 export function Prop({ kind, x, size = 1, className = '', style }) {
@@ -241,36 +245,31 @@ export function Land() {
   );
 }
 
-// What the people have about them for the weather, drawn in a person's own units over their pose: drops of
-// sweat by the head, breath puffing out of the mouth. The head is always at the same place on a pose (peeps.js
-// HEAD_AT), so they sit right on any of them.
+// What the people have about them for the weather, drawn in a person's own units over their pose. The head is
+// always at the same place on a pose (peeps.js HEAD_AT: the face 440–620 across, 210–400 down, the neck under
+// it 370–590 across, down to the collar at about 530), so they sit right on any of them.
+// beads of sweat on the face, small, high up (lower down, by the eye, they'd read as tears): one on the brow,
+// one at the temple, running a little way down
 export function Sweat() {
   const drop = 'M0 -60 C22 -20 38 6 38 26 A38 38 0 0 1 -38 26 C-38 6 -22 -20 0 -60 Z';
   return (
     <g className="ds-sweat">
-      <path {...shape} strokeWidth={16} transform="translate(705 215)" d={drop} />
-      <path {...shape} strokeWidth={16} transform="translate(690 390) scale(.8)" d={drop} />
+      <path {...shape} strokeWidth={14} transform="translate(596 232) scale(.42)" d={drop} />
+      <path {...shape} strokeWidth={14} transform="translate(452 250) scale(.36)" d={drop} />
     </g>
   );
 }
 
-// a knitted scarf round the neck, an end hanging down the front; dark on a light top, light on a dark one
+// a knitted scarf wound round the neck, under the chin, an end hanging down the front; dark on a light top,
+// light on a dark one
 export function Scarf({ dark }) {
-  const knit = dark ? { ...line, stroke: '#fff', strokeWidth: 14 } : { ...line, strokeWidth: 14 };
+  const knit = dark ? { ...line, stroke: '#fff', strokeWidth: 12 } : { ...line, strokeWidth: 12 };
   return (
     <g className="ds-scarf">
-      <path {...shape} fill={dark ? INK : '#fff'} d="M520 640 C540 760 560 860 600 900 L700 880 C660 820 640 720 640 640 Z" />
-      <path {...knit} d="M548 720 L646 712 M566 800 L668 790 M600 900 l-10 50 M635 893 l-4 50 M670 886 l2 50" />
-      <path {...shape} fill={dark ? INK : '#fff'} d="M290 560 C380 520 560 520 650 560 C660 600 660 650 650 690 C560 650 380 650 300 690 C285 650 282 600 290 560 Z" />
-      <path {...knit} d="M360 548 L372 668 M440 538 L448 652 M520 538 L524 652 M590 548 L590 662" />
-    </g>
-  );
-}
-
-export function Breath() {
-  return (
-    <g className="ds-breath" transform="translate(600 420)">
-      {[0, 1, 2].map((i) => <path key={i} {...shape} strokeWidth={14} className={`ds-puff ds-puff-${i}`} d={`${bumpy(0, 0, 70, 52, 5, 26, 21 + i)} Z`} />)}
+      <path {...shape} fill={dark ? INK : '#fff'} d="M505 540 C515 620 525 690 545 750 L630 736 C610 680 600 610 595 540 Z" />
+      <path {...knit} d="M522 620 L604 612 M534 690 L616 682 M548 750 l-6 40 M580 745 l-3 40 M612 740 l1 40" />
+      <path {...shape} fill={dark ? INK : '#fff'} d="M352 462 C430 436 545 436 618 462 C628 495 628 532 618 566 C545 542 430 542 360 566 C348 532 346 495 352 462 Z" />
+      <path {...knit} d="M412 452 L418 552 M478 443 L481 545 M544 446 L545 548" />
     </g>
   );
 }

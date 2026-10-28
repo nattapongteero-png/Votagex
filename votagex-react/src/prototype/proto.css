@@ -2336,14 +2336,12 @@ body::after { content: ''; position: fixed; inset: 0; z-index: 9998; pointer-eve
 /* the park, alive a little: the leaves sway */
 .ds-leaves { transform-box: fill-box; transform-origin: 50% 100%; animation: ds-sway 8s ease-in-out infinite; }
 @keyframes ds-sway { 0%, 100% { rotate: 0deg; } 50% { rotate: .8deg; } }
-/* clouds, birds and blown leaves go across, off one side and in at the other (still, where they're placed,
-   with reduced motion) */
+/* clouds and birds go across, off one side and in at the other (still, where they're placed, with reduced
+   motion) */
 @media (prefers-reduced-motion: no-preference) {
-  .ds-cloud, .ds-fly, .ds-blown { left: 0; translate: none; animation: ds-across var(--dur, 80s) linear var(--delay, 0s) infinite; }
-  .ds-blown { animation: ds-across var(--dur, 8s) linear var(--delay, 0s) infinite, ds-tumble 1.8s linear infinite; }
+  .ds-cloud, .ds-fly { left: 0; translate: none; animation: ds-across var(--dur, 80s) linear var(--delay, 0s) infinite; }
 }
 @keyframes ds-across { from { translate: -100% 0; } to { translate: 100cqw 0; } }
-@keyframes ds-tumble { to { rotate: 360deg; } }
 /* breathing, and a blink every few seconds (--blink sets each person apart) */
 .ds-pose > g { transform-box: fill-box; transform-origin: 50% 100%; animation: ds-breathe 3.6s ease-in-out infinite; }
 .ds .pp-face { animation: ds-open 4.4s var(--blink, 0s) infinite; }
@@ -2455,9 +2453,6 @@ body::after { content: ''; position: fixed; inset: 0; z-index: 9998; pointer-eve
 .ds-falling { opacity: 0; animation: ds-fall 8.5s ease-in var(--delay, 0s) infinite; }
 @keyframes ds-fall { 0% { opacity: 0; translate: -50% 0; rotate: 0deg; } 8%, 88% { opacity: 1; } 50% { translate: calc(-50% + 20px) 28cqh; rotate: 170deg; }
   100% { opacity: 0; translate: calc(-50% - 8px) 58cqh; rotate: 330deg; } }
-/* a scorcher: the shade of the patio umbrella on the land under us */
-.ds-shade { position: absolute; left: var(--x); bottom: calc(var(--ground) + var(--far, 0px) - 10px); width: 300px; height: 28px; translate: -50% 0; border-radius: 50%;
-  background: rgba(150, 105, 40, .13); pointer-events: none; }
 /* fog: banks of it drifting through, over the far hills, among the trees, low over the ground in front of our
    feet; the park pale in it */
 .ds-mist { position: absolute; left: -20%; width: 140%; height: 90px; pointer-events: none; animation: ds-mist 14s ease-in-out infinite alternate;
@@ -2473,14 +2468,10 @@ body::after { content: ''; position: fixed; inset: 0; z-index: 9998; pointer-eve
 .ds-cold .ds-person:not(.ds-me) { transform-origin: 50% 100%; animation: ds-shiver 3.4s var(--blink, 0s) infinite; }
 .ds-cold .ds-me { transform-origin: 50% 100%; animation: ds-walk-in 1.5s cubic-bezier(.33, .2, .35, 1) both, ds-shiver 3.4s 2.2s infinite; }
 @keyframes ds-shiver { 0%, 84%, 100% { rotate: 0deg; } 86% { rotate: -1.2deg; } 88% { rotate: 1.2deg; } 90% { rotate: -1deg; } 92% { rotate: 1deg; } 94% { rotate: -.4deg; } 96% { rotate: 0deg; } }
-/* what we have about us, drawn on the pose: sweat, breath (and a scarf, still) */
+/* what we have about us, drawn on the pose: sweat running a little way down the face (a scarf, still) */
 .ds-sweat path { animation: ds-sweat 2.8s var(--blink, 0s) ease-in infinite both; }
 .ds-sweat path + path { animation-delay: calc(var(--blink, 0s) + 1.4s); }
-@keyframes ds-sweat { 0% { opacity: 0; translate: 0 -40px; } 20%, 65% { opacity: 1; } 100% { opacity: 0; translate: 0 140px; } }
-.ds-puff { transform-box: fill-box; transform-origin: center; opacity: 0; animation: ds-puff 3.2s var(--blink, 0s) ease-out infinite both; }
-.ds-puff-1 { --to: 250px -40px; animation-delay: calc(var(--blink, 0s) + .14s); }
-.ds-puff-2 { --to: 180px -150px; animation-delay: calc(var(--blink, 0s) + .28s); }
-@keyframes ds-puff { 0% { opacity: 0; scale: .3; translate: 0 0; } 12% { opacity: 1; } 55%, 100% { opacity: 0; scale: 1.25; translate: var(--to, 300px -90px); } }
+@keyframes ds-sweat { 0% { opacity: 0; translate: 0 -8px; } 20%, 65% { opacity: 1; } 100% { opacity: 0; translate: 0 30px; } }
 
 /* the sheet over it: everything holds still */
 .homepage.pt-today:not(.at-rest) .ds * { animation-play-state: paused; }
@@ -2491,7 +2482,6 @@ body::after { content: ''; position: fixed; inset: 0; z-index: 9998; pointer-eve
   .ds-say { display: none; }
   .ds .pt-speech-text { opacity: 1; }
   .ds .pt-speech-dots { display: none; }
-  .ds-puff-0 { opacity: 1; }
 }
 
 /* ===== My character (LookSheet.jsx): me as I'll be on home, and each choice as my picture would be ===== */

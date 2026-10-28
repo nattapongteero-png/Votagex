@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
 import Peep from './Peep';
 import SpeechNotes from './SpeechNotes';
-import { Breath, Land, Prop, Scarf, Sweat } from './scenery';
+import { Land, Prop, Scarf, Sweat } from './scenery';
 import { POSE_BOX, piecesOf, usePeeps } from './peeps';
 
 const SceneWeather = lazy(() => import('./SceneWeather'));
@@ -19,10 +19,10 @@ const SceneWeather = lazy(() => import('./SceneWeather'));
 // A day with nothing on: I stand with my arms crossed by the signpost, my head tilting now and then,
 // wondering where to go; the bench behind me empty.
 // The day's weather (where I am today) plays on it all: the sky and the land take its colour, the sun or the
-// clouds are up (sailing across), rain falls in depth with ripples on the land, a storm flashes, heat rises,
-// fog drifts (SceneWeather.jsx, a Remotion loop, behind the park so a bush or a tree keeps the rain off what's
-// behind it). On a wet day we're under a shelter, dry, the rain all round and running off the roof; on a hot
-// one we sweat, on a cold one our breath puffs out.
+// clouds are up (sailing across), rain falls in depth with ripples on the land, a storm flashes, fog drifts
+// (SceneWeather.jsx, a Remotion loop, behind the park so a bush or a tree keeps the rain off what's behind it).
+// On a wet day we're under a shelter, dry, the rain all round and running off the roof; on a hot one we sweat;
+// on a cold one we've scarves on and the trees have lost most of their leaves.
 // It plays once as it shows (CSS, about four seconds) and then only breathes and blinks; tap it for the plan,
 // or for ideas on a free day.
 
@@ -40,7 +40,7 @@ const boxOf = (poses) => {
 const headOf = (poses) => (footOf(poses) - 62) / FULL;
 
 // a person, in one pose or swapping between `poses` (CSS); looking left with `flip`; with `onTap`, one to tap.
-// gear: { sweat, breath, scarf: 'dark' | 'light' }, drawn in each pose's own units over it (so it moves with it).
+// gear: { sweat, scarf: 'dark' | 'light' }, drawn in each pose's own units over it (so it moves with it).
 // `far`: px back up the land (smaller for it)
 function Person({ look, poses, flip, onTap, label, gear = {}, far = 0, className = '', style }) {
   const [x, y, w, h] = boxOf(poses);
@@ -55,7 +55,6 @@ function Person({ look, poses, flip, onTap, label, gear = {}, far = 0, className
           <Peep look={look} pose={pose} blink />
           {gear.scarf && <Scarf dark={gear.scarf === 'dark'} />}
           {gear.sweat && <Sweat />}
-          {gear.breath && <Breath />}
         </svg>
       ))}
     </div>
@@ -78,13 +77,13 @@ const FRAME = [{ p: 'tuft', x: '9%', far: -24 }, { p: 'tuft', x: '91%', far: -20
   { p: 'tuft', x: '70%', far: 36 }, { p: 'tuft', x: '40%', far: 120, size: 0.8 }, { p: 'tuft', x: '62%', far: 150 },
   { p: 'tree', x: '3%', far: 60 }, { p: 'tree', x: '97%', far: 74, size: 0.82, flip: true }];
 // the sky, by the weather: a fair day's sun glowing and birds crossing; a scorcher's sun huge and white-hot; a
-// dull day's clouds big and grey-bellied, crossing the sun; rain's clouds low and grey; fog has none
+// dull day's clouds big and grey-bellied, no sun; rain's clouds low and grey; fog has none
 const BIRDS = { p: 'birds', x: '30%', top: '31%', size: 0.42, fly: 16 };
 const SKY = {
   sun: [{ p: 'sun', x: '66%', top: '27%', size: 0.55 }, BIRDS, { ...BIRDS, x: '74%', top: '25%', size: 0.3, fly: 12 }],
   hot: [{ p: 'sun', x: '62%', top: '24%', size: 0.85 }],
   partly: [{ p: 'sun', x: '60%', top: '28%', size: 0.5 }, { p: 'cloud', x: '72%', top: '33%', size: 0.5 }, { p: 'cloud', x: '24%', top: '30%', size: 0.4 }, BIRDS],
-  cloud: [{ p: 'sun', x: '58%', top: '28%', size: 0.45 }, { p: 'cloud', x: '12%', top: '35%', size: 0.42 }, { p: 'cloud', x: '36%', top: '27%', size: 0.62 },
+  cloud: [{ p: 'cloud', x: '12%', top: '35%', size: 0.42 }, { p: 'cloud', x: '36%', top: '27%', size: 0.62 },
     { p: 'cloud', x: '64%', top: '31%', size: 0.75 }, { p: 'cloud', x: '90%', top: '26%', size: 0.5 }],
   rain: [{ p: 'cloud', x: '60%', top: '28%', size: 0.56 }, { p: 'cloud', x: '27%', top: '33%', size: 0.44 }, { p: 'cloud', x: '87%', top: '36%', size: 0.36 }],
   fog: [],
@@ -94,10 +93,9 @@ SKY.snow = SKY.cloud;
 // a cloud (or the birds, faster) sails on across the sky with the wind, left to right as the rain leans, round and
 // in again from the left; the smaller (further) ones slower. Set going from where it's placed (x)
 const across = (x, size, speed = 40) => { const dur = speed / size; return { '--dur': `${dur.toFixed(1)}s`, '--delay': `${(-parseFloat(x) / 100 * dur).toFixed(1)}s` }; };
-// a fair day: butterflies about the bushes. A dull one: leaves blown across on the wind. A cold one: leaves
-// falling from the trees (all drawn bigger than life, to be seen)
+// a mild day, some cloud: butterflies about the bushes. A cold one: leaves falling from the trees (both drawn
+// bigger than life, to be seen)
 const BUTTERFLIES = [{ p: 'butterfly', x: '21%', far: 76, size: 1.4 }, { p: 'butterfly', x: '81%', far: 70, size: 1.2 }];
-const BLOWN = [0, 1, 2, 3].map((i) => ({ p: 'leaf', x: `${i * 25}%`, top: `${44 + (i % 2) * 9}%`, size: 1.2, blown: 7 + i * 1.3 }));
 const FALLING = [['7%', 33], ['15%', 37], ['89%', 36], ['95%', 40], ['22%', 41]].map(([x, top], i) => ({ p: 'leaf', x, top: `${top}%`, size: 1.1, falling: i }));
 const BACKDROP = {
   meet: [...FRAME, { p: 'bush', x: '17%', far: 44, size: 0.7 }, { p: 'bush', x: '84%', far: 50, size: 0.55, flip: true }],
@@ -131,8 +129,8 @@ export default function DayScene({ scene, notes = [], weather = { kind: 'partly'
   const stands = (look, kinds) => kinds.map((k) => pose(look, `standing/${k}`));
   const cast = [[me, stands(me, free ? ['CrossedArms'] : n ? [easy, 'RoboDance'] : [easy])],
     ...friends.map((f, i) => [f, stands(f, free || i ? [easy] : [easy, 'RoboDance'])])];
-  // dressed for it: a scarf against the cold (dark on a light top), sweat in the heat, breath in the cold
-  const gear = (look) => ({ sweat: weather.hot, breath: weather.cold, scarf: weather.cold && ((look.tone || 'BW') === 'WB' ? 'dark' : 'light') });
+  // dressed for it: a scarf against the cold (dark on a light top), sweat in the heat
+  const gear = (look) => ({ sweat: weather.hot, scarf: weather.cold && ((look.tone || 'BW') === 'WB' ? 'dark' : 'light') });
   const ready = usePeeps(['face/EyesClosed', ...cast.flatMap(([look, poses]) => poses.flatMap((p) => piecesOf(look, p)))]);
   // where we stand (a free day on my own, by the signpost)
   const meAt = free && !n ? 40 : LAYOUT[n].me;
@@ -141,8 +139,8 @@ export default function DayScene({ scene, notes = [], weather = { kind: 'partly'
   // what keeps the weather off us, centred on us: a shelter from the rain, a patio umbrella from a scorching
   // sun (beside me when I'm alone, its pole not through me). Out from under them goes the signpost (or, with
   // friends there, it's not wanted)
-  const cover = wet ? 'shelter' : weather.hot ? 'parasol' : null;
-  const coverAt = cover === 'parasol' && !n ? (free ? 52 : 62) : free && !n ? 40 : 50;
+  const cover = wet ? 'shelter' : null;
+  const coverAt = free && !n ? 40 : 50;
   const signAt = cover ? '88%' : '74%';
   const head = headOf(cast[0][1]);
   // my thoughts, one at a time, just over my head, out to the side where there's room (towards the friends; on a
@@ -160,7 +158,7 @@ export default function DayScene({ scene, notes = [], weather = { kind: 'partly'
 
   // (the signpost and the bench are a free day's on my own; with friends, the park as on a day out)
   const props = [...(SKY[sky] || SKY.partly), ...BACKDROP[free && !n ? 'free' : 'meet'],
-    ...((sky === 'sun' || sky === 'partly') && !weather.cold ? BUTTERFLIES : []), ...(sky === 'cloud' ? BLOWN : []), ...(weather.cold ? FALLING : [])];
+    ...(sky === 'partly' && !weather.cold ? BUTTERFLIES : []), ...(weather.cold ? FALLING : [])];
   return (
     <div className={`ds ds-${kind} ds-wx-${weather.kind}${weather.hot ? ' ds-hot' : ''}${weather.cold ? ' ds-cold' : ''}${ready ? ' ready' : ''}`}
       style={{ '--horizon': `${HORIZON}px` }}>
@@ -168,23 +166,23 @@ export default function DayScene({ scene, notes = [], weather = { kind: 'partly'
       <div className="ds-world" aria-hidden="true">
         <div className="ds-skytint" />
         {/* the weather in the air goes behind the park, so a bush or a tree keeps it off what's behind them */}
-        {(wet || weather.hot || weather.kind === 'fog') && (
+        {(wet || weather.kind === 'fog') && (
           <Suspense fallback={null}>
-            <SceneWeather kind={weather.kind} level={weather.level} hot={weather.hot} horizon={HORIZON}
+            <SceneWeather kind={weather.kind} level={weather.level} horizon={HORIZON}
               shelter={wet ? { at: coverAt / 100, w: SHELTER[0], h: SHELTER[1] } : null} />
           </Suspense>
         )}
-        {props.map(({ p, x, size = 1, top, far, flip, fly, blown, falling }, i) => {
+        {props.map(({ p, x, size = 1, top, far, flip, fly, falling }, i) => {
           if (p === 'sign' && !signAt) return null;
           if (top) {
-            const go = p === 'cloud' ? across(x, size) : fly ? across(x, size, fly) : blown ? across(x, 1, blown) : null;
-            return <Prop key={i} kind={p} x={x} size={size} className={`ds-sky${fly ? ' ds-fly' : ''}${blown ? ' ds-blown' : ''}${falling != null ? ' ds-falling' : ''}`}
+            const go = p === 'cloud' ? across(x, size) : fly ? across(x, size, fly) : null;
+            return <Prop key={i} kind={p} x={x} size={size} className={`ds-sky${fly ? ' ds-fly' : ''}${falling != null ? ' ds-falling' : ''}`}
               style={{ top, ...go, ...(falling != null ? { '--delay': `${-falling * 1.7}s` } : {}) }} />;
           }
-          return <Prop key={i} kind={p} x={p === 'sign' ? signAt : x} size={size * (1 - (far || 0) / HORIZON)} className={p === 'butterfly' ? `ds-bfly ds-bfly-${i % 2}` : ''}
+          // (in the cold, the trees all but bare)
+          return <Prop key={i} kind={p === 'tree' && weather.cold ? 'bareTree' : p} x={p === 'sign' ? signAt : x} size={size * (1 - (far || 0) / HORIZON)} className={p === 'butterfly' ? `ds-bfly ds-bfly-${i % 2}` : ''}
             style={{ '--far': `${far || 0}px`, transform: flip ? 'scaleX(-1)' : undefined }} />;
         })}
-        {cover === 'parasol' && <i className="ds-shade" style={{ '--x': `${coverAt}%` }} />}
         {cover && <Prop kind={cover} x={`${coverAt}%`} />}
         {weather.kind === 'fog' && [0, 1, 2].map((i) => <i key={i} className={`ds-mist ds-mist-${i}`} />)}
       </div>
