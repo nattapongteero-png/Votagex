@@ -1,10 +1,13 @@
-import { lazy, Suspense, useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import Peep from './Peep';
 import SpeechNotes from './SpeechNotes';
 import { Land, Prop, Scarf, Space, Sweat } from './scenery';
 import { POSE_BOX, piecesOf, usePeeps } from './peeps';
 
 const SceneWeather = lazy(() => import('./SceneWeather'));
+// the places built in 3D and drawn in ink (scene3d/), the rest still drawn flat (Space)
+const Scene3D = lazy(() => import('./scene3d/Scene3D'));
+const IN_3D = new Set(['eat']);
 
 // The home page's stage: today as a little scene of Open Peeps (Peep.jsx), in place of the calendar, drawn
 // straight on the page (no card) in a park at life size (scenery.jsx), which reaches on up behind the header.
@@ -195,6 +198,10 @@ export default function DayScene({ scene, notes = [], weather = { kind: 'partly'
   const meAt = LAYOUT[n].me;
   const at = (i) => LAYOUT[n].at[i][0];
   const back = (i) => LAYOUT[n].at[i][1] + sat;
+  // in 3D: where we are in it (the table's laid at our places), and the canvas for what's in front of us
+  const in3d = IN_3D.has(place);
+  const front = useRef(null);
+  const people = useMemo(() => [{ x: LAYOUT[n].me, far: sat }, ...LAYOUT[n].at.map(([x, far]) => ({ x, far: far + sat }))], [n, sat]);
   // how high a head is off the ground, in --tall (a bust's off the floor it starts; further back, smaller)
   const headAt = (poses, far) => (liftOf(poses) + headOf(poses)) * (1 - far / HORIZON);
   // the vanishing point (between us, or ahead of me on my own), and where a thing `far` back is in the picture
@@ -219,7 +226,7 @@ export default function DayScene({ scene, notes = [], weather = { kind: 'partly'
   // at home, the sofa under me (its middle, or with friends its right end): where my body's middle is, off my face
   const [bx, , bw] = boxOf(cast[0][1]);
   const sofa = `calc(${pct(meAt)} + var(--tall) * ${((bx + bw / 2 - FACE_X - (n ? SOFA_W / 4 : 0)) / FULL).toFixed(3)})`;
-  const props = place === 'home' ? ROOMS.home(sofa) : indoor ? ROOMS[place]() : [...(SKY[sky] || SKY.partly), ...BACKDROP,
+  const props = place === 'home' ? ROOMS.home(sofa) : indoor ? (in3d ? [] : ROOMS[place]()) : [...(SKY[sky] || SKY.partly), ...BACKDROP,
     ...(sky === 'partly' && !weather.cold ? BUTTERFLIES : []), ...(weather.cold ? FALLING : [])];
   // out to eat, the table across in front of us laid where we sit: a plate before me and the friend who says hi,
   // glasses between (on my own, a small one)
@@ -230,7 +237,11 @@ export default function DayScene({ scene, notes = [], weather = { kind: 'partly'
       {!indoor && <Land />}
       <div className="ds-world" aria-hidden="true">
         {!indoor && <div className="ds-skytint" />}
-        <Space place={place} vx={vx} horizon={HORIZON} weather={weather} rug={place === 'home' && RUG[n ? 1 : 0]} />
+        {in3d ? (
+          <Suspense fallback={null}>
+            <Scene3D place={place} vx={vx} horizon={HORIZON} wx={weather.kind} hot={Boolean(weather.hot)} cold={Boolean(weather.cold)} people={people} front={front} />
+          </Suspense>
+        ) : <Space place={place} vx={vx} horizon={HORIZON} weather={weather} rug={place === 'home' && RUG[n ? 1 : 0]} />}
         {/* the weather in the air goes behind the park, so a bush or a tree keeps it off what's behind them */}
         {!indoor && (wet || weather.kind === 'fog') && (
           <Suspense fallback={null}>
@@ -265,10 +276,12 @@ export default function DayScene({ scene, notes = [], weather = { kind: 'partly'
           <Person look={me} poses={cast[0][1]} onTap={think} label="ความคิดของฉัน" gear={gear(me)} far={sat} className={`ds-me${free ? ' ds-wonder' : ''}`}
             style={{ '--x': pct(meAt), '--blink': free ? '1.6s' : '2.4s' }} />
           {/* out to eat, the table across in front of us */}
-          {place === 'eat' && <Prop kind="table" args={laid} x={n ? '50%' : pct(meAt)} className="ds-front" />}
+          {place === 'eat' && !in3d && <Prop kind="table" args={laid} x={n ? '50%' : pct(meAt)} className="ds-front" />}
           {!free && n > 0 && <span className="ds-say" style={{ '--x': pct(at(0)), '--far': `${back(0)}px`, '--head': headAt(cast[1][1], back(0)) }}>หวัดดี!</span>}
         </>
       )}
+      {/* what's in front of us in 3D (the table, a plant at the front) */}
+      {in3d && <canvas ref={front} className="ds-3d-front" aria-hidden="true" />}
       {/* fog low over the ground, in front of our feet */}
       {!indoor && weather.kind === 'fog' && <i className="ds-mist ds-mist-low" />}
       {ready && shown && (
