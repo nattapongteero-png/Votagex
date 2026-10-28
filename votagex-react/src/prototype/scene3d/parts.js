@@ -29,18 +29,46 @@ const rod = (r, h, seg = 12) => new THREE.CylinderGeometry(r, r, h, seg);
 // a turned shape from its profile, [radius, height] pairs from the bottom up
 const turned = (pts, seg = 40) => new THREE.LatheGeometry(pts.map(([r, y]) => new THREE.Vector2(r, y)), seg);
 
-// a café chair, bentwood: round seat, four legs, a hoop for a back (facing +z unless turned)
+// a café chair, bentwood: a round seat on splayed legs, the back legs running on up into a bent hoop with a rail
+// across it, a ring between the legs (facing +z unless turned)
 export function chair(parent, at, turn, tint) {
   const g = group(parent, at, turn);
   const wood = inkMaterial(tint);
-  add(g, rod(0.21, 0.04, 28), wood, [0, 0.46, 0]);
-  [[-0.15, -0.15], [0.15, -0.15], [-0.15, 0.15], [0.15, 0.15]].forEach(([x, z]) => {
-    const leg = add(g, rod(0.014, 0.46, 8), wood, [x * 1.06, 0.23, z * 1.06]);
-    leg.rotation.set(z * 0.25, 0, -x * 0.25);
-  });
-  add(g, new THREE.TorusGeometry(0.17, 0.016, 8, 24, Math.PI), wood, [0, 0.66, -0.17]);
-  [-0.17, 0.17].forEach((x) => add(g, rod(0.016, 0.2, 8), wood, [x, 0.56, -0.17]));
-  add(g, new THREE.TorusGeometry(0.155, 0.012, 6, 20, Math.PI), wood, [0, 0.62, -0.17]);
+  add(g, rod(0.2, 0.035, 28), wood, [0, 0.46, 0]);
+  [-0.14, 0.14].forEach((x) => { const l = add(g, rod(0.013, 0.46, 8), wood, [x, 0.23, 0.13]); l.rotation.set(0.1, 0, -Math.sign(x) * 0.06); });
+  [-0.13, 0.13].forEach((x) => { const l = add(g, rod(0.014, 0.92, 8), wood, [x, 0.46, -0.16]); l.rotation.x = -0.12; });
+  add(g, new THREE.TorusGeometry(0.13, 0.016, 8, 20, Math.PI), wood, [0, 0.8, -0.245]).rotation.x = -0.12;
+  add(g, box(0.26, 0.022, 0.02), wood, [0, 0.66, -0.225]);
+  add(g, new THREE.TorusGeometry(0.15, 0.008, 6, 28), wood, [0, 0.2, -0.01], [Math.PI / 2, 0, 0]);
+  return g;
+}
+
+// a bar stool for a window counter: a round seat 75 cm up on four legs, a ring for the feet
+export function stool(parent, at, tint) {
+  const g = group(parent, at);
+  const wood = inkMaterial(tint);
+  add(g, rod(0.17, 0.04, 24), wood, [0, 0.76, 0]);
+  [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([x, z]) => { const l = add(g, rod(0.014, 0.76, 8), wood, [x * 0.12, 0.38, z * 0.12]); l.rotation.set(z * 0.06, 0, -x * 0.06); });
+  add(g, new THREE.TorusGeometry(0.15, 0.009, 6, 28), wood, [0, 0.28, 0], [Math.PI / 2, 0, 0]);
+  return g;
+}
+
+// a little pot of something green, for a ledge or a shelf
+export function smallPlant(parent, at, { pot = '#EADFD2', leaf = '#D5E5C6', size = 1 } = {}) {
+  const g = group(parent, at);
+  g.scale.setScalar(size);
+  add(g, turned([[0, 0], [0.06, 0], [0.075, 0.12], [0.08, 0.13], [0, 0.13]]), inkMaterial(pot));
+  const m = inkMaterial(leaf, { hatch: 0.5 });
+  [[0, 0.2, 0, 0.09], [0.06, 0.17, 0.03, 0.065], [-0.05, 0.17, -0.02, 0.07]].forEach(([x, y, z, r]) => add(g, new THREE.IcosahedronGeometry(r, 1), m, [x, y, z]));
+  return g;
+}
+
+// a bud vase with a flower in it, for our table
+export function budVase(parent, at) {
+  const g = group(parent, at);
+  add(g, turned([[0, 0], [0.028, 0], [0.034, 0.04], [0.014, 0.1], [0.011, 0.13], [0, 0.13]]), inkMaterial('#EEF3F4'));
+  add(g, rod(0.003, 0.12, 5), inkMaterial('#9DB386', { hatch: 0 }), [0.004, 0.18, 0]).rotation.z = -0.12;
+  add(g, new THREE.IcosahedronGeometry(0.022, 1), inkMaterial('#F3C9B8', { hatch: 0 }), [0.012, 0.245, 0]);
   return g;
 }
 
@@ -123,21 +151,6 @@ export function glass(parent, at) {
   const g = group(parent, at);
   add(g, turned([[0, 0], [0.032, 0], [0.038, 0.13], [0.034, 0.13], [0.028, 0.008], [0, 0.008]]), inkMaterial('#F4F8FA', { side: THREE.DoubleSide }));
   return g;
-}
-
-// rows of upright slats (`n` of them, `gap` apart along z), as one instanced mesh
-export function slats(parent, { x, y, h, from, gap, n, w = 0.04, d = 0.05, tint, along = 'z', len }) {
-  const geo = along === 'z' ? box(d, h, w) : box(w, h, len);
-  const m = new THREE.InstancedMesh(geo, inkMaterial(tint), n);
-  const o = new THREE.Object3D();
-  for (let i = 0; i < n; i += 1) {
-    if (along === 'z') o.position.set(x, y, from - i * gap); else o.position.set(from + i * gap, y, x);
-    o.updateMatrix();
-    m.setMatrixAt(i, o.matrix);
-  }
-  m.castShadow = true; m.receiveShadow = true;
-  parent.add(m);
-  return m;
 }
 
 export { box, rod, turned };

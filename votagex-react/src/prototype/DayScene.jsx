@@ -166,6 +166,9 @@ const LAYOUT = [
   { me: 1 - PHI, at: [[PHI, 0]] },
   { me: 1 - PHI, at: [[PHI, 0], [0.724, 11]] },
 ];
+// (at a table there's no stepping back: the second friend sits beside the first, the same step on from them as
+// they are from me, so the three of us are spaced evenly along it)
+const AT_TABLE_THREE = { me: 1 - PHI, at: [[PHI, 0], [PHI + (2 * PHI - 1) * 0.97, 0]] };
 const pct = (k) => `${+(k * 100).toFixed(2)}%`;
 const SHELTER = [4600, 3800]; // the shelter's size in people's units (scenery.jsx), for the rain to keep off under it
 const reduced = () => typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
@@ -195,13 +198,14 @@ export default function DayScene({ scene, notes = [], weather = { kind: 'partly'
   useEffect(() => { if (ready) onReady?.(); }, [ready, onReady]);
   // where we are (at the table, a little back from it)
   const sat = place === 'eat' ? 16 : 0;
-  const meAt = LAYOUT[n].me;
-  const at = (i) => LAYOUT[n].at[i][0];
-  const back = (i) => LAYOUT[n].at[i][1] + sat;
+  const layout = place === 'eat' && n === 2 ? AT_TABLE_THREE : LAYOUT[n];
+  const meAt = layout.me;
+  const at = (i) => layout.at[i][0];
+  const back = (i) => layout.at[i][1] + sat;
   // in 3D: where we are in it (the table's laid at our places), and the canvas for what's in front of us
   const in3d = IN_3D.has(place);
   const front = useRef(null);
-  const people = useMemo(() => [{ x: LAYOUT[n].me, far: sat }, ...LAYOUT[n].at.map(([x, far]) => ({ x, far: far + sat }))], [n, sat]);
+  const people = useMemo(() => [{ x: layout.me, far: sat }, ...layout.at.map(([x, far]) => ({ x, far: far + sat }))], [layout, sat]);
   // how high a head is off the ground, in --tall (a bust's off the floor it starts; further back, smaller)
   const headAt = (poses, far) => (liftOf(poses) + headOf(poses)) * (1 - far / HORIZON);
   // the vanishing point (between us, or ahead of me on my own), and where a thing `far` back is in the picture

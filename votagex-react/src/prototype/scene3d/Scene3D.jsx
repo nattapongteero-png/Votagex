@@ -40,8 +40,8 @@ export default function Scene3D({ place, vx, horizon, wx, hot, cold, people, fro
     const cam = levelCamera({ w: m.w, h: m.h, f, cx, cy, eye: (horizon * PERSON) / m.tall });
     // each of us on the floor: depth from how far back, across from where we are in the picture at that depth
     const at = people.map(({ x, far }) => { const z = D / (1 - far / horizon); return [((x * m.w - cx) * z) / f, -z]; });
-    const { scene, key } = BUILD[place]({ at, wx, hot, cold });
-    const how = { w: m.w, h: m.h, dpr: Math.min(window.devicePixelRatio || 1, 2), line: (22 / 3000) * m.tall, key };
+    const { scene, key } = BUILD[place]({ at, f, wx, hot, cold });
+    const how = { w: m.w, h: m.h, dpr: Math.min(window.devicePixelRatio || 1, 2), key };
     cam.layers.set(0);
     draw(scene, cam, back.current, how);
     if (front?.current) { cam.layers.set(1); draw(scene, cam, front.current, how); }
