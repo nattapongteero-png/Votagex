@@ -52,9 +52,12 @@ function Person({ look, poses, flip, onTap, label, gear = {}, far = 0, className
       style={{ aspectRatio: `${w} / ${h}`, height: `calc(var(--tall) * ${(h / FULL) * scale})`, '--far': `${far}px`, ...style }}>
       {poses.map((pose, i) => (
         <svg key={pose} className={`ds-pose ds-pose-${i}`} {...svg}>
-          <Peep look={look} pose={pose} blink />
-          {gear.scarf && <Scarf dark={gear.scarf === 'dark'} />}
-          {gear.sweat && <Sweat />}
+          {/* (one group, so it all breathes as one: what they wear moves with them) */}
+          <g>
+            <Peep look={look} pose={pose} blink />
+            {gear.scarf && <Scarf dark={gear.scarf === 'dark'} />}
+            {gear.sweat && <Sweat />}
+          </g>
         </svg>
       ))}
     </div>

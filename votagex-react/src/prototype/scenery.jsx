@@ -246,8 +246,8 @@ export function Land() {
 }
 
 // What the people have about them for the weather, drawn in a person's own units over their pose. The head is
-// always at the same place on a pose (peeps.js HEAD_AT: the face 440–620 across, 210–400 down, the neck under
-// it 370–590 across, down to the collar at about 530), so they sit right on any of them.
+// always at the same place on a pose (peeps.js HEAD_AT: the face 440–620 across, 210–400 down, the chin about
+// 480, the neck under it 370–590 across, down to the collar at about 530), so they sit right on any of them.
 // beads of sweat on the face, small, high up (lower down, by the eye, they'd read as tears): one on the brow,
 // one at the temple, running a little way down
 export function Sweat() {
@@ -266,10 +266,10 @@ export function Scarf({ dark }) {
   const knit = dark ? { ...line, stroke: '#fff', strokeWidth: 12 } : { ...line, strokeWidth: 12 };
   return (
     <g className="ds-scarf">
-      <path {...shape} fill={dark ? INK : '#fff'} d="M505 540 C515 620 525 690 545 750 L630 736 C610 680 600 610 595 540 Z" />
-      <path {...knit} d="M522 620 L604 612 M534 690 L616 682 M548 750 l-6 40 M580 745 l-3 40 M612 740 l1 40" />
-      <path {...shape} fill={dark ? INK : '#fff'} d="M352 462 C430 436 545 436 618 462 C628 495 628 532 618 566 C545 542 430 542 360 566 C348 532 346 495 352 462 Z" />
-      <path {...knit} d="M412 452 L418 552 M478 443 L481 545 M544 446 L545 548" />
+      <path {...shape} fill={dark ? INK : '#fff'} d="M505 580 C515 660 525 730 545 790 L630 776 C610 720 600 650 595 580 Z" />
+      <path {...knit} d="M522 660 L604 652 M534 730 L616 722 M548 790 l-6 40 M580 785 l-3 40 M612 780 l1 40" />
+      <path {...shape} fill={dark ? INK : '#fff'} d="M352 504 C430 478 545 478 618 504 C628 537 628 574 618 608 C545 584 430 584 360 608 C348 574 346 537 352 504 Z" />
+      <path {...knit} d="M412 494 L418 594 M478 485 L481 587 M544 488 L545 590" />
     </g>
   );
 }
