@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { Vector3 } from 'three';
 import { dispose, draw, levelCamera } from './ink';
 import { cafe } from './cafe';
 import { home } from './home';
@@ -8,7 +9,9 @@ import { park } from './park';
 // canvas DayScene puts over them). Seen through the camera the people are drawn for: level, our feet `horizon`
 // px under the horizon at our depth and a person --tall px there (1.75 m), D m off, the vanishing point `vx`
 // across. Drawn once for the place, the weather and the stage's size (nothing in it moves).
-// people: where each of us is in the picture, { x: a share across (the face), far: px back up the floor }
+// people: where each of us is in the picture, { x: a share across (the face), far: px back up the floor };
+// onOutside: told where the outside shows in the picture, when we're under a roof (for the rain, SceneWeather):
+// { shapes, cuts, drips } in px, or null
 
 const BUILD = { eat: cafe, home, park };
 const PERSON = 1.75; // m, a person's --tall
@@ -18,7 +21,7 @@ const PERSON = 1.75; // m, a person's --tall
 const DIST = { eat: 2.6, home: 3.0, park: 4.5 };
 const FADE = { eat: [30, 160], home: [30, 160], park: [25, 140] };
 
-export default function Scene3D({ place, vx, yaw = 0, stage, horizon, wx, hot, cold, people, front }) {
+export default function Scene3D({ place, vx, yaw = 0, stage, horizon, wx, hot, cold, people, front, onOutside }) {
   const box = useRef(null);
   const probe = useRef(null);
   const back = useRef(null);
@@ -50,13 +53,18 @@ export default function Scene3D({ place, vx, yaw = 0, stage, horizon, wx, hot, c
       const z = D / (1 - far / horizon); const vx0 = ((x * m.w - cx) * z) / f;
       return [vx0 * c - z * s, -vx0 * s - z * c];
     });
-    const { scene, key } = BUILD[place]({ at, f, wx, hot, cold, stage });
-    const how = { w: m.w, h: m.h, dpr: Math.min(window.devicePixelRatio || 1, 2), key, fade: place === 'park' && wx === 'fog' ? [6, 30] : FADE[place] };
+    // where a point [x, y, z] is in the picture, px; how far across it each face is
+    const see = ([x, y, z]) => { const v = new Vector3(x, y, z).project(cam); return [((v.x + 1) / 2) * m.w, ((1 - v.y) / 2) * m.h]; };
+    const faces = people.map(({ x }) => x * m.w);
+    const { scene, key, tint, outside } = BUILD[place]({ at, f, see, faces, wx, hot, cold, stage });
+    const flat = (ps) => ps.map((p) => see(p).map((v) => Math.round(v * 10) / 10));
+    onOutside?.(outside ? { shapes: outside.shapes.map(flat), cuts: (outside.cuts || []).map(flat), drips: (outside.drips || []).map(flat) } : null);
+    const how = { w: m.w, h: m.h, dpr: Math.min(window.devicePixelRatio || 1, 2), key, tint, fade: place === 'park' && wx === 'fog' ? [6, 30] : FADE[place] };
     cam.layers.set(0);
     draw(scene, cam, back.current, how);
     if (front?.current) { cam.layers.set(1); draw(scene, cam, front.current, how); }
     return () => dispose(scene);
-  }, [m, place, vx, yaw, stage, horizon, wx, hot, cold, people, front]);
+  }, [m, place, vx, yaw, stage, horizon, wx, hot, cold, people, front, onOutside]);
 
   return (
     <div className="ds-3d" ref={box} aria-hidden="true">

@@ -214,18 +214,4 @@ export function bush(parent, at, { size = 1, leaf = '#D3E2C3', seed = 2 } = {}) 
   return g;
 }
 
-// a sala: a pavilion to sit out the rain in, four posts under a hipped tile roof, a bench along the back
-export function sala(parent, at, { w = 3.6, d = 3.0, eave = 2.5, roof = '#E3C3AE', post = '#E9DCC8', wood = '#D9B98F' } = {}) {
-  const g = group(parent, at);
-  const p = inkMaterial(post);
-  [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([x, z]) => add(g, box(0.16, eave, 0.16), p, [x * (w / 2 - 0.1), eave / 2, z * (d / 2 - 0.1)]));
-  add(g, box(w + 0.1, 0.18, d + 0.1), inkMaterial(wood), [0, eave + 0.09, 0]);
-  const top = add(g, new THREE.ConeGeometry(Math.hypot(w, d) / 2 + 0.5, 1.3, 4, 1), inkMaterial(roof, { grid: [0, 0.22], axes: 'xy' }), [0, eave + 0.18 + 0.65, 0]);
-  top.rotation.y = Math.PI / 4;
-  top.scale.set(1, 1, d / w);
-  add(g, box(w - 0.4, 0.06, 0.4), inkMaterial(wood), [0, 0.45, -d / 2 + 0.3]);
-  add(g, box(w - 0.4, 0.45, 0.06), inkMaterial(wood), [0, 0.225, -d / 2 + 0.12]);
-  return g;
-}
-
 export { box, rod, turned };

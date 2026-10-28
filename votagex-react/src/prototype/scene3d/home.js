@@ -1,20 +1,25 @@
 import * as THREE from 'three';
 import { inkMaterial } from './ink';
-import { glassPane, lights, sky, streetTree } from './outdoors';
-import { add, box, cup, group, inFront, plant, rod, smallPlant, turned } from './parts';
+import { glassPane, lights, sky, streetTree, sunPatch, tintOf } from './outdoors';
+import { add, box, cup, group, inFront, rod, smallPlant } from './parts';
 
-// A day with nothing on: at home, the living room. Laid out as a designer would, and for the picture:
-// - me on the sofa, the friends across from me on the rug, the coffee table between us: we face each other over
-//   it (a conversation, not a row); on my own, the coffee table in front of me with a cup and a book;
-// - the back wall the calm ground behind us: a wide window (the day outside in it) over a low cabinet, two
-//   pictures hung to one side;
-// - down the left wall a bookcase full of books (the detail goes at the side), in the right-hand corner a tall
-//   plant and the standard lamp;
-// - boards on the floor running back to the window (leading lines), a plain ceiling, nothing over our heads.
-// `at`: where each of us is, on the floor [x, z] (me first, on the sofa); `wx`, `hot`, `cold`: the weather.
+// A day with nothing on: at home, the living room, me alone (with nothing on, no one's come round). Laid out as a
+// designer would, and taken as a photographer would, from the front corner of the room turned a little across
+// it, so it opens out ahead of me, the way I'm looking:
+// - me on the end of the sofa, turned toward the window, the coffee table in front of me with a cup and a book,
+//   the rug under it all, nothing at my elbow;
+// - the back wall the calm ground: the window ahead of me (the day outside in it), nothing in front of it,
+//   pictures only where they're not behind my head;
+// - down the left wall a bookcase full of books, going off the edge of the picture; in the right wall, beside
+//   me, a second window, cut by the edge of the picture: the day's light comes in by it, and on a sunny day lies
+//   on the floor ahead of me in the shape of its panes (no sun in the sky: the light is the sun);
+// - boards on the floor and on the ceiling running back (leading lines, the ceiling coming on down from over the
+//   header as the café's does), nothing hung over my head.
+// `at`: where I am, on the floor [x, z]; `see`: where a point [x, y, z] is in the picture, px; `faces`: how far
+// across the picture each face is, px; `wx`, `hot`, `cold`: the weather.
 
-const ROOM = { left: -2.7, right: 2.7, back: -6.4, high: 2.7 };
-const T = { wall: '#F2F0E9', side: '#ECE9E0', floor: '#E8D9C2', wood: '#D9B98F', woodPale: '#E6D3B8', sofa: '#C8D2D8', cushion: '#E9CDBD',
+const ROOM = { left: -2.6, right: 2.5, back: -7.2, high: 2.75 };
+const T = { wall: '#F2F0E9', side: '#ECE9E0', floor: '#E3D2B7', wood: '#D9B98F', woodPale: '#E6D3B8', sofa: '#C8D2D8', cushion: '#E9CDBD',
   rug: '#E9E2D2', white: '#FFFFFF', books: ['#C9D7D3', '#E7CFC0', '#D8D3E6', '#EADFB9', '#CBD9C2', '#E3C9C9'] };
 
 // a three-seat sofa facing +z (seat 42 cm up), a cushion at each end
@@ -67,15 +72,6 @@ function bookcase(parent, at, len) {
   return g;
 }
 
-// a standard lamp: a disc base, a slim pole, a drum shade
-function standardLamp(parent, at) {
-  const g = group(parent, at);
-  add(g, rod(0.16, 0.03, 24), inkMaterial('#3A3A40'), [0, 0.015, 0]);
-  add(g, rod(0.014, 1.5, 8), inkMaterial('#3A3A40'), [0, 0.78, 0]);
-  add(g, new THREE.CylinderGeometry(0.17, 0.22, 0.3, 28, 1, true), inkMaterial('#F4EBDC', { side: THREE.DoubleSide, hatch: 0.4 }), [0, 1.62, 0]);
-  return g;
-}
-
 // a picture in a frame with a mat, hung on the back wall
 function picture(parent, at, w, h, seed) {
   const g = group(parent, at);
@@ -85,21 +81,39 @@ function picture(parent, at, w, h, seed) {
   return g;
 }
 
-export function home({ at, wx, hot, cold }) {
+export function home({ at, see, faces, wx, hot, cold }) {
   const scene = new THREE.Scene();
   const { left, right, back, high } = ROOM;
   const len = 1 - back; const mid = (1 + back) / 2;
-  const { sunny, key } = lights(scene, { wx, hot, ground: '#E8DFD0', from: [-4, 6, 6], to: [0, 0, -4], span: 8 });
+  // the light: the day's, in by the window on the right, from a little in front of us
+  const SUN = [5, hot ? 8 : cold ? 4 : 6, 3.5];
+  const { sunny, key } = lights(scene, { wx, hot, ground: '#E8DFD0', from: SUN, to: [0, 0, 0], span: 8 });
   const shell = (m) => { m.castShadow = false; return m; };
+  // (nothing busy behind my head: a thing that'd come within 60 px of my face across the picture goes elsewhere)
+  const clear = (p) => faces.every((fx) => Math.abs(see(p)[0] - fx) > 60);
 
-  // the room: boards on the floor, plain walls and ceiling, a skirting board round it
+  // the room: boards on the floor, plain walls, a ceiling of boards (their joints drawn as the café's slats
+  // are, one line each), a skirting board round it
   shell(add(scene, new THREE.PlaneGeometry(right - left, len), inkMaterial(T.floor, { grid: [0.16, 0], axes: 'xz', joints: 0.3, hatch: 0.8 }), [0, 0, mid], [-Math.PI / 2, 0, 0]));
-  shell(add(scene, box(right - left + 0.4, 0.2, len), inkMaterial('#F7F6F2', { hatch: 0 }), [0, high + 0.1, mid]));
-  [left - 0.1, right + 0.1].forEach((x) => shell(add(scene, box(0.2, high + 0.2, len), inkMaterial(T.side, { hatch: 0.5 }), [x, high / 2, mid])));
+  shell(add(scene, box(right - left + 0.4, 0.2, len), inkMaterial('#F1EADD', { hatch: 0, grid: [0.3, 0], axes: 'xz', joints: 0.22 }), [0, high + 0.1, mid]));
+  shell(add(scene, box(0.2, high + 0.2, len), inkMaterial(T.side, { hatch: 0.5 }), [left - 0.1, high / 2, mid]));
   [left + 0.01, right - 0.01].forEach((x) => add(scene, box(0.02, 0.1, len), inkMaterial(T.white), [x, 0.05, mid]));
+  // the right wall round its window (its inside out of the light, but left unhatched: a plain wall)
+  const side = [-4.9, -2.9]; const sSill = 0.45; const sHead = 2.3;
+  const sideWall = inkMaterial(T.side, { hatch: 0 });
+  [[back, side[0], 0, high], [side[1], 1, 0, high], [side[0], side[1], 0, sSill], [side[0], side[1], sHead, high]]
+    .forEach(([z0, z1, y0, y1]) => shell(add(scene, box(0.2, y1 - y0, z1 - z0), sideWall, [right + 0.1, (y0 + y1) / 2, (z0 + z1) / 2])));
+  const sz = (side[0] + side[1]) / 2;
+  [side[0], sz, side[1]].forEach((z) => add(scene, box(0.08, sHead - sSill, 0.06), inkMaterial(T.white), [right, (sSill + sHead) / 2, z]));
+  [sSill, sHead].forEach((y) => add(scene, box(0.08, 0.06, side[1] - side[0] + 0.06), inkMaterial(T.white), [right, y, sz]));
+  add(scene, new THREE.PlaneGeometry(side[1] - side[0], sHead - sSill), glassPane(wx === 'rain' || wx === 'storm', wx === 'storm'), [right + 0.02, (sSill + sHead) / 2, sz], [0, -Math.PI / 2, 0]).castShadow = false;
+  if (sunny) {
+    const d = SUN.map((v) => -v);
+    sunPatch(scene, [[side[0], sz], [sz, side[1]]].map(([z0, z1]) => [[right, sSill, z0], [right, sSill, z1], [right, sHead, z1], [right, sHead, z0]]), d, { hot, cold });
+  }
 
-  // the back wall round a wide window (the day outside in it), a low cabinet under it, two pictures beside it
-  const win = [-0.55, 1.75]; const sill = 0.85; const head = 2.25;
+  // the back wall round the window ahead of me (the day outside in it)
+  const win = [0.35, 2.05]; const sill = 0.8; const head = 2.3;
   const wall = inkMaterial(T.wall);
   [[left, win[0], 0, high], [win[1], right, 0, high], [win[0], win[1], 0, sill], [win[0], win[1], head, high]].forEach(([x0, x1, y0, y1]) => shell(add(scene, box(x1 - x0, y1 - y0, 0.2), wall, [(x0 + x1) / 2, (y0 + y1) / 2, back - 0.1])));
   add(scene, box(right - left, 0.1, 0.02), inkMaterial(T.white), [0, 0.05, back + 0.01]);
@@ -108,37 +122,33 @@ export function home({ at, wx, hot, cold }) {
   [sill, head].forEach((y) => add(scene, box(win[1] - win[0] + 0.06, 0.06, 0.08), frame, [(win[0] + win[1]) / 2, y, back]));
   add(scene, box(win[1] - win[0] + 0.2, 0.04, 0.18), frame, [(win[0] + win[1]) / 2, sill - 0.02, back + 0.08]);
   add(scene, new THREE.PlaneGeometry(win[1] - win[0], head - sill), glassPane(wx === 'rain' || wx === 'storm', wx === 'storm'), [(win[0] + win[1]) / 2, (sill + head) / 2, back - 0.02]).castShadow = false;
-  // outside it: a tree in the garden, the sky
-  streetTree(scene, [win[0] + 0.4, -0.4, back - 4.5], cold);
+  // outside it: a tree in the garden, the sky (no sun in it: the day's in its colour)
+  streetTree(scene, [win[1] - 0.3, -0.4, back - 4.5], cold);
   add(scene, new THREE.PlaneGeometry(200, 120), sky(hot ? 'hot' : wx), [0, 40, back - 40]);
-  if (sunny) add(scene, new THREE.CircleGeometry(2.4, 40), new THREE.MeshBasicMaterial({ color: hot ? '#FFF2C4' : '#FFE9A0' }), [9, 14, back - 38]).castShadow = false;
   if (wx === 'fog') add(scene, new THREE.PlaneGeometry(win[1] - win[0], head - sill), new THREE.MeshBasicMaterial({ color: '#F4F5F5', transparent: true, opacity: 0.72, depthWrite: false }), [(win[0] + win[1]) / 2, (sill + head) / 2, back - 0.3]);
-  const cab = group(scene, [(win[0] + win[1]) / 2, 0, back + 0.24]);
-  add(cab, box(1.9, 0.5, 0.42), inkMaterial(T.woodPale, { grid: [0.475, 0], axes: 'xy', joints: 0.35 }), [0, 0.3, 0]);
-  [-0.8, 0.8].forEach((x) => add(cab, rod(0.02, 0.05, 6), inkMaterial(T.wood), [x, 0.025, 0.15]));
-  smallPlant(cab, [-0.6, 0.55, 0], { size: 1.3 });
-  add(cab, turned([[0, 0], [0.07, 0], [0.09, 0.12], [0.05, 0.26], [0.04, 0.3], [0, 0.3]]), inkMaterial('#E9DCC4'), [0.55, 0.55, 0]);
-  [0, 1, 2].forEach((i) => add(cab, box(0.26 - i * 0.03, 0.04, 0.2), inkMaterial(T.books[i + 2]), [0.15, 0.57 + i * 0.04, 0]));
-  picture(scene, [left + 0.75, 1.55, back + 0.02], 0.6, 0.78, 0);
-  picture(scene, [left + 1.5, 1.45, back + 0.02], 0.44, 0.56, 1);
+  // pictures on the wall to the left of the window, whichever don't come behind my head
+  [[left + 0.7, 1.55, 0.6, 0.78, 0], [left + 1.45, 1.45, 0.44, 0.56, 1], [win[0] - 0.55, 1.5, 0.5, 0.64, 1]]
+    .filter(([x, y]) => clear([x, y, back]))
+    .forEach(([x, y, w, h, seed]) => picture(scene, [x, y, back + 0.02], w, h, seed));
 
-  // the left wall's bookcase, the right corner's plant and lamp
-  bookcase(scene, [left + 0.18, 0, -4.9], 2.2);
-  plant(scene, [right - 0.45, 0, back + 0.5], 1.5, { seed: 5 });
-  standardLamp(scene, [right - 0.5, 0, -3.9]);
+  // the left wall's bookcase, going off the edge
+  bookcase(scene, [left + 0.18, 0, back + 1.4], 2.4).traverse((o) => { o.castShadow = false; });
 
-  // us: me on the sofa (with friends, on its end towards them), the rug under us, the coffee table between us
+  // me on the sofa's end (it runs off to my left), the rug, the coffee table in front of me
   const [[mx, mz]] = at;
-  const n = at.length - 1;
-  sofa(scene, [mx - (n ? 0.5 : 0), 0, mz - 0.52]);
-  const cx = at.reduce((t, [x]) => t + x, 0) / at.length;
-  const rug = add(scene, box(n ? 3.0 : 2.4, 0.012, 2.0), inkMaterial(T.rug, { hatch: 0.6 }), [n ? cx : mx + 0.2, 0.006, mz + 0.15]);
+  sofa(scene, [mx - 0.5, 0, mz - 0.52]);
+  const rug = add(scene, box(2.6, 0.012, 2.0), inkMaterial(T.rug, { hatch: 0.6 }), [mx + 0.1, 0.006, mz + 0.35]);
   rug.castShadow = false;
-  add(scene, box((n ? 3.0 : 2.4) - 0.24, 0.014, 1.76), inkMaterial('#F1EBDE', { hatch: 0.6 }), [n ? cx : mx + 0.2, 0.007, mz + 0.15]).castShadow = false;
-  const table = n
-    ? coffeeTable(scene, [(mx + at[1][0]) / 2, 0, mz + 0.32], [[-0.22, 0.1], [0.24, -0.06]])
-    : coffeeTable(scene, [mx + 0.2, 0, mz + 0.72], [[-0.1, 0.06]]);
-  inFront(table);
+  add(scene, box(2.36, 0.014, 1.76), inkMaterial('#F1EBDE', { hatch: 0.6 }), [mx + 0.1, 0.007, mz + 0.35]).castShadow = false;
+  inFront(coffeeTable(scene, [mx + 0.15, 0, mz + 0.72], [[-0.1, 0.06]]));
 
-  return { scene, key: key.intensity };
+  // on a scorcher the windows are white with the glare; through them, where the rain shows (SceneWeather)
+  const panes = [[[win[0], sill, back], [win[1], sill, back], [win[1], head, back], [win[0], head, back]],
+    [[right, sSill, side[0]], [right, sSill, side[1]], [right, sHead, side[1]], [right, sHead, side[0]]]];
+  if (hot) {
+    const glare = new THREE.MeshBasicMaterial({ color: '#FFFDF6', transparent: true, opacity: 0.72, depthWrite: false });
+    add(scene, new THREE.PlaneGeometry(win[1] - win[0], head - sill), glare, [(win[0] + win[1]) / 2, (sill + head) / 2, back + 0.01]).castShadow = false;
+    add(scene, new THREE.PlaneGeometry(side[1] - side[0], sHead - sSill), glare, [right - 0.01, (sSill + sHead) / 2, sz], [0, -Math.PI / 2, 0]).castShadow = false;
+  }
+  return { scene, key: key.intensity, tint: tintOf({ sunny, hot, cold }), outside: { shapes: panes } };
 }

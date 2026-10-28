@@ -30,7 +30,8 @@ const NOISE = /* glsl */`
 export function inkMaterial(tint, { hatch = 1, grid = null, axes = 'xz', joints = 0.42, side = THREE.FrontSide, transparent = false, opacity = 1 } = {}) {
   const { color, shade } = paint(tint);
   const m = new THREE.MeshLambertMaterial({ color, side, transparent, opacity });
-  m.userData.ink = { uHatch: { value: hatch }, uShade: { value: shade }, uKey: { value: 1 }, uPx: { value: 1 }, uInk: { value: INK }, uGrid: { value: new THREE.Vector2(...(grid || [0, 0])) }, uJoints: { value: joints } };
+  m.userData.ink = { uHatch: { value: hatch }, uShade: { value: shade }, uKey: { value: 1 }, uPx: { value: 1 }, uInk: { value: INK }, uGrid: { value: new THREE.Vector2(...(grid || [0, 0])) }, uJoints: { value: joints },
+    uWarm: { value: new THREE.Color(1, 1, 1) }, uCool: { value: new THREE.Color(0.96, 0.96, 0.96) } };
   m.onBeforeCompile = (shader) => {
     Object.assign(shader.uniforms, m.userData.ink);
     if (grid) shader.defines = { ...shader.defines, INK_GRID: 1, [`INK_${axes.toUpperCase()}`]: 1 };
@@ -46,6 +47,7 @@ export function inkMaterial(tint, { hatch = 1, grid = null, axes = 'xz', joints 
       .replace('#include <common>', `#include <common>
         varying vec3 vInkWorld;
         uniform float uHatch; uniform float uShade; uniform float uKey; uniform float uPx; uniform vec3 uInk; uniform vec2 uGrid; uniform float uJoints;
+        uniform vec3 uWarm; uniform vec3 uCool;
         ${NOISE}
         // hatching strokes leaning dir, gap css px apart: fine, wavering a little, broken where a stroke ends
         float inkStrokes(vec2 fc, float dir, float gap) {
@@ -57,7 +59,8 @@ export function inkMaterial(tint, { hatch = 1, grid = null, axes = 'xz', joints 
         // how much of the key light falls here (shadow included), 0–1
         float lum = dot(diffuseColor.rgb, vec3(0.299, 0.587, 0.114));
         float lit = clamp(dot(reflectedLight.directDiffuse, vec3(0.299, 0.587, 0.114)) * PI / max(lum * uKey, 1e-4), 0.0, 1.0);
-        vec3 tone = diffuseColor.rgb * mix(0.96, 1.0, smoothstep(0.2, 0.6, lit));
+        // (the wash a little warmer where the sun's on it, cooler in the shade, as a watercolourist puts the light in)
+        vec3 tone = diffuseColor.rgb * mix(uCool, uWarm, smoothstep(0.2, 0.6, lit));
         vec2 fc = gl_FragCoord.xy / uPx;
         float ink = max(inkStrokes(fc, 1.0, 5.5) * (1.0 - smoothstep(0.26, 0.36, lit)), inkStrokes(fc, -1.0, 5.5) * (1.0 - smoothstep(0.06, 0.14, lit))) * 0.5 * uHatch;
         ink = max(ink, max(inkStrokes(fc, 1.0, 3.2), inkStrokes(fc, -0.6, 4.0) * 0.8) * 0.5 * uShade);
@@ -134,8 +137,10 @@ function renderer() {
   return shared;
 }
 
-// draw `scene` through `camera` (camera.layers chooses what's in it) onto `canvas`, `w`×`h` css px at `dpr`
-export function draw(scene, camera, canvas, { w, h, dpr, key, fade = [30, 160] }) {
+// draw `scene` through `camera` (camera.layers chooses what's in it) onto `canvas`, `w`×`h` css px at `dpr`;
+// `tint`: [in the sun, in the shade], what the wash is multiplied by (the day's light)
+const NO_TINT = [new THREE.Color(1, 1, 1), new THREE.Color(0.96, 0.96, 0.96)];
+export function draw(scene, camera, canvas, { w, h, dpr, key, fade = [30, 160], tint = NO_TINT }) {
   const { r, color, normal } = renderer();
   const px = dpr * SS;
   const W = Math.round(w * px); const H = Math.round(h * px);
@@ -144,15 +149,22 @@ export function draw(scene, camera, canvas, { w, h, dpr, key, fade = [30, 160] }
   color.setSize(W, H); normal.setSize(W, H);
   scene.traverse((o) => {
     const ms = !o.material ? [] : Array.isArray(o.material) ? o.material : [o.material];
-    ms.forEach((m) => { if (m.userData.ink) { m.userData.ink.uPx.value = px; m.userData.ink.uKey.value = key; } });
+    ms.forEach((m) => {
+      const u = m.userData.ink;
+      if (u) { u.uPx.value = px; u.uKey.value = key; u.uWarm.value.copy(tint[0]); u.uCool.value.copy(tint[1]); }
+    });
   });
   r.setClearColor(0x000000, 0);
   r.setRenderTarget(color); r.clear(); r.render(scene, camera);
   const bg = scene.background; scene.background = null;
+  // (what only casts a shadow, never seen, kept out of the normals too, or it'd be outlined)
+  const ghosts = [];
+  scene.traverse((o) => { if (o.userData.shadowOnly && o.visible) { o.visible = false; ghosts.push(o); } });
   scene.overrideMaterial = NORMALS;
   r.setClearColor(0x8080ff, 1);
   r.setRenderTarget(normal); r.clear(); r.render(scene, camera);
   scene.overrideMaterial = null; scene.background = bg;
+  ghosts.forEach((o) => { o.visible = true; });
   LINES.uniforms.tColor.value = color.texture;
   LINES.uniforms.tDepth.value = color.depthTexture;
   LINES.uniforms.tNormal.value = normal.texture;

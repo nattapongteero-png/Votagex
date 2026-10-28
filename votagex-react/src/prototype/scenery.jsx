@@ -56,27 +56,7 @@ const LEAF = {
   art: <path {...shape} strokeWidth={16} d="M20 90 C80 10 220 10 280 90 C220 170 80 170 20 90 Z M20 90 L250 90" />,
 };
 
-// the sun, glowing, its rays turning slowly
-const SUN = {
-  box: [0, 0, 1600, 1600],
-  art: (
-    <>
-      <defs>
-        <radialGradient id="ds-sun-glow"><stop offset="0.3" className="ds-glow-in" /><stop offset="1" className="ds-glow-out" /></radialGradient>
-      </defs>
-      <circle className="ds-glow" cx="800" cy="800" r="800" fill="url(#ds-sun-glow)" />
-      <g className="ds-rays">
-        <path {...line} strokeWidth={30} d={Array.from({ length: 12 }, (_, i) => {
-          const a = (i / 12) * 2 * Math.PI; const r0 = i % 2 ? 500 : 470; const r1 = i % 2 ? 610 : 660;
-          return `M${Math.round(800 + r0 * Math.cos(a))} ${Math.round(800 + r0 * Math.sin(a))} L${Math.round(800 + r1 * Math.cos(a))} ${Math.round(800 + r1 * Math.sin(a))}`;
-        }).join(' ')} />
-      </g>
-      <circle {...line} className="ds-disc" strokeWidth={30} cx="800" cy="800" r="360" />
-    </>
-  ),
-};
-
-const PROPS = { leaf: LEAF, sun: SUN, cloud: CLOUD, birds: BIRDS };
+const PROPS = { leaf: LEAF, cloud: CLOUD, birds: BIRDS };
 
 // one prop at --x (its centre); `size` scales it from life size
 export function Prop({ kind, x, size = 1, className = '', style }) {

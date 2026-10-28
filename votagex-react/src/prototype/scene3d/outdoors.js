@@ -2,8 +2,8 @@ import * as THREE from 'three';
 import { inkMaterial } from './ink';
 import { add, group, rod } from './parts';
 
-// What the places share: the day's light, and the day outside seen through glass (the sky, the sun, a tree, rain
-// on the pane).
+// What the places share: the day's light, and the day outside seen through glass (the sky, a tree, rain on the
+// pane).
 
 // the light: the room's or the park's all round, and the day's from `from` toward `to`, casting shadows only on a
 // sunny day (`span` m either side covered); on both layers, as what's in front of us is drawn on its own
@@ -20,6 +20,27 @@ export function lights(scene, { wx, hot, ground, from, to, span, near = 1, far =
   [fill, key].forEach((l) => l.layers.enableAll());
   scene.add(fill, key, key.target);
   return { sunny, key };
+}
+
+// the day's light in the wash (ink.js draw `tint`): [in the sun, in the shade]. A fair day's sun warm, its shade
+// cool; a scorcher's white-hot, its shade bleached; the cold's a pale, thin light, its shade blue; a dull day
+// none, all one light
+const TINTS = {
+  fair: ['#FFFAF0', '#E9EBF3'], hot: ['#FFFDF6', '#F1ECEA'], cold: ['#FBFCFF', '#E3E9F3'], dull: ['#FFFFFF', '#F5F5F5'],
+};
+export const tintOf = ({ sunny, hot, cold }) => TINTS[!sunny ? 'dull' : hot ? 'hot' : cold ? 'cold' : 'fair'].map((c) => new THREE.Color(c));
+
+// sunlight in through a window onto the floor: each pane's shape, cast along the light (`dir`, the way it's
+// going) from the pane's corners [x, y, z] down to the floor, a little warmer and brighter than it
+export function sunPatch(parent, panes, dir, { hot, cold }) {
+  const m = new THREE.MeshBasicMaterial({ color: hot ? '#FFFCF0' : cold ? '#F8FAFF' : '#FFF7E4', transparent: true, opacity: hot ? 0.85 : 0.7, depthWrite: false, side: THREE.DoubleSide });
+  panes.forEach((corners) => {
+    const pts = corners.map(([x, y, z]) => { const t = -y / dir[1]; return new THREE.Vector2(x + dir[0] * t, -(z + dir[2] * t)); });
+    const patch = new THREE.Mesh(new THREE.ShapeGeometry(new THREE.Shape(pts)), m);
+    patch.rotation.x = -Math.PI / 2;
+    patch.position.y = 0.004;
+    parent.add(patch);
+  });
 }
 
 // the sky out of the window, by the weather: [top, toward the horizon]

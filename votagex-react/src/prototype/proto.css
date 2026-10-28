@@ -2440,18 +2440,22 @@ body::after { content: ''; position: fixed; inset: 0; z-index: 9998; pointer-eve
 /* (at the table we're seen close up, bigger, the table's edge along the foot of the scene and its cloth on down
    under the card sheet) */
 .homepage.pt-today .ds.ds-at-eat { --tall: 290px; --ground: calc(var(--shown) * .382 - 2px - var(--tall) * .676); }
-/* the sun: yellow, glowing, its rays turning; on a scorcher white-hot and glaring */
-.ds-rays { transform-box: fill-box; transform-origin: center; animation: ds-turn 60s linear infinite; }
-@keyframes ds-turn { to { rotate: 360deg; } }
-.ds-disc { fill: #FFD964; }
-.ds-glow-in { stop-color: #FFE48A; stop-opacity: .5; }
-.ds-glow-out { stop-color: #FFE48A; stop-opacity: 0; }
-.ds-glow { transform-box: fill-box; transform-origin: center; animation: ds-glow 4s ease-in-out infinite alternate; }
-@keyframes ds-glow { from { scale: .85; } to { scale: 1.05; } }
-.ds-hot .ds-disc { fill: #FFF2C4; }
-.ds-hot .ds-glow-in { stop-color: #FFF6D8; stop-opacity: .95; }
-.ds-hot .ds-glow-out { stop-color: #FFEDB8; stop-opacity: 0; }
-.ds-hot .ds-glow { animation-duration: 2.4s; }
+/* the sun's light outdoors, no sun in the sky (DayScene): a glow in from the top right, where the light comes from
+   (the park's key light, scene3d/park.js), and its beams slanting down through the air, drifting a little; warm
+   on a fair day, softer with clouds about, white-hot and wide on a scorcher, thin and pale in the cold */
+.ds-light { position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(120% 80% at 100% 0%, rgba(255, 218, 150, .26), rgba(255, 224, 166, .1) 40%, rgba(255, 224, 166, 0) 72%); }
+.ds-light::after { content: ''; position: absolute; inset: -10% -20%;
+  background: repeating-linear-gradient(118deg, rgba(255, 236, 196, 0) 0 30px, rgba(255, 236, 196, .3) 38px 50px, rgba(255, 236, 196, 0) 60px 80px,
+    rgba(255, 236, 196, .18) 86px 92px, rgba(255, 236, 196, 0) 100px 140px);
+  -webkit-mask-image: radial-gradient(80% 60% at 95% 0%, #000, transparent 75%); mask-image: radial-gradient(80% 60% at 95% 0%, #000, transparent 75%);
+  animation: ds-beams 14s ease-in-out infinite alternate; }
+@keyframes ds-beams { from { translate: -10px 0; opacity: .7; } to { translate: 12px 0; opacity: 1; } }
+.ds-hot .ds-light { background: radial-gradient(160% 110% at 90% 0%, rgba(255, 244, 205, .5), rgba(255, 248, 225, .3) 45%, rgba(255, 250, 235, .12) 100%); }
+.ds-hot .ds-light::after { opacity: .5; }
+.ds-cold .ds-light { background: radial-gradient(110% 80% at 100% 6%, rgba(226, 236, 255, .3), rgba(226, 236, 255, 0) 66%); }
+.ds-cold .ds-light::after { opacity: .4; }
+@media (prefers-reduced-motion: reduce) { .ds-light::after { animation: none; } }
 /* clouds grey-bellied, more so on a dull day, darker in the rain */
 .ds-cloud-top { stop-color: #fff; }
 .ds-cloud-under { stop-color: #E6EAEF; }

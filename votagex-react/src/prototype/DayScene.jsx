@@ -18,14 +18,16 @@ const Scene3D = lazy(() => import('./scene3d/Scene3D'));
 // Each pose of the library comes in its own clothes, so we're dressed for the weather by the pose (WEAR), each
 // of us in something different, and keep to it: no walking in, no gestures.
 // A day out: me on the left, the friends going on the right, the first of them says hi (where we're off to and
-// when is in the cards below). On my own page (no group picked) it's only me. A day with nothing on: at home, my
-// head tilting now and then, wondering where to go. Each place is taken as a photographer would take it, the
+// when is in the cards below). On my own page (no group picked) it's only me. A day with nothing on: at home on
+// my own, my head tilting now and then, wondering where to go. Each place is taken as a photographer would take it, the
 // framing chosen for it and for how many of us there are (FRAMING). A change of scene (another profile picked)
 // is a Remotion transition (SceneSwap.jsx).
-// The day's weather (where I am today) plays on it all: outdoors the sky takes its colour, the sun or the
-// clouds are up (sailing across), rain falls in depth, a storm flashes, fog drifts (SceneWeather.jsx, a Remotion
-// loop); on a wet day we're in the park's sala, dry, the rain all round; on a hot one we sweat; on a cold one
-// we've scarves on and the trees are bare. Indoors it's out of the window.
+// The day's weather (where I am today) plays on it all: outdoors the sky takes its colour, clouds are up
+// (sailing across), rain falls in depth, a storm flashes, fog drifts (SceneWeather.jsx, a Remotion loop); no
+// sun in the sky, the sun is in the light (scene3d: warm light and cool shadows, our shadows with the trees'; a
+// glow in from where it is); on a wet day we're in the park's sala, dry, the rain all round; on a hot one we
+// sweat; on a cold one we've scarves on and the trees are bare. Indoors it's at the windows: the sun on the
+// floor, the glare, the rain going past, the flashes.
 // We fade in as it shows, then only breathe and blink; tap it for the plan, or for ideas on a free day.
 
 const FULL = 3000; // a standing person's height in the library's units, feet to above the hair
@@ -50,11 +52,11 @@ const FACE_X = 530;
 
 // a person, in one pose or swapping between `poses` (CSS); looking left with `flip`; with `onTap`, one to tap.
 // gear: { sweat, scarf: 'dark' | 'light' }, drawn in each pose's own units over it (so it moves with it).
-// `far`: px back up the land (smaller for it)
-function Person({ look, poses, flip, onTap, label, gear = {}, far = 0, className = '', style }) {
+// `far`: px back up the land (smaller for it, by how near the `horizon` that is)
+function Person({ look, poses, flip, onTap, label, gear = {}, far = 0, horizon = HORIZON, className = '', style }) {
   const [x, y, w, h] = boxOf(poses);
   const face = (FACE_X - x) / w;
-  const scale = 1 - far / HORIZON;
+  const scale = 1 - far / horizon;
   const lift = liftOf(poses) * scale;
   const tap = onTap ? { role: 'button', tabIndex: 0, 'aria-label': label, onClick: onTap, onKeyDown: (e) => (e.key === 'Enter' || e.key === ' ') && onTap() } : {};
   const svg = { viewBox: `${x} ${y} ${w} ${h}`, style: flip ? { transform: 'scaleX(-1)' } : undefined };
@@ -98,20 +100,23 @@ const AT_TABLE = {
   cold: ['bust/Sweater', 'bust/Turtleneck', 'bust/FurJacket'],
   hot: ['bust/Shirt', 'bust/SportyShirt', 'bust/Selena'],
 };
-// at home: me on the sofa, legs crossed; friends round on the rug; in what we wear at home, whatever the weather
-const AT_HOME = ['sitting/CrossedLegs', 'sitting/HandsBack', 'sitting/OneLegUp'];
+// at home (on my own): me on the sofa, legs crossed, in what I wear at home, whatever the weather
+const AT_HOME = 'sitting/CrossedLegs';
 // Seen from a little over our heads, as the people are drawn (the tops of their shoes show, a foot set back sits
 // higher): the horizon is HORIZON px over our feet, above our heads (the camera Scene3D draws the place through
 // is put there). We stand level, each of us `far` px back up the ground and smaller by as much as that's nearer
 // the horizon.
 const HORIZON = 240;
-// the sky, by the weather: a fair day's sun glowing and birds crossing; a scorcher's sun huge and white-hot; a
-// dull day's clouds big and grey-bellied, no sun; rain's clouds low and grey; fog has none
+// (at home the camera's lower, at about the height of our heads sat down, as an interior's taken from the chest:
+// the ceiling over us in the picture as well as the floor)
+const HORIZON_AT = { home: 165 };
+// the sky, by the weather (no sun: the sun's in the light): birds crossing on a fair day; a scorcher's empty,
+// white-hot; a dull day's clouds big and grey-bellied; rain's low and grey; fog has none
 const BIRDS = { p: 'birds', x: '30%', top: '31%', size: 0.42, fly: 16 };
 const SKY = {
-  sun: [{ p: 'sun', x: '66%', top: '27%', size: 0.55 }, BIRDS, { ...BIRDS, x: '74%', top: '25%', size: 0.3, fly: 12 }],
-  hot: [{ p: 'sun', x: '62%', top: '24%', size: 0.85 }],
-  partly: [{ p: 'sun', x: '60%', top: '28%', size: 0.5 }, { p: 'cloud', x: '72%', top: '33%', size: 0.5 }, { p: 'cloud', x: '24%', top: '30%', size: 0.4 }, BIRDS],
+  sun: [BIRDS, { ...BIRDS, x: '74%', top: '25%', size: 0.3, fly: 12 }],
+  hot: [],
+  partly: [{ p: 'cloud', x: '72%', top: '33%', size: 0.5 }, { p: 'cloud', x: '24%', top: '30%', size: 0.4 }, BIRDS],
   cloud: [{ p: 'cloud', x: '12%', top: '35%', size: 0.42 }, { p: 'cloud', x: '36%', top: '27%', size: 0.62 },
     { p: 'cloud', x: '64%', top: '31%', size: 0.75 }, { p: 'cloud', x: '90%', top: '26%', size: 0.5 }],
   rain: [{ p: 'cloud', x: '60%', top: '28%', size: 0.56 }, { p: 'cloud', x: '27%', top: '33%', size: 0.44 }, { p: 'cloud', x: '87%', top: '36%', size: 0.36 }],
@@ -145,30 +150,28 @@ const SIDE_BY_SIDE = { me: 1 - PHI, at: [[PHI, 0], [PHI + (2 * PHI - 1) * 0.97, 
 // - the café, two of us: over my shoulder, me close in the foreground on the left cut by the frame, the friend
 //   across a round table further in on the right, the camera turned toward the window so the room runs back past
 //   them (Scene3D `stage`); three, side by side at a long table, a group's picture; me alone, straight on;
-// - home with friends: the room at an angle as from the doorway, the bookcase down the left running back toward
-//   them, me on the sofa, the friends across the coffee table on the rug; alone, straight on;
-// - the park: straight down its walk between the trees, its strongest line.
+// - home (on my own): from the front corner of the room, turned a little across it toward the window I'm
+//   looking at, me on the left third, the room opening out ahead of me;
+// - the park: from beside the walk, turned across it, so it runs off at a slant past us to the far end (its
+//   strongest line, leading on to the friends), a big tree near us framing the left (park.js); the same for any
+//   of us, so on a change of group I stay put.
 const ART_TWO = { me: 0.3, meFar: -112, at: [[0.75, 42]], vx: 0.25, yaw: 0.38, stage: 'art' };
-const ANGLED = { vx: 0.37, yaw: 0.28 };
 const FRAMING = {
   eat: [null, ART_TWO, SIDE_BY_SIDE],
-  home: [null, { ...LAYOUT[1], ...ANGLED }, { ...SIDE_BY_SIDE, ...ANGLED }],
-  park: [],
+  home: [{ me: 0.34, at: [], vx: 0.62, yaw: -0.2 }],
+  park: LAYOUT.map((l) => ({ ...l, vx: 0.26, yaw: 0.36 })),
 };
 const pct = (k) => `${+(k * 100).toFixed(2)}%`;
-// the park's sala in people's units, for the rain to keep off under it (SceneWeather): its roof's front edge,
-// close in front of us, spans the picture
-const SALA = [12000, 4750];
 const reduced = () => typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
-// scene: { kind: 'meet' | 'free', me, friends: [look], label, ask (free) }; a free day with friends (a group
-// picked) has us stood as on a day out;
+// scene: { kind: 'meet' | 'free', me, friends: [look], label, ask (free) };
 // notes: what I say (SpeechNotes), after the hellos
 export default function DayScene({ scene, notes = [], weather = { kind: 'partly' }, onTap, onReady }) {
   const { me, kind } = scene;
-  const friends = scene.friends || [];
-  const n = friends.length;
   const free = kind === 'free';
+  // (with nothing on, I'm at home on my own: no one's come round, whichever group's picked)
+  const friends = free ? [] : scene.friends || [];
+  const n = friends.length;
   const wet = weather.kind === 'rain' || weather.kind === 'storm';
   const sky = weather.hot ? 'hot' : weather.kind;
   // where we are: with nothing on, at home; out to eat (the next stop a restaurant or a café), at the table;
@@ -177,7 +180,7 @@ export default function DayScene({ scene, notes = [], weather = { kind: 'partly'
   const indoor = place !== 'park';
   // dressed for the day (the rain before the cold before the heat), one pose each
   const day = wet ? 'wet' : weather.cold ? 'cold' : weather.hot ? 'hot' : 'fair';
-  const cast = [me, ...friends].map((look, i) => [look, [pose(look, place === 'home' ? AT_HOME[i]
+  const cast = [me, ...friends].map((look, i) => [look, [pose(look, place === 'home' ? AT_HOME
     : place === 'eat' ? (scene.cat === 'cafe' && !i ? 'bust/Coffee' : AT_TABLE[day][i]) : WEAR[day][i])]]);
   // dressed for it outdoors: a scarf against the cold (dark on a light top), sweat in the heat
   const gear = (look) => (indoor ? {} : { sweat: weather.hot, scarf: weather.cold && ((look.tone || 'BW') === 'WB' ? 'dark' : 'light') });
@@ -186,6 +189,7 @@ export default function DayScene({ scene, notes = [], weather = { kind: 'partly'
   useEffect(() => { if (ready) onReady?.(); }, [ready, onReady]);
   // where we are (at the table, a little back from it)
   const sat = place === 'eat' ? 16 : 0;
+  const horizon = HORIZON_AT[place] || HORIZON;
   const layout = FRAMING[place][n] || LAYOUT[n];
   const meFar = layout.meFar ?? sat;
   const meAt = layout.me;
@@ -193,13 +197,13 @@ export default function DayScene({ scene, notes = [], weather = { kind: 'partly'
   const back = (i) => layout.at[i][1] + sat;
   // where we are in the place (the table's laid at our places), and the canvas for what's in front of us
   const front = useRef(null);
+  // where the outside shows in the picture, under a roof (Scene3D: through the windows, past the sala's posts)
+  const [outside, setOutside] = useState(null);
   const people = useMemo(() => [{ x: layout.me, far: meFar }, ...layout.at.map(([x, far]) => ({ x, far: far + sat }))], [layout, meFar, sat]);
   // how high a head is off the ground, in --tall (a bust's off the floor it starts; further back, smaller)
-  const headAt = (poses, far) => (liftOf(poses) + headOf(poses)) * (1 - far / HORIZON);
-  // the vanishing point (straight on: between us, or ahead of me on my own); in the park on a wet day, where the
-  // sala over us is (in the middle of us)
+  const headAt = (poses, far) => (liftOf(poses) + headOf(poses)) * (1 - far / horizon);
+  // the vanishing point (straight on: between us, or ahead of me on my own)
   const vx = layout.vx ?? (n ? 0.5 : PHI);
-  const salaAt = (layout.me + layout.at.reduce((t, [x]) => t + x, 0)) / (n + 1);
   // my thoughts, one at a time, just over my head, out to the side where there's room (towards the friends):
   // { i: which, k: a count to start each afresh, on: showing }. The first comes once the hellos are done
   // (straight away with reduced motion); a tap on me brings the next
@@ -216,7 +220,7 @@ export default function DayScene({ scene, notes = [], weather = { kind: 'partly'
   const props = indoor ? [] : [...(SKY[sky] || SKY.partly), ...(weather.cold ? FALLING : [])];
   return (
     <div className={`ds ds-${kind} ds-at-${place} ds-wx-${weather.kind}${weather.hot ? ' ds-hot' : ''}${weather.cold ? ' ds-cold' : ''}${ready ? ' ready' : ''}`}
-      style={{ '--horizon': `${HORIZON}px` }}>
+      style={{ '--horizon': `${horizon}px` }}>
       <div className="ds-world" aria-hidden="true">
         {!indoor && <div className="ds-skytint" />}
         {props.map(({ p, x, size = 1, top, fly, falling }, i) => {
@@ -225,13 +229,15 @@ export default function DayScene({ scene, notes = [], weather = { kind: 'partly'
             style={{ top, ...go, ...(falling != null ? { '--delay': `${-falling * 1.7}s` } : {}) }} />;
         })}
         <Suspense fallback={null}>
-          <Scene3D place={place} vx={vx} yaw={layout.yaw} stage={layout.stage} horizon={HORIZON} wx={weather.kind} hot={Boolean(weather.hot)} cold={Boolean(weather.cold)} people={people} front={front} />
+          <Scene3D place={place} vx={vx} yaw={layout.yaw} stage={layout.stage} horizon={horizon} wx={weather.kind} hot={Boolean(weather.hot)} cold={Boolean(weather.cold)} people={people} front={front} onOutside={setOutside} />
         </Suspense>
-        {/* the weather in the air, in front of the park */}
-        {!indoor && (wet || weather.kind === 'fog') && (
+        {/* the sun's light outdoors (no sun in the sky): a glow in from the top right, where it's coming from */}
+        {!indoor && (weather.kind === 'sun' || weather.kind === 'partly') && <i className="ds-light" />}
+        {/* the weather in the air: rain where the outside shows (past the sala's posts, out of the windows: never
+            under a roof), fog over the park */}
+        {((wet && outside) || (!indoor && weather.kind === 'fog')) && (
           <Suspense fallback={null}>
-            <SceneWeather kind={weather.kind} level={weather.level} horizon={HORIZON}
-              shelter={wet ? { at: salaAt, w: SALA[0], h: SALA[1] } : null} />
+            <SceneWeather kind={weather.kind} level={weather.level} horizon={horizon} open={wet ? outside : null} far={indoor} />
           </Suspense>
         )}
         {!indoor && weather.kind === 'fog' && [0, 1, 2].map((i) => <i key={i} className={`ds-mist ds-mist-${i}`} />)}
@@ -241,11 +247,11 @@ export default function DayScene({ scene, notes = [], weather = { kind: 'partly'
         <>
           {/* the furthest back first, so the nearer ones stand in front */}
           {friends.map((look, i) => (
-            <Person key={i} look={look} poses={cast[i + 1][1]} flip gear={gear(look)} far={back(i)} className="ds-friend"
+            <Person key={i} look={look} poses={cast[i + 1][1]} flip gear={gear(look)} far={back(i)} horizon={horizon} className="ds-friend"
               style={{ '--x': pct(at(i)), '--blink': `${1.1 + 0.9 * i}s` }} />
           )).reverse()}
           {/* me, facing them (on a free day, my head tilting now and then, wondering) */}
-          <Person look={me} poses={cast[0][1]} onTap={think} label="ความคิดของฉัน" gear={gear(me)} far={meFar} className={`ds-me${free ? ' ds-wonder' : ''}`}
+          <Person look={me} poses={cast[0][1]} onTap={think} label="ความคิดของฉัน" gear={gear(me)} far={meFar} horizon={horizon} className={`ds-me${free ? ' ds-wonder' : ''}`}
             style={{ '--x': pct(meAt), '--blink': free ? '1.6s' : '2.4s', zIndex: meFar < 0 ? 1 : undefined }} />
           {!free && n > 0 && <span className="ds-say" style={{ '--x': pct(at(0)), '--far': `${back(0)}px`, '--head': headAt(cast[1][1], back(0)) }}>หวัดดี!</span>}
         </>
