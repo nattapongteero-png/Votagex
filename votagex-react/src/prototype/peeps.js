@@ -24,10 +24,12 @@ export const POSE_BOX = {
   'standing/PointingFingerBW': [-15, 62, 1300, 2607], 'standing/PointingFingerWB': [-16, 62, 1300, 2607],
   'standing/RestingBW': [7, 62, 1274, 2880], 'standing/RestingWB': [7, 62, 1274, 2879],
   'standing/RoboDanceBW': [-146, 62, 1350, 2926], 'standing/RoboDanceWB': [-146, 62, 1350, 2927],
+  'standing/BlazerPantsBW': [-75, 62, 1046, 2826], 'standing/BlazerPantsWB': [-75, 62, 1046, 2827],
   'standing/ShirtPantsBW': [44, 62, 894, 2934], 'standing/ShirtPantsWB': [44, 62, 894, 2934],
   'standing/WalkingBW': [-83, 62, 1035, 2848], 'standing/WalkingWB': [-83, 62, 1035, 2848],
   'sitting/OneLegUpBW': [-72, 62, 1305, 1920], 'sitting/OneLegUpWB': [-72, 62, 1305, 1920],
-  'sitting/MediumBW': [-285, 62, 1322, 1833], 'sitting/ClosedLegBW': [-2, 62, 1347, 1966], 'sitting/ClosedLegWB': [-2, 62, 1347, 1966], 'sitting/CrossedLegs': [89, 62, 1421, 2243],
+  'sitting/MediumBW': [-285, 62, 1322, 1833], 'sitting/MediumWB': [-285, 62, 1322, 1833],
+  'sitting/HandsBackBW': [-88, 62, 1258, 1807], 'sitting/HandsBackWB': [-88, 62, 1258, 1807], 'sitting/ClosedLegBW': [-2, 62, 1347, 1966], 'sitting/ClosedLegWB': [-2, 62, 1347, 1966], 'sitting/CrossedLegs': [89, 62, 1421, 2243],
 };
 
 // how each person looks: the demo's four are set; anyone else gets one picked from their id, until they pick

@@ -65,6 +65,17 @@ function Person({ look, poses, flip, onTap, label, gear = {}, far = 0, className
 }
 
 const pose = (look, kind) => `${kind}${look.tone || 'BW'}`;
+// what we wear, by the weather: each of the library's poses comes in its own clothes, so the clothes are the
+// pose. Long sleeves on a fair day: standing easy, a hand out to say hi, arms crossed wondering on a free day.
+// An open jacket in the rain, a blazer in the cold, a T-shirt in the heat, sat on the ground (the T-shirt's
+// only standing pose is mid-stride). Only the long sleeves come in more than one pose, so only then do we move
+// from one to another (no one changes clothes as they move). [me, then each friend]
+const WEAR = {
+  fair: { stand: 'standing/Resting', greet: 'standing/RoboDance', wonder: 'standing/CrossedArms' },
+  wet: { each: ['standing/Easing'] },
+  cold: { each: ['standing/BlazerPants'] },
+  hot: { each: ['sitting/OneLegUp', 'sitting/HandsBack', 'sitting/Medium'] },
+};
 
 // Seen from a little over our heads, as the people are drawn (the tops of their shoes show, a foot set back sits
 // higher): the horizon (the hills) is HORIZON px over our feet, above our heads, so the land (Land, a tint, not
@@ -125,13 +136,16 @@ export default function DayScene({ scene, notes = [], weather = { kind: 'partly'
   const free = kind === 'free';
   const wet = weather.kind === 'rain' || weather.kind === 'storm';
   const sky = weather.hot ? 'hot' : weather.kind;
-  // all in the long-sleeved poses: I come in standing easy and, meeting friends, hold out a hand and stand easy
-  // again; the first friend the same; on a free day, arms crossed. In the cold everyone hugs themselves (arms
-  // crossed) instead of standing easy
-  const easy = weather.cold ? 'CrossedArms' : 'Resting';
-  const stands = (look, kinds) => kinds.map((k) => pose(look, `standing/${k}`));
-  const cast = [[me, stands(me, free ? ['CrossedArms'] : n ? [easy, 'RoboDance'] : [easy])],
-    ...friends.map((f, i) => [f, stands(f, free || i ? [easy] : [easy, 'RoboDance'])])];
+  // dressed for the day (WEAR; the rain before the cold before the heat). On a fair day I come in standing
+  // easy and, meeting friends, hold out a hand and stand easy again; the first friend the same; on a free day,
+  // arms crossed. Any other day, each of us in the one pose the clothes come in; sat down, I don't walk in
+  const wear = WEAR[wet ? 'wet' : weather.cold ? 'cold' : weather.hot ? 'hot' : 'fair'];
+  const dress = (look, kinds) => kinds.map((k) => pose(look, k));
+  const one = (i) => [wear.each?.[Math.min(i, wear.each.length - 1)]];
+  const cast = wear.each ? [me, ...friends].map((look, i) => [look, dress(look, one(i))])
+    : [[me, dress(me, free ? [wear.wonder] : n ? [wear.stand, wear.greet] : [wear.stand])],
+      ...friends.map((f, i) => [f, dress(f, free || i ? [wear.stand] : [wear.stand, wear.greet])])];
+  const seated = cast[0][1][0].startsWith('sitting');
   // dressed for it: a scarf against the cold (dark on a light top), sweat in the heat
   const gear = (look) => ({ sweat: weather.hot, scarf: weather.cold && ((look.tone || 'BW') === 'WB' ? 'dark' : 'light') });
   const ready = usePeeps(['face/EyesClosed', ...cast.flatMap(([look, poses]) => poses.flatMap((p) => piecesOf(look, p)))]);
@@ -194,7 +208,7 @@ export default function DayScene({ scene, notes = [], weather = { kind: 'partly'
         <>
           {/* the furthest back first, so the nearer ones stand in front */}
           {friends.map((look, i) => (
-            <Person key={i} look={look} poses={cast[i + 1][1]} flip gear={gear(look)} far={back(i)} className={`ds-friend${i || free ? '' : ' ds-greeter'}`}
+            <Person key={i} look={look} poses={cast[i + 1][1]} flip gear={gear(look)} far={back(i)} className={`ds-friend${cast[i + 1][1].length > 1 ? ' ds-greeter' : ''}`}
               style={{ '--x': `${at(i)}%`, '--blink': `${1.1 + 0.9 * i}s` }} />
           )).reverse()}
           {free ? (
@@ -202,9 +216,9 @@ export default function DayScene({ scene, notes = [], weather = { kind: 'partly'
           ) : (
             /* coming in facing right, then a hand out to say hi, then standing easy (on my own, just standing) */
             <Person look={me} poses={cast[0][1]} onTap={think} label="ความคิดของฉัน" gear={gear(me)}
-              className={`ds-me${n ? '' : ' ds-alone'}`} style={{ '--x': `${meAt}%`, '--blink': '2.4s' }} />
+              className={`ds-me${seated ? ' ds-seated' : cast[0][1].length > 1 ? '' : ' ds-alone'}`} style={{ '--x': `${meAt}%`, '--blink': '2.4s' }} />
           )}
-          {!free && n > 0 && <span className="ds-say" style={{ '--x': `${at(0)}%` }}>หวัดดี!</span>}
+          {!free && n > 0 && <span className="ds-say" style={{ '--x': `${at(0)}%`, '--head': headOf(cast[1][1]) }}>หวัดดี!</span>}
         </>
       )}
       {/* fog low over the ground, in front of our feet */}
