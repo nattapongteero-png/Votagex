@@ -18,7 +18,7 @@ export default function SpeechNotes({ notes }) {
     el.style.width = '';
     el.style.maxWidth = '';
     const text = el.querySelector('.pt-speech-text');
-    if (text.offsetHeight / parseFloat(getComputedStyle(text).lineHeight) > 2.5) el.style.maxWidth = '170px';
+    if (text.offsetHeight / parseFloat(getComputedStyle(text).lineHeight) > 2.5) el.style.maxWidth = '150px';
     const range = document.createRange();
     range.selectNodeContents(el.querySelector('.pt-speech-text'));
     const scale = el.getBoundingClientRect().width / el.offsetWidth || 1; // the pop animation scales the bubble

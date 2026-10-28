@@ -145,10 +145,10 @@ export default function DayScene({ scene, notes = [], weather = { kind: 'partly'
   const coverAt = cover === 'parasol' && !n ? (free ? 52 : 62) : free && !n ? 40 : 50;
   const signAt = cover ? '88%' : '74%';
   const head = headOf(cast[0][1]);
-  // my thoughts, one at a time, out from the side of my head (towards the friends, a little up over the gap
-  // between our heads; on a free day alone the other way,
-  // the signpost's there): { i: which, k: a count to start each afresh, on: showing }. The first comes once
-  // the hellos are done (straight away with reduced motion); a tap on me brings the next
+  // my thoughts, one at a time, just over my head, out to the side where there's room (towards the friends; on a
+  // free day alone the other way, the signpost's there): { i: which, k: a count to start each afresh, on:
+  // showing }. The first comes once the hellos are done (straight away with reduced motion); a tap on me brings
+  // the next
   const said = free ? [{ key: 'ask', text: scene.ask, onClick: onTap }, ...notes] : notes;
   const [thought, setThought] = useState({ i: -1, k: 0, on: false });
   useEffect(() => {
@@ -209,7 +209,7 @@ export default function DayScene({ scene, notes = [], weather = { kind: 'partly'
       {/* fog low over the ground, in front of our feet */}
       {weather.kind === 'fog' && <i className="ds-mist ds-mist-low" />}
       {ready && shown && (
-        <div key={thought.k} className={`ds-note ${free && !n ? 'left' : `right${n ? ' up' : ''}`}`} style={{ '--x': `${meAt}%`, '--head': head }}
+        <div key={thought.k} className={`ds-note ${free && !n ? 'left' : 'right'}`} style={{ '--x': `${meAt}%`, '--head': head }}
           onAnimationEnd={(e) => e.target === e.currentTarget && setThought((x) => ({ ...x, on: false }))}>
           <SpeechNotes notes={[shown]} />
         </div>

@@ -2266,7 +2266,7 @@ body::after { content: ''; position: fixed; inset: 0; z-index: 9998; pointer-eve
 /* ===== Home top bar (HomeBar.jsx), as Instagram's: + / the name / the bell with a red dot for what's new ===== */
 /* a short screen (iPhone SE) wins back the bar's height, so today's week stays clear of the resting sheet */
 @media (max-height: 719px) {
-  .homepage.pt-today { --hp-stage-top: 143px; --ds-h: 380px; }
+  .homepage.pt-today { --hp-stage-top: 143px; }
   .homepage.pt-today .ds { --ground: 40px; }
   .homepage.pt-today .hp-header { padding-top: 8px; gap: 6px; }
   .homepage.pt-today .hp-header-top.pt-talk { padding-top: 4px; }
@@ -2301,6 +2301,9 @@ body::after { content: ''; position: fixed; inset: 0; z-index: 9998; pointer-eve
    (an inline transform) is kept. No card: it's drawn on the page, edge to edge (out past the stage's 20px
    sides), and the park behind (.ds-world) goes on up behind the header, in the people's own ink, faded
    only under the header so its buttons stay clear ===== */
+/* (a shorter screen: the scene gives up some sky, down to 330px, so the first card at rest still shows its top
+   ~90px clear of the dock: 22px gap, the card, the dock's 112px) */
+.homepage.pt-today { --ds-h: clamp(330px, calc(100dvh - var(--hp-stage-top) - 224px), 420px); }
 .ds { position: relative; width: calc(100% + 40px); height: var(--ds-h, 420px); margin: 0 -20px; container-type: size;
   --tall: 196px; --ground: 50px; font-family: var(--font); color: var(--tw-text); text-align: left; }
 /* the card sheet comes up over it (solid, its top edge a soft fade, no line) and stops under the profile row,
@@ -2375,35 +2378,32 @@ body::after { content: ''; position: fixed; inset: 0; z-index: 9998; pointer-eve
 /* a free day: on the bench, the head tilting now and then */
 .ds-wonder .pp-head { transform-box: fill-box; transform-origin: 50% 85%; animation: ds-tilt 6s ease-in-out infinite; }
 @keyframes ds-tilt { 0%, 100% { transform: rotate(0deg); } 30% { transform: rotate(-4deg); } 60% { transform: rotate(2deg); } }
-/* my thoughts (SpeechNotes, once the hellos are done): a small bubble out from the side of my head, where
-   there's room (towards the friends, or on a free day the other way), two dots trailing back to my head */
-.ds-note { position: absolute; bottom: calc(var(--ground) + var(--tall) * var(--head) - 26px); z-index: 1; animation: ds-note-life 5.2s both; }
-.ds-note.right { left: calc(var(--x) + 26px); }
-.ds-note.left { left: calc(var(--x) - 34px); translate: -100% 0; }
+/* my thoughts (SpeechNotes, once the hellos are done): a small bubble just over my head, out to the side
+   where there's room (towards the friends, or on a free day alone the other way, the signpost's there), two
+   dots rising from my head to it. Over our heads, it's never across a face */
+.ds-note { position: absolute; bottom: calc(var(--ground) + var(--tall) * var(--head) + 16px); z-index: 1; animation: ds-note-life 5.2s both; }
+.ds-note.right { left: calc(var(--x) + 12px); }
+.ds-note.left { left: calc(var(--x) - 12px); translate: -100% 0; }
 /* a thought stays a while, then goes */
 @keyframes ds-note-life { 0%, 90% { opacity: 1; } 100% { opacity: 0; } }
-.ds-note .pt-speech-wrap { display: block; width: max-content; max-width: 170px; padding: 0; }
+.ds-note .pt-speech-wrap { display: block; width: max-content; max-width: 150px; padding: 0; }
 .ds-note .pt-speech {
-  display: block; min-width: 0; max-width: 132px; min-height: 0; padding: 5px 10px; border-radius: 14px;
-  font-size: 11px; font-weight: 500; line-height: 1.35; color: var(--tw-text-2); text-align: center;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, .05), 0 3px 10px rgba(15, 23, 42, .08); transform-origin: -14px 85%;
+  display: block; min-width: 0; max-width: 118px; min-height: 0; padding: 4px 9px; border-radius: 12px;
+  font-size: 10px; font-weight: 500; line-height: 1.35; color: var(--tw-text-2); text-align: center;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, .05), 0 3px 10px rgba(15, 23, 42, .08); transform-origin: -8px calc(100% + 14px);
 }
-.ds-note.left .pt-speech { transform-origin: calc(100% + 14px) 85%; }
+.ds-note.left .pt-speech { transform-origin: calc(100% + 8px) calc(100% + 14px); }
+.ds-note .pt-inline-icon { width: 11px; height: 11px; vertical-align: -1px; }
 /* never clipped: Thai vowels and tone marks sit above and below the line, so no line clamp, room between lines */
 .ds-note .pt-speech-text { white-space: normal; display: block; overflow: visible; line-height: 1.5; padding: 1px 0; text-wrap: balance; }
 .ds-note .pt-speech-dots { left: 50%; margin-left: -12px; }
-.ds-note .pt-speech-dots i { width: 5px; height: 5px; }
+.ds-note .pt-speech-dots i { width: 4px; height: 4px; }
 .ds-note .pt-speech::before, .ds-note .pt-speech::after {
   content: ''; position: absolute; border-radius: 50%; background: #fff; clip-path: none; box-shadow: 0 1px 3px rgba(15, 23, 42, .08); }
-.ds-note .pt-speech::before { left: -10px; bottom: 3px; width: 7px; height: 7px; }
-.ds-note .pt-speech::after { left: -18px; bottom: -3px; width: 4px; height: 4px; }
-.ds-note.left .pt-speech::before { left: auto; right: -10px; }
-.ds-note.left .pt-speech::after { left: auto; right: -18px; }
-/* with friends there, it rises a little, out over the gap between our heads, clear of their faces */
-.ds-note.up { bottom: calc(var(--ground) + var(--tall) * var(--head) + 4px); left: calc(var(--x) + 16px); }
-.ds-note.up .pt-speech { transform-origin: -8px 140%; }
-.ds-note.up .pt-speech::before { left: -5px; bottom: -8px; }
-.ds-note.up .pt-speech::after { left: -12px; bottom: -15px; }
+.ds-note .pt-speech::before { left: -2px; bottom: -8px; width: 6px; height: 6px; }
+.ds-note .pt-speech::after { left: -8px; bottom: -14px; width: 3.5px; height: 3.5px; }
+.ds-note.left .pt-speech::before { left: auto; right: -2px; }
+.ds-note.left .pt-speech::after { left: auto; right: -8px; }
 /* ===== the day's weather on the scene. The sky runs down into the land as rain's does: each sky's colour at
    the horizon is all but the land's there, the land a touch deeper nearer us, so there's never a line of two
    colours meeting; each weather keeps its own light. The lines stay ink. The rain, heat and fog in the air are
