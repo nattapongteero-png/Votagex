@@ -117,7 +117,9 @@ export default function SceneWeather({ kind, level, horizon, open, far }) {
     if (!el) return undefined;
     const ro = new ResizeObserver(() => {
       const css = getComputedStyle(el);
-      setSize({ w: Math.round(el.clientWidth), h: Math.round(el.clientHeight), ground: parseFloat(css.getPropertyValue('--ground')) || 0 });
+      // (the ground's --ground over the scene's foot, which the backdrop goes on --below past)
+      setSize({ w: Math.round(el.clientWidth), h: Math.round(el.clientHeight),
+        ground: (parseFloat(css.getPropertyValue('--ground')) || 0) + (parseFloat(css.getPropertyValue('--below')) || 0) });
     });
     ro.observe(el);
     return () => ro.disconnect();

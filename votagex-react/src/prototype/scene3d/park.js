@@ -42,11 +42,12 @@ export function park({ at, see, faces, wx, hot, cold }) {
   const ground = add(scene, new THREE.PlaneGeometry(400, 400), inkMaterial(grass, { hatch: 0.3 }), [0, 0, -150], [-Math.PI / 2, 0, 0]);
   ground.castShadow = false;
   const [[mx]] = at;
-  const xs = at.map(([x]) => x); const zs = at.map(([, z]) => z);
+  const xs = at.map(([x]) => x);
 
   // the sala (wet): its floor round us and on back past the camera, its back a little behind us; posts only at
   // the corners (a beam spans between), benches along its back and left side
-  const s = wet ? { x0: Math.min(...xs, 0) - 1.5, x1: Math.max(...xs, 0) + 1.4, z0: Math.min(...zs) - 1.1, z1: 0.8 } : null;
+  // (by where I stand, so it's the same sala however many of us there are)
+  const s = wet ? { x0: Math.min(...xs, 0) - 1.5, x1: Math.max(...xs, 0) + 1.4, z0: at[0][1] - 1.5, z1: 0.8 } : null;
 
   // the walk: through where we stand, slabs of paving, a kerb each side; on a wet day out past the sala's left
   const walk = wet ? [s.x0 - 3.6, s.x0 - 0.9] : [mx - 0.9, mx + 2.1];
@@ -86,7 +87,12 @@ export function park({ at, see, faces, wx, hot, cold }) {
 
   // far off: a line of trees across the end of the park, and the town's towers beyond (we look off to the left
   // of the walk, so they run on further that way)
-  for (let x = -110; x <= 50; x += 7) tree(scene, [x + ((x * 13) % 5), 0, -78 - ((Math.abs(x) * 7) % 9)], { size: 1.3, cold, seed: x + 200 });
+  // (a gap left in it where the walk goes on through)
+  for (let x = -110; x <= 50; x += 7) {
+    const tx = x + ((x * 13) % 5);
+    if (tx > walk[0] - 3 && tx < walk[1] + 3) continue;
+    tree(scene, [tx, 0, -78 - ((Math.abs(x) * 7) % 9)], { size: 1.3, cold, seed: x + 200 });
+  }
   const town = group(scene, [0, 0, -150]);
   [[-104, 34, 15], [-84, 26, 13], [-66, 44, 12], [-48, 30, 14], [-30, 46, 12], [-14, 26, 16], [4, 58, 13], [20, 34, 15], [38, 48, 12]].forEach(([x, h, w], i) => {
     add(town, box(w, h, 12), inkMaterial(['#EAE7E1', '#E3E7EA', '#ECE5DC'][i % 3], { grid: [3, 3.2], axes: 'xy', hatch: 0 }), [x, h / 2, 0]);

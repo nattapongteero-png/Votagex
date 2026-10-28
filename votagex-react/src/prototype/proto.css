@@ -2309,7 +2309,11 @@ body::after { content: ''; position: fixed; inset: 0; z-index: 9998; pointer-eve
    which stays with the top bar; the scene holds still behind it (moving, the tree would go past the top of
    the page and be cut off there) and dims a little */
 .homepage.pt-today.with-scene .hp-stage { transform: none; }
-.homepage.pt-today.with-scene.sheet-open:not(.at-rest) .hp-stage { z-index: 0; }
+/* (the scene's over the card list only while the sheet's right down, for its taps; it drops behind the moment the
+   sheet starts up, from the scroll itself (--sheet-p) and not the page's at-rest state, which came a few frames
+   late and let the sheet slide in under the scene before it jumped over it) */
+.homepage.pt-today.with-scene .hp-stage { z-index: calc(2 - 2 * min(1, var(--sheet-p, 0) * 1000)); }
+.homepage.pt-today.with-scene .hp-content { z-index: 1; }
 .homepage.pt-today .ds { opacity: calc(1 - var(--sheet-p, 0) * .7); }
 .homepage.pt-today.with-scene .hp-sheet-bg { opacity: 1 !important; animation: none; border-radius: 0; box-shadow: none;
   background: linear-gradient(to bottom, rgba(249, 250, 251, 0), var(--page) 32px); }
@@ -2321,7 +2325,13 @@ body::after { content: ''; position: fixed; inset: 0; z-index: 9998; pointer-eve
    header) to the stage's foot, edge to edge, each a page of it the slide moves; the one going can't be tapped
    and says nothing more */
 .ds-swap { position: relative; height: var(--ds-h, 420px); }
-.ds-swap-clip { position: absolute; top: calc(-1 * var(--hp-stage-top, 0px)); bottom: 0; left: -20px; right: -20px; overflow: hidden; pointer-events: none; }
+/* (the scene goes on a little past its foot, --below, and fades into the page there, people and all: no edge
+   between it and the card sheet under it, one sheet of paper) */
+.ds-swap { --below: 30px; }
+.ds-swap-clip { position: absolute; top: calc(-1 * var(--hp-stage-top, 0px)); bottom: calc(-1 * var(--below)); left: -20px; right: -20px; overflow: hidden; pointer-events: none;
+  --foot-fade: linear-gradient(to bottom, #000 calc(100% - var(--below) - 36px), rgba(0, 0, 0, .84) calc(100% - var(--below) * .75 - 27px),
+    rgba(0, 0, 0, .5) calc(100% - var(--below) * .5 - 18px), rgba(0, 0, 0, .16) calc(100% - var(--below) * .25 - 9px), transparent 100%);
+  -webkit-mask-image: var(--foot-fade); mask-image: var(--foot-fade); }
 .ds-swap-page { width: 100%; height: 100%; flex: none; box-sizing: border-box; padding: var(--hp-stage-top, 0px) 20px 0; }
 .ds-swap-page .ds { pointer-events: auto; }
 .ds-swap-out .ds, .ds-swap-out .ds * { pointer-events: none !important; }
@@ -2347,12 +2357,12 @@ body::after { content: ''; position: fixed; inset: 0; z-index: 9998; pointer-eve
   animation: pt-float-in .4s cubic-bezier(.22, 1, .36, 1) both; }
 @keyframes pt-float-in { from { opacity: 0; translate: 0 16px; } }
 .ds { --fade: linear-gradient(to bottom, rgba(0, 0, 0, .16), rgba(0, 0, 0, .16) calc(var(--hp-stage-top, 0px) - 20px), #000 calc(var(--hp-stage-top, 0px) + 50px)); }
-.ds-world { position: absolute; left: 0; right: 0; bottom: 0; top: calc(-1 * var(--hp-stage-top, 0px)); overflow: hidden; pointer-events: none; color: #18181B;
+.ds-world { position: absolute; left: 0; right: 0; bottom: calc(-1 * var(--below, 0px)); top: calc(-1 * var(--hp-stage-top, 0px)); overflow: hidden; pointer-events: none; color: #18181B;
   -webkit-mask-image: var(--fade); mask-image: var(--fade); }
 /* a place in 3D (scene3d/): behind us in the world, what's in front of us on a canvas over us, the same size */
 .ds-3d { position: absolute; inset: 0; pointer-events: none; }
 .ds-3d-back { position: absolute; inset: 0; width: 100%; height: 100%; }
-.ds-3d-front { position: absolute; left: 0; top: calc(-1 * var(--hp-stage-top, 0px)); width: 100%; height: calc(100% + var(--hp-stage-top, 0px)); pointer-events: none;
+.ds-3d-front { position: absolute; left: 0; top: calc(-1 * var(--hp-stage-top, 0px)); width: 100%; height: calc(100% + var(--hp-stage-top, 0px) + var(--below, 0px)); pointer-events: none;
   -webkit-mask-image: var(--fade); mask-image: var(--fade); }
 .ds-person, .ds-prop { position: absolute; left: var(--x); bottom: calc(var(--ground) + var(--far, 0px) + var(--up, 0px)); translate: -50% 0; pointer-events: none; }
 /* (a bust sat at a table starts off the floor; a person stands at --x by their face, DayScene --face) */
@@ -2432,11 +2442,11 @@ body::after { content: ''; position: fixed; inset: 0; z-index: 9998; pointer-eve
 .ds.ds-wx-storm { --sky-top: #D7DEE6; --sky-low: #D9DFE4; }
 .ds.ds-hot { --sky-top: #FCF3DF; --sky-low: #F4EAD4; }
 .ds.ds-cold { --sky-top: #E4ECF5; --sky-low: #E9EEF1; }
-.ds-skytint { position: absolute; left: 0; right: 0; top: 0; bottom: calc(var(--ground) + var(--horizon) - 4px);
+.ds-skytint { position: absolute; left: 0; right: 0; top: 0; bottom: calc(var(--ground) + var(--below, 0px) + var(--horizon) - 4px);
   background: linear-gradient(to bottom, var(--sky-top), var(--sky-low)); }
 .ds-wx { position: absolute; inset: 0; pointer-events: none; }
 /* (Scene3D's probe: where the ground is, how tall a person is) */
-.ds-probe { position: absolute; left: 0; bottom: var(--ground); width: 1px; height: var(--tall); visibility: hidden; }
+.ds-probe { position: absolute; left: 0; bottom: calc(var(--ground) + var(--below, 0px)); width: 1px; height: var(--tall); visibility: hidden; }
 /* (at the table we're seen close up, bigger, the table's edge along the foot of the scene and its cloth on down
    under the card sheet) */
 .homepage.pt-today .ds.ds-at-eat { --tall: 290px; --ground: calc(var(--shown) * .382 - 2px - var(--tall) * .676); }
@@ -2476,9 +2486,9 @@ body::after { content: ''; position: fixed; inset: 0; z-index: 9998; pointer-eve
    feet; the park pale in it */
 .ds-mist { position: absolute; left: -20%; width: 140%; height: 90px; pointer-events: none; animation: ds-mist 14s ease-in-out infinite alternate;
   background: radial-gradient(closest-side, rgba(255, 255, 255, .92), rgba(255, 255, 255, 0)); }
-.ds-mist-0 { bottom: calc(var(--ground) + var(--horizon) - 44px); }
-.ds-mist-1 { bottom: calc(var(--ground) + 120px); height: 120px; animation-duration: 18s; animation-direction: alternate-reverse; }
-.ds-mist-2 { bottom: calc(var(--ground) + 26px); height: 80px; animation-duration: 11s; }
+.ds-mist-0 { bottom: calc(var(--ground) + var(--below, 0px) + var(--horizon) - 44px); }
+.ds-mist-1 { bottom: calc(var(--ground) + var(--below, 0px) + 120px); height: 120px; animation-duration: 18s; animation-direction: alternate-reverse; }
+.ds-mist-2 { bottom: calc(var(--ground) + var(--below, 0px) + 26px); height: 80px; animation-duration: 11s; }
 .ds-mist-low { bottom: -24px; height: 76px; z-index: 1; opacity: .8; animation-duration: 9s; }
 @keyframes ds-mist { from { translate: -6% 0; } to { translate: 6% 0; } }
 /* the cold: we shiver now and then */

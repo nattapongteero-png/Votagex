@@ -154,12 +154,13 @@ const SIDE_BY_SIDE = { me: 1 - PHI, at: [[PHI, 0], [PHI + (2 * PHI - 1) * 0.97, 
 //   looking at, me on the left third, the room opening out ahead of me;
 // - the park: from beside the walk, turned across it, so it runs off at a slant past us to the far end (its
 //   strongest line, leading on to the friends), a big tree near us framing the left (park.js); the same for any
-//   of us, so on a change of group I stay put.
+//   of us, so on a change of group I stay put, and the same park (kept `clear` behind all three places, however
+//   many of us are in them).
 const ART_TWO = { me: 0.3, meFar: -112, at: [[0.75, 42]], vx: 0.25, yaw: 0.38, stage: 'art' };
 const FRAMING = {
   eat: [null, ART_TWO, SIDE_BY_SIDE],
   home: [{ me: 0.34, at: [], vx: 0.62, yaw: -0.2 }],
-  park: LAYOUT.map((l) => ({ ...l, vx: 0.26, yaw: 0.36 })),
+  park: LAYOUT.map((l) => ({ ...l, vx: 0.26, yaw: 0.36, clear: [1 - PHI, PHI, 0.724] })),
 };
 const pct = (k) => `${+(k * 100).toFixed(2)}%`;
 const reduced = () => typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
@@ -229,7 +230,7 @@ export default function DayScene({ scene, notes = [], weather = { kind: 'partly'
             style={{ top, ...go, ...(falling != null ? { '--delay': `${-falling * 1.7}s` } : {}) }} />;
         })}
         <Suspense fallback={null}>
-          <Scene3D place={place} vx={vx} yaw={layout.yaw} stage={layout.stage} horizon={horizon} wx={weather.kind} hot={Boolean(weather.hot)} cold={Boolean(weather.cold)} people={people} front={front} onOutside={setOutside} />
+          <Scene3D place={place} vx={vx} yaw={layout.yaw} stage={layout.stage} clear={layout.clear} horizon={horizon} wx={weather.kind} hot={Boolean(weather.hot)} cold={Boolean(weather.cold)} people={people} front={front} onOutside={setOutside} />
         </Suspense>
         {/* the sun's light outdoors (no sun in the sky): a glow in from the top right, where it's coming from */}
         {!indoor && (weather.kind === 'sun' || weather.kind === 'partly') && <i className="ds-light" />}
