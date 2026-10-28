@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
 import Peep from './Peep';
 import SpeechNotes from './SpeechNotes';
-import { Land, Prop, Room, Scarf, Sweat, Window } from './scenery';
+import { Land, Prop, Scarf, Space, Sweat } from './scenery';
 import { POSE_BOX, piecesOf, usePeeps } from './peeps';
 
 const SceneWeather = lazy(() => import('./SceneWeather'));
@@ -41,19 +41,23 @@ const headOf = (poses) => (footOf(poses) - 62) / FULL;
 // far off the floor it starts, in --tall (the table hides where it stops)
 const SEATED_HEAD = 2243;
 const liftOf = (poses) => (poses[0].startsWith('bust') ? (SEATED_HEAD - (footOf(poses) - 62)) / FULL : 0);
+// where the face is across a pose (the head's always at the same place on one, the face 440–620 across): a person
+// is placed by it, so it's the face that lands on the phi grid
+const FACE_X = 530;
 
 // a person, in one pose or swapping between `poses` (CSS); looking left with `flip`; with `onTap`, one to tap.
 // gear: { sweat, scarf: 'dark' | 'light' }, drawn in each pose's own units over it (so it moves with it).
 // `far`: px back up the land (smaller for it)
 function Person({ look, poses, flip, onTap, label, gear = {}, far = 0, className = '', style }) {
   const [x, y, w, h] = boxOf(poses);
+  const face = (FACE_X - x) / w;
   const scale = 1 - far / HORIZON;
   const lift = liftOf(poses) * scale;
   const tap = onTap ? { role: 'button', tabIndex: 0, 'aria-label': label, onClick: onTap, onKeyDown: (e) => (e.key === 'Enter' || e.key === ' ') && onTap() } : {};
   const svg = { viewBox: `${x} ${y} ${w} ${h}`, style: flip ? { transform: 'scaleX(-1)' } : undefined };
   return (
     <div className={`ds-person ${className}${onTap ? ' ds-tappable' : ''}`} {...tap}
-      style={{ aspectRatio: `${w} / ${h}`, height: `calc(var(--tall) * ${(h / FULL) * scale})`, '--far': `${far}px`, '--lift': lift, ...style }}>
+      style={{ aspectRatio: `${w} / ${h}`, height: `calc(var(--tall) * ${(h / FULL) * scale})`, '--far': `${far}px`, '--lift': lift, '--face': flip ? 1 - face : face, ...style }}>
       {poses.map((pose, i) => (
         <svg key={pose} className={`ds-pose ds-pose-${i}`} {...svg}>
           {/* (one group, so it all breathes as one: what they wear moves with them) */}
@@ -93,17 +97,21 @@ const AT_TABLE = {
 };
 // at home: me on the sofa, legs crossed; friends round on the rug; in what we wear at home, whatever the weather
 const AT_HOME = ['sitting/CrossedLegs', 'sitting/HandsBack', 'sitting/OneLegUp'];
-// indoors, the room (scenery.jsx): its back wall `wall` px up the floor; what's in it as the park's props are
-// (`up`: hung on the wall, people's units off the floor); the window in the back wall [x, sill off the floor].
-// Framed as the park is, a plant (and at home the standard lamp) at the sides
-const WALL = { eat: 110, home: 120 };
+// indoors, the room (scenery.jsx Space, in perspective) and what's in it, as the park's props are: `X` across as
+// it would be at our feet (it's drawn on toward the vanishing point, the further back the more), or `x` where it
+// is in the picture; `up` hung on a wall, people's units off the floor. Framed as the park is, a plant at the side
+// in front, cut by the edge. Out to eat: the lamps over the tables hung in rows on back, the board on the back
+// wall. At home: me on the sofa (with friends, on its right end, towards them; on my own, in the middle), the
+// picture over it, the standard lamp, and the rug (in the Space) where the friends sit, or in front of me
+const LAMP_UP = 3300;
 const ROOMS = {
-  eat: () => [{ p: 'plant', x: '5%', far: 30 }, { p: 'plant', x: '96%', far: 34, size: 0.85, flip: true }, { p: 'board', x: '16%', far: 110, up: 1300 },
-    { p: 'pendant', x: '31%', far: 40, up: 3500 }, { p: 'pendant', x: '69%', far: 40, up: 3500 }],
-  home: (n) => [{ p: 'rug', x: '52%', far: 4 }, { p: 'plant', x: '7%', far: 30 }, { p: 'floorLamp', x: '93%', far: 26 },
-    { p: 'picture', x: n ? '15%' : '24%', far: 120, up: 1800, size: 1.5 }, { p: 'sofa', x: `${n ? 30 : 50}%`, far: 14 }],
+  eat: () => [{ p: 'plant', X: -0.02, far: 24 }, { p: 'plant', X: 1.04, far: 30, size: 0.85, flip: true }, { p: 'board', X: 0.1, far: 149, up: 2300 },
+    ...[110, 40].flatMap((far) => [0.2, 0.8].map((X) => ({ p: 'pendant', args: [LAMP_UP], X, far, up: LAMP_UP })))],
+  home: (sofa) => [{ p: 'floorLamp', X: 1.0, far: 30 }, { p: 'picture', x: sofa, far: 124, up: 1900, size: 1.5 }, { p: 'sofa', x: sofa, far: 14 },
+    { p: 'plant', X: 0.0, far: 20 }],
 };
-const WINDOW_AT = { eat: ['50%', 1500], home: [['50%', 1650], ['70%', 1500]] };
+const SOFA_W = 3800;
+const RUG = [[0.16, 0.7, -24, 8], [0.5, 0.98, -16, 34]];
 
 // Seen from a little over our heads, as the people are drawn (the tops of their shoes show, a foot set back sits
 // higher): the horizon (the hills) is HORIZON px over our feet, above our heads, so the land (Land, a tint, not
@@ -115,9 +123,11 @@ const HORIZON = 240;
 // { p, x, top: off the top of the whole backdrop (header and all), size }. Nothing may reach past the top of the
 // page (a crop there clashes with the browser's bar). A free day: the signpost near the middle (I stand by it),
 // the bench back on the left, empty. On a wet day, a shelter over us (and the signpost out from under it)
-const FRAME = [{ p: 'tuft', x: '9%', far: -24 }, { p: 'tuft', x: '91%', far: -20 }, { p: 'tuft', x: '50%', far: -30, size: 0.9 }, { p: 'tuft', x: '30%', far: 40 },
-  { p: 'tuft', x: '70%', far: 36 }, { p: 'tuft', x: '40%', far: 120, size: 0.8 }, { p: 'tuft', x: '62%', far: 150 },
-  { p: 'tree', x: '3%', far: 60 }, { p: 'tree', x: '97%', far: 74, size: 0.82, flip: true }];
+// The path (Space) runs back from under our feet; the tufts are on the grass either side of it (`X`, drawn on
+// toward the vanishing point as the path's edges are, so they stay off it)
+const FRAME = [{ p: 'tuft', X: 0.06, far: -24 }, { p: 'tuft', X: 1.04, far: -20 }, { p: 'tuft', X: 0.02, far: 40 }, { p: 'tuft', X: 1.1, far: 36 },
+  { p: 'tuft', X: -0.06, far: 90, size: 0.9 }, { p: 'tuft', X: 0.1, far: 130, size: 0.8 }, { p: 'tuft', X: 1.06, far: 150 },
+  { p: 'tree', x: 0.03, far: 60 }, { p: 'tree', x: 0.97, far: 74, size: 0.82, flip: true }];
 // the sky, by the weather: a fair day's sun glowing and birds crossing; a scorcher's sun huge and white-hot; a
 // dull day's clouds big and grey-bellied, no sun; rain's clouds low and grey; fog has none
 const BIRDS = { p: 'birds', x: '30%', top: '31%', size: 0.42, fly: 16 };
@@ -139,15 +149,21 @@ const across = (x, size, speed = 40) => { const dur = speed / size; return { '--
 // bigger than life, to be seen)
 const BUTTERFLIES = [{ p: 'butterfly', x: '21%', far: 76, size: 1.4 }, { p: 'butterfly', x: '81%', far: 70, size: 1.2 }];
 const FALLING = [['7%', 33], ['15%', 37], ['89%', 36], ['95%', 40], ['22%', 41]].map(([x, top], i) => ({ p: 'leaf', x, top: `${top}%`, size: 1.1, falling: i }));
-const BACKDROP = [...FRAME, { p: 'bush', x: '17%', far: 44, size: 0.7 }, { p: 'bush', x: '84%', far: 50, size: 0.55, flip: true }];
-// where we stand, by how many friends (two at most): my centre (% across), and each friend's [centre, px back up
-// the land]. On my own, in the middle; one friend, face to face, me on the left; two, the second close in a step
-// behind the first, both facing me
+const BACKDROP = [...FRAME, { p: 'bush', X: -0.02, far: 44, size: 0.7 }, { p: 'bush', X: 1.08, far: 50, size: 0.55, flip: true }];
+// The picture's laid out on the golden section, the phi grid of what shows of the stage (lines .382 and .618
+// across it, and up it, CSS --ground): our faces on its lines, mine on the left one, the friend's who says hi
+// on the right one (a second friend a step behind, at the golden spiral's eye, .724), face to face. The place is
+// in one-point perspective (Space): when we meet, its vanishing point is between us, so it all runs back to where
+// we say hi; on my own, it's on the other line, ahead of me, the way I'm looking.
+// Where we stand, by how many friends (two at most): my face (a share across), and each friend's [face, px back
+// up the land]
+const PHI = 0.618;
 const LAYOUT = [
-  { me: 50, at: [] },
-  { me: 33, at: [[67, 0]] },
-  { me: 30, at: [[60, 0], [71, 11]] },
+  { me: 1 - PHI, at: [] },
+  { me: 1 - PHI, at: [[PHI, 0]] },
+  { me: 1 - PHI, at: [[PHI, 0], [0.724, 11]] },
 ];
+const pct = (k) => `${+(k * 100).toFixed(2)}%`;
 const SHELTER = [4600, 3800]; // the shelter's size in people's units (scenery.jsx), for the rain to keep off under it
 const reduced = () => typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
@@ -181,9 +197,13 @@ export default function DayScene({ scene, notes = [], weather = { kind: 'partly'
   const back = (i) => LAYOUT[n].at[i][1] + sat;
   // how high a head is off the ground, in --tall (a bust's off the floor it starts; further back, smaller)
   const headAt = (poses, far) => (liftOf(poses) + headOf(poses)) * (1 - far / HORIZON);
+  // the vanishing point (between us, or ahead of me on my own), and where a thing `far` back is in the picture
+  // that would be `X` across at our feet
+  const vx = n ? 0.5 : PHI;
+  const toward = (X, far = 0) => vx + (X - vx) * (1 - far / HORIZON);
   // what keeps the rain off us outdoors, centred on us: a shelter
   const cover = !indoor && wet ? 'shelter' : null;
-  const coverAt = 50;
+  const coverAt = n ? 50 : 45;
   // my thoughts, one at a time, just over my head, out to the side where there's room (towards the friends):
   // { i: which, k: a count to start each afresh, on: showing }. The first comes once the hellos are done
   // (straight away with reduced motion); a tap on me brings the next
@@ -196,16 +216,21 @@ export default function DayScene({ scene, notes = [], weather = { kind: 'partly'
   const think = () => said.length && setThought((x) => ({ i: (x.i + 1) % said.length, k: x.k + 1, on: true }));
   const shown = thought.on && said[thought.i % said.length];
 
-  const props = indoor ? ROOMS[place](n) : [...(SKY[sky] || SKY.partly), ...BACKDROP,
+  // at home, the sofa under me (its middle, or with friends its right end): where my body's middle is, off my face
+  const [bx, , bw] = boxOf(cast[0][1]);
+  const sofa = `calc(${pct(meAt)} + var(--tall) * ${((bx + bw / 2 - FACE_X - (n ? SOFA_W / 4 : 0)) / FULL).toFixed(3)})`;
+  const props = place === 'home' ? ROOMS.home(sofa) : indoor ? ROOMS[place]() : [...(SKY[sky] || SKY.partly), ...BACKDROP,
     ...(sky === 'partly' && !weather.cold ? BUTTERFLIES : []), ...(weather.cold ? FALLING : [])];
-  const win = place === 'home' ? WINDOW_AT.home[n ? 1 : 0] : WINDOW_AT[place];
+  // out to eat, the table across in front of us laid where we sit: a plate before me and the friend who says hi,
+  // glasses between (on my own, a small one)
+  const laid = n ? [4200, [meAt, at(0)].map((f) => (f - 0.5) * 0.96 + 0.5), [0.5, 0.86]] : [1800, [0.5], [0.82]];
   return (
     <div className={`ds ds-${kind} ds-at-${place} ds-wx-${weather.kind}${weather.hot ? ' ds-hot' : ''}${weather.cold ? ' ds-cold' : ''}${ready ? ' ready' : ''}`}
       style={{ '--horizon': `${HORIZON}px` }}>
       {!indoor && <Land />}
       <div className="ds-world" aria-hidden="true">
-        {indoor ? <Room wallAt={WALL[place]} /> : <div className="ds-skytint" />}
-        {indoor && <Window x={win[0]} far={WALL[place]} size={1 - WALL[place] / HORIZON} up={win[1]} weather={weather} />}
+        {!indoor && <div className="ds-skytint" />}
+        <Space place={place} vx={vx} horizon={HORIZON} weather={weather} rug={place === 'home' && RUG[n ? 1 : 0]} />
         {/* the weather in the air goes behind the park, so a bush or a tree keeps it off what's behind them */}
         {!indoor && (wet || weather.kind === 'fog') && (
           <Suspense fallback={null}>
@@ -213,7 +238,7 @@ export default function DayScene({ scene, notes = [], weather = { kind: 'partly'
               shelter={wet ? { at: coverAt / 100, w: SHELTER[0], h: SHELTER[1] } : null} />
           </Suspense>
         )}
-        {props.map(({ p, x, size = 1, top, far, up, flip, fly, falling }, i) => {
+        {props.map(({ p, args, x, X, size = 1, top, far, up, flip, fly, falling }, i) => {
           if (top) {
             const go = p === 'cloud' ? across(x, size) : fly ? across(x, size, fly) : null;
             return <Prop key={i} kind={p} x={x} size={size} className={`ds-sky${fly ? ' ds-fly' : ''}${falling != null ? ' ds-falling' : ''}`}
@@ -221,7 +246,8 @@ export default function DayScene({ scene, notes = [], weather = { kind: 'partly'
           }
           // (in the cold, the trees all but bare)
           const k = size * (1 - (far || 0) / HORIZON);
-          return <Prop key={i} kind={p === 'tree' && weather.cold ? 'bareTree' : p} x={x} size={k} className={p === 'butterfly' ? `ds-bfly ds-bfly-${i % 2}` : ''}
+          const where = X != null ? pct(toward(X, far)) : typeof x === 'number' ? pct(x) : x;
+          return <Prop key={i} kind={p === 'tree' && weather.cold ? 'bareTree' : p} args={args} x={where} size={k} className={p === 'butterfly' ? `ds-bfly ds-bfly-${i % 2}` : ''}
             style={{ '--far': `${far || 0}px`, '--up': up ? `calc(var(--tall) * ${(up * k) / FULL})` : undefined, transform: flip ? 'scaleX(-1)' : undefined }} />;
         })}
         {cover && <Prop kind={cover} x={`${coverAt}%`} />}
@@ -233,20 +259,20 @@ export default function DayScene({ scene, notes = [], weather = { kind: 'partly'
           {/* the furthest back first, so the nearer ones stand in front */}
           {friends.map((look, i) => (
             <Person key={i} look={look} poses={cast[i + 1][1]} flip gear={gear(look)} far={back(i)} className="ds-friend"
-              style={{ '--x': `${at(i)}%`, '--blink': `${1.1 + 0.9 * i}s` }} />
+              style={{ '--x': pct(at(i)), '--blink': `${1.1 + 0.9 * i}s` }} />
           )).reverse()}
           {/* me, facing them (on a free day, my head tilting now and then, wondering) */}
           <Person look={me} poses={cast[0][1]} onTap={think} label="ความคิดของฉัน" gear={gear(me)} far={sat} className={`ds-me${free ? ' ds-wonder' : ''}`}
-            style={{ '--x': `${meAt}%`, '--blink': free ? '1.6s' : '2.4s' }} />
+            style={{ '--x': pct(meAt), '--blink': free ? '1.6s' : '2.4s' }} />
           {/* out to eat, the table across in front of us */}
-          {place === 'eat' && <Prop kind={n ? 'tableLong' : 'tableSmall'} x={`${n ? 50.5 : meAt}%`} className="ds-front" />}
-          {!free && n > 0 && <span className="ds-say" style={{ '--x': `${at(0)}%`, '--far': `${back(0)}px`, '--head': headAt(cast[1][1], back(0)) }}>หวัดดี!</span>}
+          {place === 'eat' && <Prop kind="table" args={laid} x={n ? '50%' : pct(meAt)} className="ds-front" />}
+          {!free && n > 0 && <span className="ds-say" style={{ '--x': pct(at(0)), '--far': `${back(0)}px`, '--head': headAt(cast[1][1], back(0)) }}>หวัดดี!</span>}
         </>
       )}
       {/* fog low over the ground, in front of our feet */}
       {!indoor && weather.kind === 'fog' && <i className="ds-mist ds-mist-low" />}
       {ready && shown && (
-        <div key={thought.k} className="ds-note right" style={{ '--x': `${meAt}%`, '--far': `${sat}px`, '--head': headAt(cast[0][1], sat) }}
+        <div key={thought.k} className="ds-note right" style={{ '--x': pct(meAt), '--far': `${sat}px`, '--head': headAt(cast[0][1], sat) }}
           onAnimationEnd={(e) => e.target === e.currentTarget && setThought((x) => ({ ...x, on: false }))}>
           <SpeechNotes notes={[shown]} />
         </div>

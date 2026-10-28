@@ -1,3 +1,5 @@
+import { useLayoutEffect, useRef, useState } from 'react';
+
 // The day scene's backdrop (DayScene.jsx), drawn as Open Peeps are: one line of the same weight, white
 // fills, solid for the dark parts, at life size beside them (a standing person is 3000 tall in their units,
 // about 1.75 m: the tree is some 4.5 m, the lamp 3.7 m, the bench's seat 50 cm up), feet on the bottom, so
@@ -7,6 +9,7 @@
 
 const INK = 'currentColor';
 const LINE = 22; // the people's line weight, in their units
+const CEILING = 4800; // a room's ceiling off the floor, in people's units (2.8 m)
 
 // a hand-drawn bumpy outline round an ellipse (a canopy, a bush, a cloud): n bumps, each a curve bulging
 // out between points on it, a little uneven. from/to: the arc to go round (angles, clockwise from 3 o'clock)
@@ -222,12 +225,12 @@ const shelter = (w) => ({
 
 // a table across the front, its top seen from a little above with plates and glasses on it, a cloth down to
 // the floor (the people sat behind it are busts: it hides where they stop). Its top is 75 cm up, `w` across
-const table = (w, seats) => {
+const table = (w, seats, cups) => {
   const plate = (x) => `M${x - 260} 150 a260 62 0 1 0 520 0 a260 62 0 1 0 -520 0 Z`;
   const food = (x) => `M${x - 150} 146 C${x - 130} 40 ${x + 130} 40 ${x + 150} 146 Z`;
   const glass = (x) => `M${x - 66} -230 L${x + 66} -230 L${x + 52} 150 L${x - 52} 150 Z`;
   const plates = seats.map((f) => Math.round(w * f));
-  const glasses = seats.length > 1 ? [Math.round(w * 0.36), Math.round(w * 0.64)] : [Math.round(w * 0.8)];
+  const glasses = cups.map((f) => Math.round(w * f));
   return {
     box: [0, -260, w, 1760],
     art: (
@@ -245,18 +248,18 @@ const table = (w, seats) => {
   };
 };
 
-// a lamp hung over the table on a long cord, from the ceiling out of sight above (stood by its shade's foot)
-const PENDANT = {
-  box: [0, 0, 900, 3980],
+// a lamp hung from the ceiling, its shade's foot `up` off the floor (stood by it), its cord up to the ceiling
+const pendant = (up) => { const cord = CEILING - up - 480; return {
+  box: [0, 0, 900, cord + 480],
   art: (
     <>
-      <path {...line} d="M450 0 V3500" />
-      <path {...shape} d="M150 3900 C150 3630 300 3500 450 3500 C600 3500 750 3630 750 3900 Z" />
-      <path {...line} d="M110 3900 H790" />
-      <path {...shape} d="M385 3900 A65 65 0 0 0 515 3900" />
+      <path {...line} d={`M450 0 V${cord}`} />
+      <path {...shape} d={`M150 ${cord + 400} C150 ${cord + 130} 300 ${cord} 450 ${cord} C600 ${cord} 750 ${cord + 130} 750 ${cord + 400} Z`} />
+      <path {...line} d={`M110 ${cord + 400} H790`} />
+      <path {...shape} d={`M385 ${cord + 400} A65 65 0 0 0 515 ${cord + 400}`} />
     </>
   ),
-};
+}; };
 
 // a blackboard of the day's dishes, chalked
 const BOARD = {
@@ -329,53 +332,202 @@ const PICTURE = {
     </>
   ),
 };
-const RUG = {
-  box: [0, 0, 4400, 600],
-  art: (
-    <>
-      <path {...shape} d="M300 100 H4100 C4300 100 4400 200 4400 300 C4400 400 4300 500 4100 500 H300 C100 500 0 400 0 300 C0 200 100 100 300 100 Z" />
-      <path {...line} strokeWidth={14} d="M380 180 H4020 C4170 180 4250 240 4250 300 C4250 360 4170 420 4020 420 H380 C230 420 150 360 150 300 C150 240 230 180 380 180 Z" />
-    </>
-  ),
+// ===== The space we're in, in one-point perspective: a room's floor, walls and ceiling, or the park's path,
+// all running back to the one vanishing point on the horizon, `vx` across (a share of the width), so the place
+// has the depth the people have (further back, smaller: DayScene's `far`, px up the ground). Drawn in px off
+// the stage's own measure: the world's size, where the ground line is and how tall a person is (CSS --ground,
+// --tall, read off a probe). A plane's edges in the people's ink and line; what's on it (tiles, boards, slats)
+// finer and fainter, so it reads as the surface and not as things
+
+const NEAR = -1200; // px in front of us: far enough that a plane runs on out of the picture
+// where a point is in the picture: `X` across as it would be at our feet (a share of the width), `far` px up the
+// ground, `up` off the floor in people's units
+const lensOf = ({ w, h, tall, ground }, vx, horizon) => (X, far, up = 0) => {
+  const s = 1 - far / horizon;
+  return [+(w * (vx + (X - vx) * s)).toFixed(1), +(h - ground - far - (up / 3000) * tall * s).toFixed(1)];
 };
+// depths (px up the ground) evenly spaced as they really are, from `from` back to `to`, a step of `dz` apart (in
+// how far off they are, ours 1): closer and closer together in the picture, and none closer than `gap` px there
+const depths = (from, to, dz, horizon, gap = 3) => {
+  const out = [];
+  for (let z = horizon / (horizon - from); ; z += dz) {
+    const f = Math.min(to, horizon * (1 - 1 / z));
+    if (!out.length || f - out[out.length - 1] >= gap * (1 - f / horizon) || f === to) out.push(f);
+    if (f >= to) return out;
+  }
+};
+const span = (a, b, k) => Array.from({ length: k + 1 }, (_, i) => a + ((b - a) * i) / k);
+const poly = (pts) => `M${pts.map((p) => p.join(' ')).join(' L')} Z`;
+const segs = (pairs) => pairs.map(([a, b]) => `M${a.join(' ')} L${b.join(' ')}`).join(' ');
+const ink = { fill: 'none', stroke: INK, strokeLinecap: 'round', strokeLinejoin: 'round' };
 
-// the room's back wall and floor: the wall down to where it meets the floor (a skirting board), the floor a
-// tint from there down past our feet, as the land is outdoors
-export function Room({ wallAt }) {
-  return <div className="ds-room" style={{ '--wall-at': `${wallAt}px` }} />;
-}
-
-// a window in the back wall, the day outside in it: the sky's colour, the sun or a cloud, rain running down
-// the glass, fog. `size` its scale by how far back it is; `up` its sill off the floor (people's units)
-const WIN = [2600, 2000, 120]; // w, h, frame
-export function Window({ x, far, size, up, weather }) {
-  const [w, h, f] = WIN;
-  const u = (n) => `calc(var(--tall) * ${(n * size) / 3000})`;
+// glass in a wall, the day outside through it: the sky's colour, the sun or a cloud, rain running down it, fog.
+// `pts` its outline in the picture; `spot` [x, y, size] where the sun or the cloud is in it
+function Glass({ pts, spot, weather, m }) {
+  const xs = pts.map((p) => p[0]); const ys = pts.map((p) => p[1]);
+  const l = Math.max(0, Math.min(...xs)); const r = Math.min(m.w, Math.max(...xs));
+  const t = Math.max(0, Math.min(...ys)); const b = Math.min(m.h, Math.max(...ys));
+  if (r - l < 2 || b - t < 2) return null;
   const wet = weather.kind === 'rain' || weather.kind === 'storm';
   const cloudy = wet || weather.kind === 'cloud' || weather.kind === 'partly';
   const sunny = !wet && weather.kind !== 'fog' && weather.kind !== 'cloud';
+  const [x, y, d] = spot;
   return (
-    <div className="ds-window" style={{ '--x': x, bottom: `calc(var(--ground) + ${far}px + ${u(up)})`, width: u(w + 240), height: u(h + 140) }}>
-      <div className="ds-pane" style={{ left: `${(120 + f) / (w + 240) * 100}%`, right: `${(120 + f) / (w + 240) * 100}%`, top: `${(f / (h + 140)) * 100}%`, bottom: `${((140 + f) / (h + 140)) * 100}%` }}>
-        {sunny && <i className={`ds-pane-sun${weather.hot ? ' hot' : ''}`} />}
-        {cloudy && <svg className="ds-pane-cloud" viewBox={CLOUD.box.join(' ')}>{CLOUD.art}</svg>}
-        {wet && <i className={`ds-pane-rain${weather.kind === 'storm' ? ' storm' : ''}`} />}
-        {weather.kind === 'fog' && <i className="ds-pane-fog" />}
-      </div>
-      <svg className="ds-window-frame" viewBox={`-120 0 ${w + 240} ${h + 140}`} preserveAspectRatio="none">
-        <path {...shape} fillRule="evenodd" d={`M0 0 H${w} V${h} H0 Z M${f} ${f} H${w / 2 - 30} V${h - f} H${f} Z M${w / 2 + 30} ${f} H${w - f} V${h - f} H${w / 2 + 30} Z`} />
-        <path {...shape} d={`M-110 ${h} H${w + 110} V${h + 120} H-110 Z`} />
+    <div className="ds-glass" style={{ left: l, top: t, width: r - l, height: b - t,
+      clipPath: `polygon(${pts.map(([px, py]) => `${(px - l).toFixed(1)}px ${(py - t).toFixed(1)}px`).join(', ')})` }}>
+      {sunny && <i className={`ds-pane-sun${weather.hot ? ' hot' : ''}`} style={{ left: x - l - d / 2, top: y - t - d / 2, width: d }} />}
+      {cloudy && <svg className="ds-pane-cloud" viewBox={CLOUD.box.join(' ')} style={{ left: x - l - d * 1.6, top: y - t + d * 0.1, width: d * 2.6 }}>{CLOUD.art}</svg>}
+      {wet && <i className={`ds-pane-rain${weather.kind === 'storm' ? ' storm' : ''}`} />}
+      {weather.kind === 'fog' && <i className="ds-pane-fog" />}
+    </div>
+  );
+}
+
+// the park's path, paved in slabs, from under our feet back to the horizon: its edges and the slabs' long joints
+// run to the vanishing point, the joints across closer together the further back. We stand on it; the grass either side (Land)
+const PATH = 0.3; // half its width at our feet, a share of the picture's
+function Path({ at, m, vx, horizon }) {
+  const [a, b] = [vx - PATH, vx + PATH];
+  const end = horizon - 4;
+  const pen = (m.tall * LINE) / 3000;
+  const joints = depths(-m.ground - 4, end - 40, 0.32, horizon, 4).slice(1);
+  // (it fades into the distance as it narrows, the far end lost in the land at the foot of the hills)
+  const [, y0] = at(a, end); const [, y1] = at(a, end - 70);
+  return (
+    <svg className="ds-space-art" viewBox={`0 0 ${m.w} ${m.h}`}>
+      <defs>
+        <linearGradient id="ds-path-far" gradientUnits="userSpaceOnUse" x1="0" y1={y0} x2="0" y2={y1}>
+          <stop offset="0" stopColor="#fff" stopOpacity="0" /><stop offset="1" stopColor="#fff" />
+        </linearGradient>
+        <mask id="ds-path-fade" maskUnits="userSpaceOnUse" x="0" y="0" width={m.w} height={m.h}>
+          <rect width={m.w} height={m.h} fill="url(#ds-path-far)" />
+        </mask>
+      </defs>
+      <g mask="url(#ds-path-fade)">
+        <path className="ds-path" d={poly([at(a, NEAR), at(b, NEAR), at(b, end), at(a, end)])} />
+        <path {...ink} className="ds-texture" strokeWidth={pen * 0.5}
+          d={segs([...joints.map((f) => [at(a, f), at(b, f)]), ...span(a, b, 4).slice(1, -1).map((X) => [at(X, NEAR), at(X, end)])])} />
+        <path {...ink} strokeWidth={pen * 0.85} d={segs([[at(a, NEAR), at(a, end)], [at(b, NEAR), at(b, end)]])} />
+      </g>
+    </svg>
+  );
+}
+
+// the rooms: the side walls `x` across at our feet, the back wall `back` px up the floor, the ceiling `high` off
+// it. At home the back wall's a golden rectangle (1.618 times as wide as it's high, on a phone)
+const ROOM = {
+  eat: { x: [-0.22, 1.22], back: 150, high: CEILING },
+  home: { x: [-0.15, 1.15], back: 125, high: CEILING },
+};
+// a restaurant: a tiled floor, a slatted ceiling, the street through a glass front down the left, slats down the
+// right. Home: boards, a window in the left wall, a doorway dark in the right, a rug on the floor (`rug`: X from,
+// X to, far from, far to)
+function Room({ place, at, m, horizon, weather, rug }) {
+  const { x: [x0, x1], back, high } = ROOM[place];
+  const pen = (m.tall * LINE) / 3000;
+  const front = -m.ground - 4; // the picture's foot
+  const eat = place === 'eat';
+  const plane = {
+    ceiling: [at(x0, NEAR, high), at(x1, NEAR, high), at(x1, back, high), at(x0, back, high)],
+    left: [at(x0, NEAR), at(x0, back), at(x0, back, high), at(x0, NEAR, high)],
+    right: [at(x1, NEAR), at(x1, back), at(x1, back, high), at(x1, NEAR, high)],
+    wall: [at(x0, back), at(x1, back), at(x1, back, high), at(x0, back, high)],
+    floor: [at(x0, NEAR), at(x1, NEAR), at(x1, back), at(x0, back)],
+  };
+  const edges = `${segs([[at(x0, NEAR), at(x0, back)], [at(x1, NEAR), at(x1, back)], [at(x0, NEAR, high), at(x0, back, high)], [at(x1, NEAR, high), at(x1, back, high)]])} ${poly(plane.wall)}`;
+  // what's on the planes
+  const texture = eat
+    ? segs([
+      ...span(x0, x1, 18).map((X) => [at(X, NEAR), at(X, back)]),
+      ...depths(front, back, 0.3, horizon).map((f) => [at(x0, f), at(x1, f)]),
+      ...span(x0, x1, 24).map((X) => [at(X, NEAR, high), at(X, back, high)]),
+      ...depths(-500, back, 0.07, horizon).map((f) => [at(x1, f, 0), at(x1, f, high)]),
+    ])
+    : segs([
+      ...span(x0, x1, 26).map((X) => [at(X, NEAR), at(X, back)]),
+      ...[[x0, NEAR, x0, back], [x0, back, x1, back], [x1, back, x1, NEAR]].map(([a, f, b, g]) => [at(a, f, 150), at(b, g, 150)]),
+    ]);
+  // the glass: down the restaurant's left, its whole length (a mullion every so often, a transom); at home, a
+  // window in the left wall
+  const glass = eat ? { far: [NEAR, back - 1], up: [320, 4300] } : { far: [26, 96], up: [1500, 4100] };
+  const g = (f, u) => at(x0, f, u);
+  const pane = [g(glass.far[0], glass.up[0]), g(glass.far[1], glass.up[0]), g(glass.far[1], glass.up[1]), g(glass.far[0], glass.up[1])];
+  const mid = eat ? back * 0.62 : (glass.far[0] + glass.far[1]) / 2;
+  const sunAt = g(mid, 3400);
+  const spot = [sunAt[0], sunAt[1], (glass.up[1] - glass.up[0]) / 3000 * m.tall * (1 - mid / horizon) * (eat ? 0.13 : 0.24)];
+  const frames = eat
+    ? segs([
+      ...depths(-160, back - 1, 0.5, horizon).map((f) => [g(f, glass.up[0]), g(f, glass.up[1])]),
+      [g(NEAR, 3500), g(back, 3500)], [g(NEAR, glass.up[0]), g(back, glass.up[0])], [g(NEAR, glass.up[1]), g(back, glass.up[1])],
+    ])
+    : `${poly(pane)} ${segs([[g(mid, glass.up[0]), g(mid, glass.up[1])], [g(glass.far[0] - 4, glass.up[0] - 120), g(glass.far[1] + 3, glass.up[0] - 120)]])}`;
+  // home's doorway, dark, through the right wall
+  const door = !eat && poly([at(x1, 84, 0), at(x1, 112, 0), at(x1, 112, 3600), at(x1, 84, 3600)]);
+  const doorFrame = !eat && poly([at(x1, 80, 0), at(x1, 115, 0), at(x1, 115, 3760), at(x1, 80, 3760)]);
+  const mat = rug && [at(rug[0], rug[2]), at(rug[1], rug[2]), at(rug[1], rug[3]), at(rug[0], rug[3])];
+  const matIn = rug && [at(rug[0] + 0.02, rug[2] + 3), at(rug[1] - 0.02, rug[2] + 3), at(rug[1] - 0.02, rug[3] - 3), at(rug[0] + 0.02, rug[3] - 3)];
+  return (
+    <>
+      <svg className="ds-space-art" viewBox={`0 0 ${m.w} ${m.h}`}>
+        <defs>
+          <linearGradient id={`ds-floor-${place}`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" className="ds-floor-far" /><stop offset="1" className="ds-floor-near" />
+          </linearGradient>
+        </defs>
+        <path className="ds-plane-ceiling" d={poly(plane.ceiling)} />
+        <path className="ds-plane-side" d={poly(plane.left)} />
+        <path className="ds-plane-side" d={poly(plane.right)} />
+        <path className="ds-plane-wall" d={poly(plane.wall)} />
+        <path fill={`url(#ds-floor-${place})`} d={poly(plane.floor)} />
+        <path {...ink} className="ds-texture" strokeWidth={pen * 0.45} d={texture} />
+        {mat && <><path className="ds-rug" stroke={INK} strokeWidth={pen * 0.85} strokeLinejoin="round" d={poly(mat)} /><path {...ink} strokeWidth={pen * 0.5} d={poly(matIn)} /></>}
       </svg>
+      <Glass pts={pane} spot={spot} weather={weather} m={m} />
+      <svg className="ds-space-art" viewBox={`0 0 ${m.w} ${m.h}`}>
+        {door && <path fill="#fff" stroke={INK} strokeWidth={pen * 0.85} strokeLinejoin="round" d={doorFrame} />}
+        {door && <path fill={INK} d={door} />}
+        <path {...ink} strokeWidth={pen * (eat ? 0.7 : 0.85)} d={frames} />
+        <path {...ink} strokeWidth={pen * 0.85} d={edges} />
+      </svg>
+    </>
+  );
+}
+
+// the space, measured off the stage (every render, cheap reads, as the ground moves with the place; and when
+// the stage changes size)
+export function Space({ place, vx, horizon, weather, rug }) {
+  const box = useRef(null);
+  const probe = useRef(null);
+  const [m, setM] = useState(null);
+  const measure = () => {
+    const el = box.current; const p = probe.current;
+    if (!el || !p) return;
+    const next = { w: el.clientWidth, h: el.clientHeight, tall: p.offsetHeight, ground: el.clientHeight - p.offsetTop - p.offsetHeight };
+    setM((o) => (o && o.w === next.w && o.h === next.h && o.tall === next.tall && o.ground === next.ground ? o : next));
+  };
+  useLayoutEffect(() => measure());
+  useLayoutEffect(() => {
+    const ro = new ResizeObserver(() => measure());
+    ro.observe(box.current);
+    return () => ro.disconnect();
+  }, []);
+  const at = m?.w ? lensOf(m, vx, horizon) : null;
+  return (
+    <div className={`ds-space ds-space-${place}`} ref={box} aria-hidden="true">
+      <i className="ds-probe" ref={probe} />
+      {at && (place === 'park' ? <Path at={at} m={m} vx={vx} horizon={horizon} />
+        : <Room place={place} at={at} m={m} horizon={horizon} weather={weather} rug={rug} />)}
     </div>
   );
 }
 
 const PROPS = { shelter: shelter(4600), butterfly: BUTTERFLY, leaf: LEAF, sun: SUN, tree: TREE, bareTree: BARE_TREE, lamp: LAMP, bench: BENCH, bush: BUSH, cloud: CLOUD, tuft: TUFT, birds: BIRDS, sign: SIGN,
-  tableLong: table(4200, [0.22, 0.5, 0.78]), tableSmall: table(1800, [0.42]), pendant: PENDANT, board: BOARD, plant: PLANT, sofa: SOFA, floorLamp: FLOOR_LAMP, picture: PICTURE, rug: RUG };
+  board: BOARD, plant: PLANT, sofa: SOFA, floorLamp: FLOOR_LAMP, picture: PICTURE, table, pendant };
 
-// one prop at --x (its centre), feet on the ground line; `size` scales it from life size
-export function Prop({ kind, x, size = 1, className = '', style }) {
-  const { box: [bx, by, w, h], art } = PROPS[kind];
+// one prop at --x (its centre), feet on the ground line; `size` scales it from life size. One drawn to order (a
+// table laid for us, a lamp hung from the ceiling) takes its `args`
+export function Prop({ kind, args = [], x, size = 1, className = '', style }) {
+  const { box: [bx, by, w, h], art } = typeof PROPS[kind] === 'function' ? PROPS[kind](...args) : PROPS[kind];
   return (
     <svg className={`ds-prop ds-${kind} ${className}`} viewBox={`${bx} ${by} ${w} ${h}`} aria-hidden="true"
       style={{ '--x': x, height: `calc(var(--tall) * ${(h * size) / 3000})`, aspectRatio: `${w} / ${h}`, ...style }}>

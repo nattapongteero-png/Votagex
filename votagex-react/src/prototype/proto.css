@@ -2267,7 +2267,6 @@ body::after { content: ''; position: fixed; inset: 0; z-index: 9998; pointer-eve
 /* a short screen (iPhone SE) wins back the bar's height, so today's week stays clear of the resting sheet */
 @media (max-height: 719px) {
   .homepage.pt-today { --hp-stage-top: 143px; }
-  .homepage.pt-today .ds { --ground: 40px; }
   .homepage.pt-today .hp-header { padding-top: 8px; gap: 6px; }
   .homepage.pt-today .hp-header-top.pt-talk { padding-top: 4px; }
 }
@@ -2351,8 +2350,14 @@ body::after { content: ''; position: fixed; inset: 0; z-index: 9998; pointer-eve
   --fade: linear-gradient(to bottom, rgba(0, 0, 0, .16), rgba(0, 0, 0, .16) calc(var(--hp-stage-top, 0px) - 20px), #000 calc(var(--hp-stage-top, 0px) + 50px));
   -webkit-mask-image: var(--fade); mask-image: var(--fade); }
 .ds-person, .ds-prop { position: absolute; left: var(--x); bottom: calc(var(--ground) + var(--far, 0px) + var(--up, 0px)); translate: -50% 0; pointer-events: none; }
-/* (a bust sat at a table starts off the floor) */
-.ds-person { bottom: calc(var(--ground) + var(--far, 0px) + var(--tall) * var(--lift, 0)); }
+/* (a bust sat at a table starts off the floor; a person stands at --x by their face, DayScene --face) */
+.ds-person { bottom: calc(var(--ground) + var(--far, 0px) + var(--tall) * var(--lift, 0)); translate: calc(var(--face, .5) * -100%) 0; }
+/* the faces on the phi grid of what shows of the stage, from under the profile row (18px over the stage) to the
+   card sheet's top (2px off its foot): stood or sat about, on its upper line (.618 up from the foot); close up
+   at a table, on the lower one */
+.homepage.pt-today .ds { --shown: calc(var(--ds-h, 420px) + 16px); }
+.homepage.pt-today .ds.ds-at-park { --ground: calc(var(--shown) * .618 - 2px - var(--tall) * .88); }
+.homepage.pt-today .ds.ds-at-home { --ground: calc(var(--shown) * .618 - 2px - var(--tall) * .67); }
 .ds-prop { overflow: visible; }
 .ds-prop.ds-sky { bottom: auto; }
 /* the land (behind the park, under the header's fade): a light tint from the horizon down past our feet, on
@@ -2386,8 +2391,8 @@ body::after { content: ''; position: fixed; inset: 0; z-index: 9998; pointer-eve
 /* I'm the one to tap: my thoughts */
 .ds-person.ds-tappable { pointer-events: auto; cursor: pointer; -webkit-tap-highlight-color: transparent; outline: none; }
 .ds-person.ds-tappable:active .ds-pose { scale: .98; transform-origin: 50% 100%; }
-/* the first friend says hi (from their side, to me), once the scene has come in */
-.ds-say { position: absolute; left: calc(var(--x) - 8%); bottom: calc(var(--ground) + var(--far, 0px) + var(--tall) * (var(--head, .96) - .16)); translate: -100% 0; padding: 6px 12px;
+/* the first friend says hi (from just over their head, towards me), once the scene has come in */
+.ds-say { position: absolute; left: calc(var(--x) + 6px); bottom: calc(var(--ground) + var(--far, 0px) + var(--tall) * var(--head, .96) + 8px); translate: -100% 0; padding: 6px 12px;
   border-radius: 16px 16px 4px 16px; background: #fff; font-size: 13px; font-weight: 700; line-height: 1.4; white-space: nowrap; pointer-events: none;
   box-shadow: 0 4px 14px rgba(15, 23, 42, .1); opacity: 0; transform-origin: 100% 100%; animation: ds-say 2.4s .7s both; }
 @keyframes ds-say { 0% { opacity: 0; scale: .4; } 14% { opacity: 1; scale: 1.08; } 22%, 84% { opacity: 1; scale: 1; } 100% { opacity: 0; scale: .92; } }
@@ -2435,24 +2440,31 @@ body::after { content: ''; position: fixed; inset: 0; z-index: 9998; pointer-eve
 .ds-skytint { position: absolute; left: 0; right: 0; top: 0; bottom: calc(var(--ground) + var(--horizon) - 4px);
   background: linear-gradient(to bottom, var(--sky-top), var(--sky-low)); }
 .ds-wx { position: absolute; inset: 0; pointer-events: none; }
-/* indoors (scenery.jsx Room, Window): the back wall down to a skirting board where it meets the floor, the floor
-   a tint from there down past our feet (as the land is outdoors, fading out under the card sheet's top);
-   warm in a restaurant, soft at home. The day outside is in the window: the sky's colour, the sun or a cloud,
-   rain running down the glass (a storm's harder), fog */
-.ds-at-eat { --wall: #F4E9DA; --floor-far: #E9D8C2; --floor-near: #E2CCB0; }
-/* (at the table we're seen close up: bigger, the floor sunk out of sight under the stage, so the table's edge
-   runs along the foot of the scene and its cloth on down under the card sheet) */
-.homepage.pt-today .ds.ds-at-eat { --tall: 290px; --ground: calc(30px - var(--tall) * .428); }
-.ds-at-home { --wall: #EEF0EA; --floor-far: #E8E2D6; --floor-near: #E1D8C7; }
-.ds-room { position: absolute; inset: 0; background: var(--wall); }
-.ds-room::before { content: ''; position: absolute; left: 0; right: 0; bottom: -22px; height: calc(22px + var(--ground) + var(--wall-at));
-  background: linear-gradient(to bottom, var(--floor-far), var(--floor-near));
+/* the place in perspective (scenery.jsx Space): a room's planes or the park's path, drawn in px off the stage's
+   measure (.ds-probe: where the ground is, how tall a person is), the floor fading out under the card sheet's
+   top as the land does. Indoors warm in a restaurant, soft at home, the side walls a shade darker than the back,
+   the light coming from in front; what's on a plane (tiles, boards, slats, the paving) fainter than its edges.
+   The day outside is in the glass: the sky's colour, the sun or a cloud, rain running down it (a storm's
+   harder), fog */
+.ds-space { position: absolute; inset: 0; pointer-events: none;
   -webkit-mask-image: linear-gradient(to top, transparent, #000 34px); mask-image: linear-gradient(to top, transparent, #000 34px); }
-.ds-room::after { content: ''; position: absolute; left: 0; right: 0; bottom: calc(var(--ground) + var(--wall-at) - 1px); height: 7px;
-  background: #fff; border-top: 1.5px solid #18181B; border-bottom: 1px solid #18181B; }
-.ds-window { position: absolute; left: var(--x); translate: -50% 0; pointer-events: none; }
-.ds-window-frame { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
-.ds-pane { position: absolute; overflow: hidden; background: linear-gradient(to bottom, var(--sky-top), var(--sky-low)); }
+.ds-probe { position: absolute; left: 0; bottom: var(--ground); width: 1px; height: var(--tall); visibility: hidden; }
+.ds-space-art { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.ds-texture { stroke-opacity: .34; }
+.ds-path { fill: rgba(255, 255, 255, .55); }
+.ds-plane-wall { fill: var(--wall); }
+.ds-plane-side { fill: var(--wall-side); }
+.ds-plane-ceiling { fill: var(--ceiling); }
+.ds-floor-far { stop-color: var(--floor-far); }
+.ds-floor-near { stop-color: var(--floor-near); }
+.ds-rug { fill: #FBF8F2; }
+.ds-glass { position: absolute; overflow: hidden; background: linear-gradient(to bottom, var(--sky-top), var(--sky-low)); }
+.ds-glass .ds-pane-sun { right: auto; }
+.ds-at-eat { --wall: #F4E9DA; --wall-side: #EEDFCB; --ceiling: #EADBC6; --floor-far: #E9D8C2; --floor-near: #E2CCB0; }
+/* (at the table we're seen close up, bigger, the table's edge along the foot of the scene and its cloth on down
+   under the card sheet) */
+.homepage.pt-today .ds.ds-at-eat { --tall: 290px; --ground: calc(var(--shown) * .382 - 2px - var(--tall) * .676); }
+.ds-at-home { --wall: #EEF0EA; --wall-side: #E5E9E1; --ceiling: #F4F5F1; --floor-far: #E8E2D6; --floor-near: #E1D8C7; }
 .ds-pane-sun { position: absolute; right: 16%; top: 14%; width: 26%; aspect-ratio: 1; border-radius: 50%; background: #FFD964; box-shadow: 0 0 0 1.5px #18181B; }
 .ds-pane-sun.hot { width: 36%; background: #FFF2C4; box-shadow: 0 0 0 1.5px #18181B, 0 0 18px 6px rgba(255, 214, 102, .7); }
 .ds-pane-cloud { position: absolute; left: 4%; top: 30%; width: 70%; color: #18181B; animation: ds-pane-drift 16s ease-in-out infinite alternate; }
