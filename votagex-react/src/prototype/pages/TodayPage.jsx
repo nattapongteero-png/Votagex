@@ -348,8 +348,22 @@ export default function TodayPage() {
     );
   };
 
+  // a day without plans: make one (a group's page: whose calendar this is, and its info, even then)
+  const freeCard = (
+    <div className="hp-tile pt-day-card">
+      {group && <PlanHead group={group} invite={selected === today ? 'วันนี้ยังว่าง ไปไหนกันดี?' : 'วันนี้ยังว่าง ชวนกันไปไหนดี?'} onOpen={() => openSheet('group', { groupId: group.id })} onGroup={() => openSheet('group', { groupId: group.id })} />}
+      <div className="hp-plan-actions">
+        <button className="hp-add-btn" onClick={() => openSheet('createPlan', { date: selected })}><Icon name="plus" size={18} stroke={2.2} /> {selected === today ? 'สร้างแผนวันนี้' : 'สร้างแผน'}</button>
+        {canShuffle && <button className="pt-btn light" onClick={() => openSheet('shuffle', { date: selected })}><Icon name="shuffle" size={16} /> สุ่มให้</button>}
+      </div>
+    </div>
+  );
+  const soon = !live && upcoming && diffDays(today, upcoming.startDate) <= 3;
+  // that card all there is to show (a group's free day): it floats over the dock, no sheet to pull up
+  const lone = Boolean(group) && !card && !dayEvents.length && !sections.length && !soon;
+
   return (
-    <div ref={pageRef} className={`homepage pt-today${SHOW_CALENDAR ? '' : ' with-scene'}${collapsed ? ' header-collapsed' : ''}${atRest ? ' at-rest' : ''}`} style={sheet ? { '--hp-sheet-top': `${sheet.top}px`, '--fold-top': `${FOLD_TOP}px` } : undefined}>
+    <div ref={pageRef} className={`homepage pt-today${SHOW_CALENDAR ? '' : ' with-scene'}${collapsed ? ' header-collapsed' : ''}${atRest ? ' at-rest' : ''}${lone ? ' lone' : ''}`} style={sheet ? { '--hp-sheet-top': `${sheet.top}px`, '--fold-top': `${FOLD_TOP}px` } : undefined}>
       <div className="hp-header">
         {/* + to make something, the name, the bell for what came in */}
         <HomeBar onRecap={(id) => setRecapOf(id)} />
@@ -380,8 +394,8 @@ export default function TodayPage() {
             <MonthCalendar selected={selected} today={today} onSelect={setSelected} stopsOn={stopsOn} eventsOn={eventsOn} groupsOn={groupsOn} plans={plans} />
           </div>
         ) : (
-          /* another profile picked: the scene changes over from the side it was picked on */
-          <SceneSwap at={group ? groups.indexOf(group) + 1 : 0} kind={settings.sceneSwap || 'slide'}>
+          /* another profile picked: the park slides over from the side it was picked on */
+          <SceneSwap at={group ? groups.indexOf(group) + 1 : 0}>
             <DayScene scene={scene} notes={notes} weather={sceneWeather(wxToday, !cloud && settings.simWeather)} onTap={() => (scene.kind === 'meet' ? navigate(`/proto/plan/${scene.planId}`)
               : openSheet(canShuffle ? 'shuffle' : 'createPlan', { date: selected }))} />
           </SceneSwap>
@@ -394,6 +408,7 @@ export default function TodayPage() {
         <div className="hp-stage-spacer" />
 
         {/* one block for the whole sheet, so a drag anywhere on it (gaps and handle too) moves it */}
+        {!lone && (
         <div className="pt-home-sheet">
           {/* the trip to look back on (this day in a past year, else the latest), as a postcard; a tap plays its film */}
           {card && <PostcardTile card={card} onPlay={() => setRecapOf(looks[0].plan.id)} />}
@@ -406,19 +421,10 @@ export default function TodayPage() {
           {/* the selected day's plans: a card each, side by side when there are several */}
           {multi ? (
             <div className="pt-day-row">{sections.map(renderCard)}</div>
-          ) : sections.length ? renderCard(sections[0]) : (
-            <div className="hp-tile pt-day-card">
-              {/* a group's page: whose calendar this is, and its info, even on a day without plans */}
-              {group && <PlanHead group={group} invite={selected === today ? 'วันนี้ยังว่าง ไปไหนกันดี?' : 'วันนี้ยังว่าง ชวนกันไปไหนดี?'} onOpen={() => openSheet('group', { groupId: group.id })} onGroup={() => openSheet('group', { groupId: group.id })} />}
-              <div className="hp-plan-actions">
-                <button className="hp-add-btn" onClick={() => openSheet('createPlan', { date: selected })}><Icon name="plus" size={18} stroke={2.2} /> {selected === today ? 'สร้างแผนวันนี้' : 'สร้างแผน'}</button>
-                {canShuffle && <button className="pt-btn light" onClick={() => openSheet('shuffle', { date: selected })}><Icon name="shuffle" size={16} /> สุ่มให้</button>}
-              </div>
-            </div>
-          )}
+          ) : sections.length ? renderCard(sections[0]) : freeCard}
 
           {/* the next trip, only once it's 3 days away or less (the speech note counts down before that) */}
-          {!live && upcoming && diffDays(today, upcoming.startDate) <= 3 && (
+          {soon && (
             <div className="hp-section">
               <SectionTitle title="กำลังจะไป" action="แผนทั้งหมด" onAction={() => navigate('/proto/plans')} />
               <button className="hp-tile pt-upcoming" onClick={() => navigate(`/proto/plan/${upcoming.id}`)}>
@@ -452,7 +458,9 @@ export default function TodayPage() {
             </div>
           )}
         </div>
+        )}
       </div>
+      {lone && <div className="pt-float-card">{freeCard}</div>}
       {recap && <RecapViewer {...recap} stamp={recapCard.stamp} postcard={recapCard} onClose={() => setRecapOf(null)} />}
     </div>
   );

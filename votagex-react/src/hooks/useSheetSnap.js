@@ -46,7 +46,15 @@ export default function useSheetSnap(pageRef, { cssDriven = false } = {}) {
     const pills = page?.querySelector('.hp-pill-row') || page?.querySelector('.hp-header-top');
     const frame = page?.querySelector('.hp-sheet-frame');
     const first = spacer?.nextElementSibling;
-    if (!content || !pills || !frame || !first) return;
+    if (!content || !pills || !frame) return;
+    // no cards (the page shows its one elsewhere): no sheet, nothing to scroll
+    if (!first) {
+      s.current.range = 0;
+      content.style.paddingBottom = '';
+      page.style.setProperty('--sheet-range', '1px');
+      apply(0);
+      return;
+    }
 
     const pageTop = page.getBoundingClientRect().top;
     const stopTop = pills.getBoundingClientRect().bottom - pageTop + 10; // frame top at step 2

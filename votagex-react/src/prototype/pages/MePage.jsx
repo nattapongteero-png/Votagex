@@ -7,7 +7,6 @@ import { ME, PEOPLE, EXPENSE_CATS, parseISO, myShare, fmtMoney, planStatus, jarS
 import { StampBook } from '../StampBook';
 import { avatarOf } from '../peeps';
 import { SCENE_SIMS } from '../weather';
-import { SCENE_SWAPS } from '../sceneSwaps';
 
 const CAL_THEME_KEY = 'votagex.proto.calTheme'; // read by the home calendar
 const CAL_THEMES = [['riso', 'Riso'], ['poster', 'โปสเตอร์ 1969']];
@@ -190,14 +189,7 @@ export default function MePage() {
                     onClick={() => actions.setSetting('simWeather', k || null)}>{label}</button>
                 ))}
               </div>
-              {/* how the scene changes over when another profile is picked (Remotion's transitions) */}
-              <div className="pt-muted sm">เปลี่ยนฉาก</div>
-              <div className="pt-chip-row wrap">
-                {SCENE_SWAPS.map(([k, label]) => (
-                  <button key={k} className={`pt-chip${(settings.sceneSwap || 'slide') === k ? ' active' : ''}`}
-                    onClick={() => actions.setSetting('sceneSwap', k)}>{label}</button>
-                ))}
-              </div>
+
             </div>
           )}
           {autoOn && todayStops.length > 0 && (

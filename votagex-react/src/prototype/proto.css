@@ -2319,14 +2319,34 @@ body::after { content: ''; position: fixed; inset: 0; z-index: 9998; pointer-eve
 .homepage.pt-today.with-scene.header-collapsed .hp-header > * * { pointer-events: auto; }
 .ds-tap { position: absolute; inset: 0; padding: 0; border: 0; background: none; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 /* a change of scene (SceneSwap.jsx): both scenes in a box from the top of the page (the park runs up behind the
-   header) to the stage's foot, edge to edge, each a page of it the transition moves, clips or turns; the one
-   going can't be tapped and says nothing more */
+   header) to the stage's foot, edge to edge, each a page of it the slide moves; the one going can't be tapped
+   and says nothing more */
 .ds-swap { position: relative; height: var(--ds-h, 420px); }
 .ds-swap-clip { position: absolute; top: calc(-1 * var(--hp-stage-top, 0px)); bottom: 0; left: -20px; right: -20px; overflow: hidden; pointer-events: none; }
 .ds-swap-page { width: 100%; height: 100%; flex: none; box-sizing: border-box; padding: var(--hp-stage-top, 0px) 20px 0; }
 .ds-swap-page .ds { pointer-events: auto; }
 .ds-swap-out .ds, .ds-swap-out .ds * { pointer-events: none !important; }
 .ds-swap-out :is(.ds-say, .ds-note) { visibility: hidden; }
+/* through it, I stay where I am on the page (against the park sliding by), gliding to my place in the next;
+   the friends going walk off to the right; the next ones wait off stage until it's in, then come in from the
+   right, and only then say hi */
+.ds-swap-page .ds-me { transform: translateX(calc(var(--me-shift, 0px) - var(--swap-off, 0px))); }
+/* (I'm there all along, so the next scene's me doesn't fade in: its fade's already over, not none, or it would
+   start again once the change is done) */
+.ds-swap-coming .ds-me .ds-pose { animation-delay: -1s; }
+.ds-swap-out .ds-friend { transform: translateX(calc(var(--swap-k, 0) * 70cqw - var(--swap-off, 0px))); }
+.ds-swap-coming .ds-friend { visibility: hidden; }
+.ds-swap-coming .ds-say { animation: none; }
+.ds-swap-arrived .ds-friend .ds-pose { animation: ds-appear .2s ease-out both, ds-friend-in .55s cubic-bezier(.22, 1, .36, 1) both; }
+@keyframes ds-friend-in { from { translate: 75cqw 0; } }
+/* a group's free day with only the one card (make a plan): it floats just over the dock, no sheet */
+.homepage.pt-today.lone .hp-sheet-frame { display: none; }
+/* (and the scroll-driven sheet progress, with no list to scroll, stays at rest: an idle timeline would keep
+   whatever it last had and leave the scene dimmed) */
+.homepage.pt-today.lone { animation: none; --sheet-p: 0; }
+.pt-float-card { position: absolute; left: 20px; right: 20px; bottom: calc(env(safe-area-inset-bottom, 0px) + 84px); z-index: 11;
+  animation: pt-float-in .4s cubic-bezier(.22, 1, .36, 1) both; }
+@keyframes pt-float-in { from { opacity: 0; translate: 0 16px; } }
 .ds-world { position: absolute; left: 0; right: 0; bottom: 0; top: calc(-1 * var(--hp-stage-top, 0px)); overflow: hidden; pointer-events: none; color: #18181B;
   --fade: linear-gradient(to bottom, rgba(0, 0, 0, .16), rgba(0, 0, 0, .16) calc(var(--hp-stage-top, 0px) - 20px), #000 calc(var(--hp-stage-top, 0px) + 50px));
   -webkit-mask-image: var(--fade); mask-image: var(--fade); }
