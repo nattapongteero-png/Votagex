@@ -108,7 +108,8 @@ export function ProtoProvider({ children, user = null, exit }) {
     cloud.saveProfile(user).catch(() => {});
     return cloud.watchGroups(user.uid, setCloudGroups);
   }, [user]);
-  const myGroups = useMemo(() => cloudGroups || [], [cloudGroups]);
+  const myGroups = useMemo(() => (cloudGroups || []).filter((g) => !g.archived), [cloudGroups]);
+  const archivedGroups = useMemo(() => (cloudGroups || []).filter((g) => g.archived), [cloudGroups]);
 
   // signed in: settings and saved places (mine and my groups'), live.
   // What this device kept before they moved goes up once.
@@ -157,22 +158,26 @@ export function ProtoProvider({ children, user = null, exit }) {
     cloud.savePromptPay(user.uid, groupKey.split(','), cloudSettings.promptpay)
       .then(() => { try { localStorage.setItem(mark, now); } catch { /* next time */ } }).catch(() => {});
   }, [user, cloudSettings, groupKey]);
-  // signed in: my trips and every trip of my groups, with their stops, live
+  // signed in: my trips and every trip of my groups, archived ones too, with their stops, live
+  const planKey = (cloudGroups || []).map((g) => g.id).sort().join(',');
   useEffect(() => {
     if (!user) return undefined;
-    return cloud.watchPlans(user.uid, groupKey ? groupKey.split(',') : [], (list, ready) => {
+    return cloud.watchPlans(user.uid, planKey ? planKey.split(',') : [], (list, ready) => {
       setCloudPlans(list);
-      if (ready) setPlansReadyFor(groupKey);
+      if (ready) setPlansReadyFor(planKey);
     });
-  }, [user, groupKey]);
+  }, [user, planKey]);
   // signed in, still waiting for the first answer: a trip that isn't there yet may only be on its way
-  const loading = Boolean(user) && (!cloudGroups || plansReadyFor !== groupKey);
-  const plans = useMemo(() => {
+  const loading = Boolean(user) && (!cloudGroups || plansReadyFor !== planKey);
+  const allPlans = useMemo(() => {
     const all = user ? [...cloudPlans, ...pendingPlans.filter((p) => !cloudPlans.some((c) => c.id === p.id))] : data.plans;
     if (!hidden.length) return all;
     const gone = (p, s) => hidden.includes(`${p.id}/${s.id}`);
     return all.filter((p) => !hidden.includes(p.id)).map((p) => (p.stops.some((s) => gone(p, s)) ? { ...p, stops: p.stops.filter((s) => !gone(p, s)) } : p));
   }, [user, cloudPlans, pendingPlans, data.plans, hidden]);
+  // a trip of an archived group is only looked at (archivedPlans, with its money and memories on it); the rest of the app doesn't see it
+  const archivedIds = useMemo(() => new Set(archivedGroups.map((g) => g.id)), [archivedGroups]);
+  const plans = useMemo(() => (archivedIds.size ? allPlans.filter((p) => !archivedIds.has(p.groupId)) : allPlans), [allPlans, archivedIds]);
   // expenses and transfers, flat (signed in, each plan brings its own)
   const expenses = useMemo(() => {
     const all = user ? plans.flatMap((p) => p.expenses || []) : data.expenses;
@@ -187,12 +192,12 @@ export function ProtoProvider({ children, user = null, exit }) {
   const asked = useRef(new Set());
   useEffect(() => {
     if (!user) return;
-    plans.forEach((p) => (p.memories || []).forEach((m) => (m.photoIds || []).forEach((id) => {
+    allPlans.forEach((p) => (p.memories || []).forEach((m) => (m.photoIds || []).forEach((id) => {
       if (asked.current.has(id)) return;
       asked.current.add(id);
       cloud.loadPhoto(user.uid, p, id).then((url) => url && setPhotoUrls((u) => ({ ...u, [id]: url })));
     })));
-  }, [user, plans]);
+  }, [user, allPlans]);
   const memories = useMemo(() => {
     const all = user
       ? plans.flatMap((p) => p.memories || []).map((m) => ({ ...m, photos: (m.photoIds || []).map((id) => photoUrls[id]).filter(Boolean) }))
@@ -200,6 +205,10 @@ export function ProtoProvider({ children, user = null, exit }) {
       : data.memories;
     return hidden.length ? all.filter((m) => !hidden.includes(m.id)) : all;
   }, [user, plans, photoUrls, data.memories, hidden]);
+  const archivedPlans = useMemo(() => allPlans.filter((p) => archivedIds.has(p.groupId)).map((p) => ({
+    ...p, archived: true,
+    memories: (p.memories || []).map((m) => ({ ...m, photos: (m.photoIds || []).map((id) => photoUrls[id]).filter(Boolean) })),
+  })), [allPlans, archivedIds, photoUrls]);
 
   // my piggies (signed in: from Firestore, null until it first answers)
   const [cloudPiggy, setCloudPiggy] = useState(null);
@@ -237,7 +246,7 @@ export function ProtoProvider({ children, user = null, exit }) {
   const findPay = (id) => moneyRef.current.payments.find((x) => x.id === id);
 
   // names and photos of the people in my groups
-  const memberKey = [...new Set(myGroups.flatMap((g) => g.memberIds))].sort().join(',');
+  const memberKey = [...new Set((cloudGroups || []).flatMap((g) => g.memberIds))].sort().join(',');
   useEffect(() => {
     const unknown = memberKey ? memberKey.split(',').filter((id) => !PEOPLE[id]) : [];
     if (!unknown.length) return;
@@ -569,6 +578,7 @@ export function ProtoProvider({ children, user = null, exit }) {
     memories, jars, piggyLog,
     postcards: data.postcards || NONE,
     groups: user ? myGroups : data.groups,
+    archivedPlans, archivedGroups,
     loading,
     cloud: Boolean(user),
     exit, // sign out, or leave the demo

@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { useProto } from '../useProto';
+import { ProtoCtx, useProto } from '../useProto';
 import Icon, { Flag } from '../icons';
 import PiggyStage from '../PiggyStage';
 import StopRow from '../StopRow';
@@ -74,7 +74,7 @@ function useDragOrder(onDrop, locked = []) {
   return { rows, start, move, end, style, from: drag?.from };
 }
 
-function PlanTab({ plan, day, setDay, days, status }) {
+function PlanTab({ plan, day, setDay, days, status, readOnly }) {
   const { actions, openSheet, today } = useProto();
   const [showAllChecklist, setShowAllChecklist] = useState(false);
   const c = countryOf(plan.country);
@@ -89,7 +89,7 @@ function PlanTab({ plan, day, setDay, days, status }) {
     list.splice(to, 0, list.splice(from, 1)[0]);
     actions.reorderStops(plan.id, list.map((s, i) => ({ id: s.id, order: i, time: stops[i].time || '' })));
   }, locked);
-  const canDrag = status !== 'past' && stops.length > 1;
+  const canDrag = !readOnly && status !== 'past' && stops.length > 1;
   const nextCheck = nextCheckIndex(stops, today, nowHM);
   const checklist = plan.checklist || [];
   const doneCount = checklist.filter((x) => x.done).length;
@@ -110,7 +110,7 @@ function PlanTab({ plan, day, setDay, days, status }) {
           <SectionTitle title={`เตรียมตัว ${doneCount}/${checklist.length}`} action={showAllChecklist ? 'ย่อ' : 'ดูทั้งหมด'} onAction={() => setShowAllChecklist((v) => !v)} />
           <Progress value={doneCount / checklist.length} color="var(--tw-brand)" />
           {visibleChecklist.map((x) => (
-            <button key={x.id} className={`pt-check${x.done ? ' done' : ''}`} onClick={() => actions.toggleChecklist(plan.id, x.id)}>
+            <button key={x.id} className={`pt-check${x.done ? ' done' : ''}`} disabled={readOnly} onClick={() => actions.toggleChecklist(plan.id, x.id)}>
               <span className="pt-check-box">{x.done && <Icon name="check" size={14} stroke={3} />}</span>
               {x.text}
             </button>
@@ -122,8 +122,8 @@ function PlanTab({ plan, day, setDay, days, status }) {
 
       <div className="pt-lines full">
         {stops.map((s, i) => (
-          <StopRow key={s.id} full stop={s} planId={plan.id} state={stopState(s, today, nowHM)} checkHere={i === nextCheck} passed={passedStop(stops, i, today)}
-            onOpen={() => openSheet('stop', { planId: plan.id, stopId: s.id })}
+          <StopRow key={s.id} full stop={s} planId={plan.id} state={stopState(s, today, nowHM)} checkHere={!readOnly && i === nextCheck} passed={passedStop(stops, i, today)}
+            onOpen={readOnly ? undefined : () => openSheet('stop', { planId: plan.id, stopId: s.id })}
             drag={{
               rowRef: (el) => { dnd.rows.current[i] = el; },
               style: dnd.style(i),
@@ -133,7 +133,7 @@ function PlanTab({ plan, day, setDay, days, status }) {
         ))}
         {!stops.length && <Empty>ยังไม่มีจุดแวะ</Empty>}
       </div>
-      {status !== 'past' && (
+      {!readOnly && status !== 'past' && (
         <button className="pt-dashed-btn" onClick={() => openSheet('addStop', { planId: plan.id, date: plan.kind === 'idea' ? null : day })}>
           <Icon name="plus" size={18} /> เพิ่มจุดแวะ
         </button>
@@ -170,10 +170,10 @@ function MapTab({ plan, days }) {
 }
 
 /* ---------- รายจ่าย ---------- */
-function MoneyTab({ plan }) {
+function MoneyTab({ plan, readOnly }) {
   const { expenses, payments, jars, piggyLog, plans, today, openSheet, actions } = useProto();
   const outing = plan.kind === 'outing'; // a day out spends, it doesn't save up
-  const jarOf = !outing && jars.find((j) => j.planId === plan.id);
+  const jarOf = !outing && !readOnly && jars.find((j) => j.planId === plan.id);
   const jar = jarOf && { ...jarOf, ...jarStats(jarOf, piggyLog, plans, expenses) };
   const openJar = () => openSheet('piggy', { jarId: jar.id });
   const list = expenses.filter((e) => e.planId === plan.id).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
@@ -202,7 +202,7 @@ function MoneyTab({ plan }) {
           <Progress value={jar.goal ? jar.balance / jar.goal : 0} color="var(--tw-brand)" />
           <PiggyStage jar={jarOf} onOpen={openJar} />
         </div>
-      ) : !outing && planStatus(plan, today) !== 'past' && (
+      ) : !outing && !readOnly && planStatus(plan, today) !== 'past' && (
         <button className="hp-tile pt-jar-tile" onClick={() => openSheet('newJar', { planId: plan.id })}>
           <span className="pt-cat-icon" style={{ width: 40, height: 40, background: '#FDECF4', color: '#DB2777' }}><Icon name="piggy" size={22} /></span>
           <span className="pt-grow"><span className="pt-strong">เริ่มเก็บเงินทริปนี้</span><span className="pt-muted sm">หยอดทีละนิด แบ่งตามหมวดให้เอง</span></span>
@@ -243,7 +243,7 @@ function MoneyTab({ plan }) {
                 <Icon name="next" size={14} />
                 <Avatar id={t.to} size={32} />
                 <span className="pt-grow"><span className="pt-strong">{PEOPLE[t.from].name} → {PEOPLE[t.to].name}</span><span className="pt-muted sm">{fmtMoney(t.amount)}</span></span>
-                {sent ? (
+                {readOnly ? null : sent ? (
                   t.to === ME
                     ? <button className="pt-pill-btn sm" onClick={() => openSheet('payment', { payId: sent.id })}>{sent.slip ? 'ดูสลิป' : 'ยืนยันรับเงิน'}</button>
                     : <span className="pt-badge">รอยืนยัน</span>
@@ -262,7 +262,7 @@ function MoneyTab({ plan }) {
         <div className="hp-tile pt-settle">
           <SectionTitle title="การโอนคืน" />
           {pays.map((x) => (
-            <button key={x.id} className="pt-settle-row" disabled={x.from !== ME && x.to !== ME} onClick={() => openSheet('payment', { payId: x.id })}>
+            <button key={x.id} className="pt-settle-row" disabled={readOnly || (x.from !== ME && x.to !== ME)} onClick={() => openSheet('payment', { payId: x.id })}>
               <Avatar id={x.from} size={32} />
               <Icon name="next" size={14} />
               <Avatar id={x.to} size={32} />
@@ -273,13 +273,13 @@ function MoneyTab({ plan }) {
         </div>
       )}
 
-      <button className="pt-dashed-btn" onClick={() => openSheet('expense', { planId: plan.id })}><Icon name="plus" size={18} /> จดรายจ่าย</button>
+      {!readOnly && <button className="pt-dashed-btn" onClick={() => openSheet('expense', { planId: plan.id })}><Icon name="plus" size={18} /> จดรายจ่าย</button>}
 
       {Object.entries(groups).map(([date, items]) => (
         <div key={date} className="pt-exp-group">
           <div className="pt-muted sm">{date ? `${thaiDay(date)} ${thaiShort(date)}` : 'ไม่ระบุวัน'}</div>
           {items.map((e) => (
-            <button key={e.id} className="pt-exp" disabled={!canEdit(e)} onClick={() => openSheet('expense', { expenseId: e.id })}>
+            <button key={e.id} className="pt-exp" disabled={readOnly || !canEdit(e)} onClick={() => openSheet('expense', { expenseId: e.id })}>
               <span className="pt-exp-dot" style={{ background: EXPENSE_CATS[e.cat].color }} />
               <span className="pt-grow">
                 <span className="pt-strong">{e.title}</span>
@@ -298,12 +298,12 @@ function MoneyTab({ plan }) {
 }
 
 /* ---------- ความทรงจำ ---------- */
-function MemoriesTab({ plan, status }) {
+function MemoriesTab({ plan, status, readOnly }) {
   const { memories, postcards, today, openSheet, actions } = useProto();
   const navigate = useNavigate();
   const list = memories.filter((m) => m.planId === plan.id).sort((a, b) => (a.date || '').localeCompare(b.date || ''));
   // a postcard to myself, while the trip's on and for a few days after; it comes back on its anniversary (Postcard)
-  const canWrite = plan.members.includes(ME) && (status === 'ongoing' || (status === 'past' && diffDays(plan.endDate || plan.startDate, today) <= 3));
+  const canWrite = !readOnly && plan.members.includes(ME) && (status === 'ongoing' || (status === 'past' && diffDays(plan.endDate || plan.startDate, today) <= 3));
   const sent = postcards.find((x) => x.planId === plan.id && x.by === ME);
   return (
     <>
@@ -319,20 +319,20 @@ function MemoriesTab({ plan, status }) {
           <Icon name="next" size={18} />
         </button>
       ))}
-      {status === 'past' && list.length > 0 && (
+      {!readOnly && status === 'past' && list.length > 0 && (
         <button className="pt-recap-banner" onClick={() => navigate(`/proto/plan/${plan.id}/recap`)}>
           <Icon name="sparkle" size={22} />
           <span className="pt-grow"><span className="pt-strong">สรุปทริป</span></span>
           <Icon name="next" size={18} />
         </button>
       )}
-      <button className="pt-dashed-btn" onClick={() => openSheet('memory', { planId: plan.id })}><Icon name="camera" size={18} /> เพิ่มรูป / โน้ต</button>
+      {!readOnly && <button className="pt-dashed-btn" onClick={() => openSheet('memory', { planId: plan.id })}><Icon name="camera" size={18} /> เพิ่มรูป / โน้ต</button>}
       <div className="pt-mem-grid">
         {list.map((m) => {
           const stop = plan.stops.find((s) => s.id === m.stopId);
           return (
             <div key={m.id} className={`pt-mem${m.photos?.length ? '' : ' text'}`}>
-              {m.by === ME && <button className="pt-mem-del" aria-label="ลบ" onClick={() => actions.removeMemory(m.id)}><Icon name="close" size={12} stroke={2.6} /></button>}
+              {!readOnly && m.by === ME && <button className="pt-mem-del" aria-label="ลบ" onClick={() => actions.removeMemory(m.id)}><Icon name="close" size={12} stroke={2.6} /></button>}
               {m.photos?.length > 0 && <div className="pt-mem-photo" style={{ backgroundImage: `url(${m.photos[0]})` }}>{m.photos.length > 1 && <span className="pt-badge glass right">+{m.photos.length - 1}</span>}</div>}
               <div className="pt-mem-body">
                 <div className="pt-mem-text"><Icon name={m.mood} size={16} className="pt-inline-icon" /> {m.text}</div>
@@ -351,9 +351,13 @@ export default function PlanDetailPage() {
   const { planId } = useParams();
   const [params, setParams] = useSearchParams();
   const navigate = useNavigate();
-  const { plans, groups, today, openSheet, loading } = useProto();
-  const plan = plans.find((p) => p.id === planId);
-  const group = plan && groups.find((g) => g.id === plan.groupId);
+  const ctx = useProto();
+  const { plans, groups, archivedPlans = [], archivedGroups = [], today, openSheet, loading } = ctx;
+  // a trip of an archived group: looked at only, its money and memories brought along for the tabs
+  const live = plans.find((p) => p.id === planId);
+  const plan = live || archivedPlans.find((p) => p.id === planId);
+  const readOnly = !live && Boolean(plan);
+  const group = plan && [...groups, ...archivedGroups].find((g) => g.id === plan.groupId);
   const days = plan ? dayList(plan.startDate, plan.endDate) : [];
   const status = plan ? planStatus(plan, today) : 'idea';
   const [picked, setDay] = useState(() => (days.includes(today) ? today : days[0]));
@@ -374,12 +378,14 @@ export default function PlanDetailPage() {
   const c = countryOf(plan.country);
   const mapStops = plan.stops.filter((st) => st.lat != null && !st.skip).sort(byOrder);
 
-  return (
+  const page = (
     <div className="pt-page">
       <div className="pt-detail-head">
         <button className="pt-round-btn" aria-label="ย้อนกลับ" onClick={() => (window.history.length > 1 ? navigate(-1) : navigate('/proto/plans'))}><Icon name="back" size={20} /></button>
         <span className="pt-detail-title">{KINDS[plan.kind].label}</span>
-        <button className="pt-round-btn" aria-label="ตัวเลือก" onClick={() => openSheet('planMenu', { planId: plan.id })}><Icon name="more" size={20} /></button>
+        {readOnly
+          ? <span className="pt-round-btn" aria-hidden style={{ visibility: 'hidden' }} />
+          : <button className="pt-round-btn" aria-label="ตัวเลือก" onClick={() => openSheet('planMenu', { planId: plan.id })}><Icon name="more" size={20} /></button>}
       </div>
       <div className="pt-scroll">
         {/* an outing's cover is its map: where it goes, in order */}
@@ -393,8 +399,9 @@ export default function PlanDetailPage() {
         ) : (
           <Cover cover={plan.cover} className={`pt-hero-cover${plan.kind === 'outing' ? ' short' : ''}`}>
             <span className="pt-badge glass"><Flag code={c.code} /> {c.name}</span>
-            {status === 'ongoing' && <span className="pt-badge live right">กำลังเที่ยว</span>}
-            {status === 'upcoming' && <span className="pt-badge dark right">อีก {diffDays(today, plan.startDate)} วัน</span>}
+            {readOnly && <span className="pt-badge dark right">เก็บแล้ว</span>}
+            {!readOnly && status === 'ongoing' && <span className="pt-badge live right">กำลังเที่ยว</span>}
+            {!readOnly && status === 'upcoming' && <span className="pt-badge dark right">อีก {diffDays(today, plan.startDate)} วัน</span>}
           </Cover>
         )}
         <div className="pt-hero-text">
@@ -408,22 +415,31 @@ export default function PlanDetailPage() {
         </div>
         {plan.kind === 'outing' ? (
           <>
-            <PlanTab plan={plan} day={day} setDay={setDay} days={days} status={status} />
+            <PlanTab plan={plan} day={day} setDay={setDay} days={days} status={status} readOnly={readOnly} />
             <SectionTitle title="รายจ่าย" />
-            <MoneyTab plan={plan} />
+            <MoneyTab plan={plan} readOnly={readOnly} />
             <SectionTitle title="ความทรงจำ" />
-            <MemoriesTab plan={plan} status={status} />
+            <MemoriesTab plan={plan} status={status} readOnly={readOnly} />
           </>
         ) : (
           <>
             <Seg value={tab} onChange={(v) => setParams({ tab: v }, { replace: true })} items={TABS} />
-            {tab === 'plan' && <PlanTab plan={plan} day={day} setDay={setDay} days={days} status={status} />}
+            {tab === 'plan' && <PlanTab plan={plan} day={day} setDay={setDay} days={days} status={status} readOnly={readOnly} />}
             {tab === 'map' && <MapTab plan={plan} days={days} />}
-            {tab === 'money' && <MoneyTab plan={plan} />}
-            {tab === 'memories' && <MemoriesTab plan={plan} status={status} />}
+            {tab === 'money' && <MoneyTab plan={plan} readOnly={readOnly} />}
+            {tab === 'memories' && <MemoriesTab plan={plan} status={status} readOnly={readOnly} />}
           </>
         )}
       </div>
     </div>
   );
+  if (!readOnly) return page;
+  const view = {
+    ...ctx,
+    plans: [...plans, plan],
+    expenses: [...ctx.expenses, ...(plan.expenses || [])],
+    payments: [...ctx.payments, ...(plan.payments || [])],
+    memories: [...ctx.memories, ...plan.memories],
+  };
+  return <ProtoCtx.Provider value={view}>{page}</ProtoCtx.Provider>;
 }

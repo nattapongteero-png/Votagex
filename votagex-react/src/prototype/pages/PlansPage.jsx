@@ -10,8 +10,9 @@ export function PlanCard({ plan }) {
   const { expenses, memories, today } = useProto();
   const navigate = useNavigate();
   const status = planStatus(plan, today);
-  const spent = expenses.filter((e) => e.planId === plan.id).reduce((s, e) => s + toTHB(e), 0);
-  const memCount = memories.filter((m) => m.planId === plan.id).length;
+  // a trip of an archived group carries its own money and memories
+  const spent = (plan.archived ? plan.expenses || [] : expenses.filter((e) => e.planId === plan.id)).reduce((s, e) => s + toTHB(e), 0);
+  const memCount = plan.archived ? plan.memories.length : memories.filter((m) => m.planId === plan.id).length;
   const c = countryOf(plan.country);
   const meta = [
     thaiRange(plan.startDate, plan.endDate),
@@ -57,14 +58,17 @@ export function PlanCard({ plan }) {
 }
 
 export default function PlansPage() {
-  const { plans, openSheet, today } = useProto();
+  const { plans, archivedPlans = [], archivedGroups = [], openSheet, today } = useProto();
   const [tab, setTab] = useState('next');
   const [book, setBook] = useState(false); // the stamp book, opened from the top of past trips
   const withStatus = plans.map((p) => ({ p, s: planStatus(p, today) }));
   const next = withStatus.filter((x) => x.s === 'ongoing' || x.s === 'upcoming').sort((a, b) => a.p.startDate.localeCompare(b.p.startDate)).map((x) => x.p);
   const past = withStatus.filter((x) => x.s === 'past').sort((a, b) => b.p.startDate.localeCompare(a.p.startDate)).map((x) => x.p);
   const ideas = withStatus.filter((x) => x.s === 'idea').map((x) => x.p);
-  const list = { next, past, ideas }[tab];
+  const list = { next, past, ideas, archived: [] }[tab];
+  // trips of groups I archived, by group, newest first
+  const archived = archivedGroups.map((g) => ({ g, trips: archivedPlans.filter((p) => p.groupId === g.id).sort((a, b) => (b.startDate || '').localeCompare(a.startDate || '')) }))
+    .filter((x) => x.trips.length);
 
   return (
     <div className="pt-page">
@@ -77,12 +81,19 @@ export default function PlansPage() {
           { value: 'next', label: 'กำลังจะไป', count: next.length },
           { value: 'past', label: 'ผ่านมาแล้ว', count: past.length },
           { value: 'ideas', label: 'ไอเดีย', count: ideas.length },
+          ...(archived.length ? [{ value: 'archived', label: 'เก็บแล้ว', count: archivedPlans.length }] : []),
         ]} />
       </div>
       <div className="pt-scroll">
         {tab === 'past' && <StampStrip onOpen={() => setBook(true)} />}
         {list.map((p) => <PlanCard key={p.id} plan={p} />)}
-        {!list.length && <Empty>{tab === 'ideas' ? 'ยังไม่มีไอเดีย' : 'ยังไม่มีแผน'}</Empty>}
+        {tab === 'archived' && archived.map(({ g, trips }) => (
+          <div key={g.id} className="pt-archived-group">
+            <span className="pt-group-chip" style={{ background: g.color }}><Icon name={g.icon} size={14} /> {g.name}</span>
+            {trips.map((p) => <PlanCard key={p.id} plan={p} />)}
+          </div>
+        ))}
+        {tab !== 'archived' && !list.length && <Empty>{tab === 'ideas' ? 'ยังไม่มีไอเดีย' : 'ยังไม่มีแผน'}</Empty>}
         {tab === 'ideas' && (
           <button className="pt-dashed-btn" onClick={() => openSheet('createPlan', { type: 'trip', undated: true })}><Icon name="plus" size={18} /> ไอเดียใหม่</button>
         )}

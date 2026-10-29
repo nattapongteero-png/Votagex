@@ -69,11 +69,11 @@ export async function loadProfiles(uids) {
 }
 
 /* ---------- groups ---------- */
-// my groups, live; archived ones drop out of the list
+// my groups, live, archived ones too (their trips can still be looked at)
 export function watchGroups(uid, onChange) {
   const q = query(collection(db, 'groups'), where('memberIds', 'array-contains', uid));
   return onSnapshot(q, (snap) => {
-    onChange(snap.docs.map((d) => ({ id: d.id, ...d.data(), members: d.data().memberIds })).filter((g) => !g.archived));
+    onChange(snap.docs.map((d) => ({ id: d.id, ...d.data(), members: d.data().memberIds })));
   }, () => onChange([]));
 }
 // a new group starts with only me; friends come in through an invite link
