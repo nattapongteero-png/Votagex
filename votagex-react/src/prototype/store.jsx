@@ -9,8 +9,8 @@ import * as cloud from './cloud';
 import { avatarOf, onAvatars, setLooks } from './peeps';
 
 // The app's data. Demo: sample data in memory + localStorage. Signed in: groups, trips with their stops,
-// expenses and transfers, settings and saved places (events too) live in Firestore; the rest (memories, savings
-// piggies) moves there piece by piece (docs/ROADMAP.md, phase 3) and until then is kept on this device, per account.
+// expenses, transfers and memories, settings, saved places (events too) and my piggies live in Firestore; the
+// rest (postcards, looks) is kept on this device, per account.
 const KEY = 'votagex.proto.v1';
 const emptyData = () => ({ v: 1, seededOn: TODAY, simMode: 'normal', plans: [], places: [], expenses: [], payments: [], memories: [], postcards: [], looks: {}, jars: [], piggyLog: [], groups: [], settings: {} });
 
@@ -182,9 +182,57 @@ export function ProtoProvider({ children, user = null, exit }) {
     const all = user ? plans.flatMap((p) => p.payments || []) : data.payments || [];
     return hidden.length ? all.filter((x) => !hidden.includes(x.id)) : all;
   }, [user, plans, data.payments, hidden]);
+  // memories (signed in, each plan brings its own; their photos come one by one, then stay on the device)
+  const [photoUrls, setPhotoUrls] = useState({});
+  const asked = useRef(new Set());
+  useEffect(() => {
+    if (!user) return;
+    plans.forEach((p) => (p.memories || []).forEach((m) => (m.photoIds || []).forEach((id) => {
+      if (asked.current.has(id)) return;
+      asked.current.add(id);
+      cloud.loadPhoto(user.uid, p, id).then((url) => url && setPhotoUrls((u) => ({ ...u, [id]: url })));
+    })));
+  }, [user, plans]);
+  const memories = useMemo(() => {
+    const all = user
+      ? plans.flatMap((p) => p.memories || []).map((m) => ({ ...m, photos: (m.photoIds || []).map((id) => photoUrls[id]).filter(Boolean) }))
+        .sort((a, b) => (b.date || '').localeCompare(a.date || ''))
+      : data.memories;
+    return hidden.length ? all.filter((m) => !hidden.includes(m.id)) : all;
+  }, [user, plans, photoUrls, data.memories, hidden]);
+
+  // my piggies (signed in: from Firestore, null until it first answers)
+  const [cloudPiggy, setCloudPiggy] = useState(null);
+  useEffect(() => (user ? cloud.watchPiggy(user.uid, setCloudPiggy) : undefined), [user]);
+  const jars = user ? cloudPiggy?.jars || NONE : data.jars;
+  const piggyLog = user ? cloudPiggy?.piggyLog || NONE : data.piggyLog;
+  const jarsRef = useRef(jars);
+  useEffect(() => { jarsRef.current = jars; }, [jars]);
+
+  // signed in: memories and piggies this device kept before they moved go up once (memories only to a trip
+  // that's there, and only my own; the demo's sample piggies stay behind)
+  const ready = !loading && cloudPiggy;
+  useEffect(() => {
+    if (!user || !ready) return;
+    const moved = `votagex.moved.mine.${user.uid}`;
+    try {
+      if (localStorage.getItem(moved)) return;
+      localStorage.setItem(moved, '1');
+    } catch { return; }
+    const d = local.current;
+    const trips = new Map(plans.map((p) => [p.id, p]));
+    const sample = new Set(seedPiggy().jars.map((j) => j.id));
+    (d.memories || []).filter((m) => trips.has(m.planId) && m.by === user.uid)
+      .forEach((m) => cloud.addMemory(user.uid, trips.get(m.planId), { ...m, photos: (m.photos || []).filter((x) => x.startsWith('data:')).slice(0, 4) }));
+    const myJars = (d.jars || []).filter((j) => !sample.has(j.id));
+    myJars.forEach((j) => cloud.addJar(user.uid, { ...j, planId: trips.has(j.planId) ? j.planId : null }));
+    (d.piggyLog || []).filter((e) => myJars.some((j) => j.id === e.jar)).forEach((e) => cloud.addPiggyLog(user.uid, e));
+  }, [user, ready, plans]);
+
   const plansRef = useRef(plans);
   const moneyRef = useRef({ expenses, payments });
-  useEffect(() => { plansRef.current = plans; moneyRef.current = { expenses, payments }; }, [plans, expenses, payments]);
+  const memoriesRef = useRef(memories);
+  useEffect(() => { plansRef.current = plans; moneyRef.current = { expenses, payments }; memoriesRef.current = memories; }, [plans, expenses, payments, memories]);
   const findPlan = (id) => plansRef.current.find((p) => p.id === id);
   const findPay = (id) => moneyRef.current.payments.find((x) => x.id === id);
 
@@ -303,7 +351,11 @@ export function ProtoProvider({ children, user = null, exit }) {
     removePlan: (planId) => {
       const plan = findPlan(planId);
       removeLater(planId, `ลบ “${plan.name}” แล้ว`, () => {
-        if (user) { setPendingPlans((ps) => ps.filter((p) => p.id !== planId)); cloud.deletePlan(user.uid, plan); }
+        if (user) {
+          setPendingPlans((ps) => ps.filter((p) => p.id !== planId));
+          cloud.deletePlan(user.uid, plan);
+          jarsRef.current.filter((j) => j.planId === planId).forEach((j) => cloud.updateJar(user.uid, j.id, { planId: null }));
+        }
         // what's still on this device goes with it; the piggy stays, just no longer tied to the trip
         setData((d) => ({
           ...d,
@@ -454,26 +506,45 @@ export function ProtoProvider({ children, user = null, exit }) {
       const pay = findPay(payId);
       return user ? cloud.readSlip(user.uid, findPlan(pay.planId), payId) : Promise.resolve(pay?.slip || null);
     },
-    addMemory: (m) => setData((d) => ({ ...d, memories: [{ ...m, id: uid('m') }, ...d.memories] })),
+    addMemory: (m) => {
+      if (user) return cloud.addMemory(user.uid, findPlan(m.planId) || { id: m.planId, groupId: null }, m);
+      const id = uid('m');
+      setData((d) => ({ ...d, memories: [{ ...m, id }, ...d.memories] }));
+      return id;
+    },
     // a postcard to myself from a trip, written `on` a day, delivered on the trip's first anniversary (one per trip)
     writePostcard: ({ planId, text, on }) => {
       const deliver = addYear(findPlan(planId)?.startDate || on);
       setData((d) => ({ ...d, postcards: [...(d.postcards || []).filter((x) => !(x.planId === planId && x.by === ME)), { id: uid('pc'), planId, by: ME, on, deliver, text }] }));
     },
-    removeMemory: (id) => removeLater(id, 'ลบความทรงจำแล้ว', () => setData((d) => ({ ...d, memories: d.memories.filter((m) => m.id !== id) }))),
+    removeMemory: (id) => {
+      const memory = memoriesRef.current.find((m) => m.id === id);
+      removeLater(id, 'ลบความทรงจำแล้ว', () => {
+        if (user) cloud.deleteMemory(user.uid, findPlan(memory.planId), memory);
+        else setData((d) => ({ ...d, memories: d.memories.filter((m) => m.id !== id) }));
+      });
+    },
 
     // Piggies: 'in' splits across the jar's categories by share (target 'split') or goes to one category;
     // 'use' takes money out of one category
-    addPiggy: ({ jarId, type, amount, target, note = '' }) => setData((d) => {
-      const jar = d.jars.find((j) => j.id === jarId);
-      if (!jar) return d;
+    addPiggy: ({ jarId, type, amount, target, note = '' }) => {
+      const jar = jarsRef.current.find((j) => j.id === jarId);
+      if (!jar) return;
       const alloc = type === 'in' && target === 'split' ? splitByShare(amount, jarCats(jar)) : { [target]: amount };
-      return { ...d, piggyLog: [{ id: uid('pg'), jar: jarId, date: TODAY, type, amount, alloc, note }, ...d.piggyLog] };
-    }),
-    setShares: (jarId, shares) => setData((d) => ({ ...d, jars: d.jars.map((j) => (j.id === jarId ? { ...j, cats: { ...j.cats, ...shares } } : j)) })),
+      const entry = { jar: jarId, date: TODAY, type, amount, alloc, note };
+      if (user) { cloud.addPiggyLog(user.uid, entry); return; }
+      setData((d) => ({ ...d, piggyLog: [{ id: uid('pg'), ...entry }, ...d.piggyLog] }));
+    },
+    setShares: (jarId, shares) => {
+      const jar = jarsRef.current.find((j) => j.id === jarId);
+      if (user) { cloud.updateJar(user.uid, jarId, { cats: { ...jar.cats, ...shares } }); return; }
+      setData((d) => ({ ...d, jars: d.jars.map((j) => (j.id === jarId ? { ...j, cats: { ...j.cats, ...shares } } : j)) }));
+    },
     addJar: ({ name, goal, planId, icon, kind }) => {
+      const jar = { name, goal, icon: icon || 'piggy', planId: planId || null, cats: { ...(JAR_TEMPLATES[kind] || JAR_TEMPLATES.trip) } };
+      if (user) return cloud.addJar(user.uid, jar);
       const id = uid('jar');
-      setData((d) => ({ ...d, jars: [...d.jars, { id, name, goal, icon: icon || 'piggy', planId: planId || null, cats: { ...(JAR_TEMPLATES[kind] || JAR_TEMPLATES.trip) } }] }));
+      setData((d) => ({ ...d, jars: [...d.jars, { ...jar, id }] }));
       return id;
     },
   }), [updatePlan, user, removeLater, showToast]);
@@ -495,7 +566,7 @@ export function ProtoProvider({ children, user = null, exit }) {
 
   const value = {
     ...data, plans, expenses, payments, today, activePlan, ensureActivePlan, actions,
-    memories: hidden.length ? data.memories.filter((m) => !hidden.includes(m.id)) : data.memories,
+    memories, jars, piggyLog,
     postcards: data.postcards || NONE,
     groups: user ? myGroups : data.groups,
     loading,

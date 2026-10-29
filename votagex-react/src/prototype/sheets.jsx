@@ -115,9 +115,9 @@ function AddMemorySheet({ onClose, planId: fixedPlanId }) {
   const [stopId, setStopId] = useState(null);
 
   const onFiles = async (e) => {
-    const files = [...e.target.files].slice(0, 6);
+    const files = [...e.target.files].slice(0, 4);
     const urls = await Promise.all(files.map((f) => compressImage(f).catch(() => null)));
-    setPhotos((p) => [...p, ...urls.filter(Boolean)].slice(0, 6));
+    setPhotos((p) => [...p, ...urls.filter(Boolean)].slice(0, 4));
   };
 
   const save = (close) => {

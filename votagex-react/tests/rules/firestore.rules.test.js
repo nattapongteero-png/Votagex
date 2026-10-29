@@ -170,6 +170,30 @@ describe('group trips', () => {
     await assertSucceeds(deleteDoc(doc(as('ton'), 'groups/g1/plans/p1/slips/x1')));
     await assertSucceeds(deleteDoc(doc(as('ton'), 'groups/g1/plans/p1/payments/x1')));
   });
+  it("memories: the group reads them, only the writer changes them, the trip's deleter clears them", async () => {
+    const memory = { date: '2026-11-16', stopId: 's1', text: 'ทาโกะยากิร้อนมาก', mood: 'moodLove', photoIds: ['ph1'], by: 'fai' };
+    await assertSucceeds(setDoc(doc(as('fai'), 'groups/g1/plans/p1/memories/m1'), memory));
+    await assertSucceeds(setDoc(doc(as('fai'), 'groups/g1/plans/p1/photos/ph1'), { memoryId: 'm1', by: 'fai', image: 'data:image/jpeg;base64,AAAA' }));
+    await assertSucceeds(getDoc(doc(as('ton'), 'groups/g1/plans/p1/memories/m1')));
+    await assertSucceeds(getDoc(doc(as('ton'), 'groups/g1/plans/p1/photos/ph1')));
+    await assertFails(getDoc(doc(as('bew'), 'groups/g1/plans/p1/photos/ph1')));
+    await assertFails(setDoc(doc(as('ton'), 'groups/g1/plans/p1/memories/m2'), memory)); // as fai
+    await assertFails(setDoc(doc(as('fai'), 'groups/g1/plans/p1/memories/m3'), { ...memory, text: '', photoIds: [] }));
+    await assertFails(setDoc(doc(as('fai'), 'groups/g1/plans/p1/memories/m4'), { ...memory, photoIds: ['a', 'b', 'c', 'd', 'e'] }));
+    await assertFails(setDoc(doc(as('fai'), 'groups/g1/plans/p1/photos/ph9'), { memoryId: 'm1', by: 'fai', image: 'x'.repeat(400000) }));
+    await assertFails(updateDoc(doc(as('ton'), 'groups/g1/plans/p1/memories/m1'), { text: 'แก้' }));
+    await assertSucceeds(updateDoc(doc(as('fai'), 'groups/g1/plans/p1/memories/m1'), { text: 'แก้' }));
+    await seed((db) => updateDoc(doc(db, 'groups/g1'), { memberIds: ['ton', 'fai', 'prae'] }));
+    await assertFails(deleteDoc(doc(as('prae'), 'groups/g1/plans/p1/memories/m1')));
+    await assertSucceeds(deleteDoc(doc(as('ton'), 'groups/g1/plans/p1/photos/ph1')));
+    await assertSucceeds(deleteDoc(doc(as('ton'), 'groups/g1/plans/p1/memories/m1')));
+  });
+  it('my piggies are mine only', async () => {
+    await assertSucceeds(setDoc(doc(as('fai'), 'users/fai/jars/j1'), { name: 'โอซาก้า', goal: 45000, icon: 'plane', planId: null, cats: { food: 50, stay: 50 } }));
+    await assertSucceeds(setDoc(doc(as('fai'), 'users/fai/piggyLog/l1'), { jar: 'j1', date: '2026-11-01', type: 'in', amount: 500, alloc: { food: 250, stay: 250 } }));
+    await assertFails(getDoc(doc(as('ton'), 'users/fai/jars/j1')));
+    await assertFails(setDoc(doc(as('ton'), 'users/fai/piggyLog/l2'), { jar: 'j1', type: 'use', amount: 1 }));
+  });
 });
 
 describe('old app trips (until it is retired)', () => {

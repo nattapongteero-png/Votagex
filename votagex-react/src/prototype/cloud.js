@@ -117,6 +117,7 @@ const CHILDREN = {
   stops: (x) => ({ id: x.id, ...x.data() }),
   expenses: (x, planId) => ({ id: x.id, ...x.data(), split: x.data().splitIds, planId }),
   payments: (x, planId) => ({ id: x.id, ...x.data(), planId }),
+  memories: (x, planId) => ({ id: x.id, ...x.data(), planId }),
 };
 
 // Every trip I can see: mine, and every trip of each of my groups (whether I go or not), each with its stops,
@@ -182,11 +183,15 @@ export function editPlan(uid, plan, fields, stopDates = {}) {
   Object.entries(stopDates).forEach(([id, date]) => batch.update(doc(planRef(uid, plan), 'stops', id), { date }));
   return batch.commit();
 }
-// the trip with its stops, expenses, transfers and slips (its memories are still kept on each device)
+// the trip with its stops, expenses, transfers and slips, memories and their photos
 export function deletePlan(uid, plan) {
   const ref = planRef(uid, plan);
   const batch = writeBatch(db);
   plan.stops.forEach((s) => batch.delete(doc(ref, 'stops', s.id)));
+  (plan.memories || []).forEach((m) => {
+    batch.delete(doc(ref, 'memories', m.id));
+    (m.photoIds || []).forEach((id) => batch.delete(doc(ref, 'photos', id)));
+  });
   (plan.expenses || []).forEach((e) => batch.delete(doc(ref, 'expenses', e.id)));
   (plan.payments || []).forEach((x) => {
     batch.delete(doc(ref, 'payments', x.id));
@@ -247,6 +252,87 @@ export function deletePayment(uid, plan, pay) {
 export async function readSlip(uid, plan, id) {
   const snap = await getDoc(doc(planRef(uid, plan), 'slips', id)).catch(() => null);
   return snap?.data()?.image || null;
+}
+
+/* ---------- memories ---------- */
+// A memory names its photos (photoIds); each photo, a shrunk JPEG, is a doc of its own under the trip so the
+// memories load light. Photos never change, so each is fetched once and kept on the device (IndexedDB).
+const PHOTO_DB = 'votagex-photos';
+let photoDb = null;
+const openPhotos = () => {
+  photoDb ||= new Promise((resolve, reject) => {
+    const req = indexedDB.open(PHOTO_DB, 1);
+    req.onupgradeneeded = () => req.result.createObjectStore('photos');
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  }).catch(() => null); // private mode: no cache, fetched each time
+  return photoDb;
+};
+async function keptPhoto(id, image) {
+  const idb = await openPhotos();
+  if (!idb) return image ?? null;
+  return new Promise((resolve) => {
+    const tx = idb.transaction('photos', image ? 'readwrite' : 'readonly');
+    const req = image ? tx.objectStore('photos').put(image, id) : tx.objectStore('photos').get(id);
+    req.onsuccess = () => resolve(image ?? req.result ?? null);
+    req.onerror = () => resolve(image ?? null);
+  });
+}
+// a photo's data URL (null: gone, or not mine to see)
+export async function loadPhoto(uid, plan, id) {
+  const kept = await keptPhoto(id);
+  if (kept) return kept;
+  const snap = await getDoc(doc(planRef(uid, plan), 'photos', id)).catch(() => null);
+  const image = snap?.data()?.image;
+  return image ? keptPhoto(id, image) : null;
+}
+// photos: data URLs; the id is known at once, the write finishes in the background
+export function addMemory(uid, plan, { photos = [], ...m }) {
+  const ref = doc(collection(planRef(uid, plan), 'memories'));
+  const batch = writeBatch(db);
+  const photoIds = photos.map((image) => {
+    const photoRef = doc(collection(planRef(uid, plan), 'photos'));
+    batch.set(photoRef, { memoryId: ref.id, by: uid, image });
+    keptPhoto(photoRef.id, image);
+    return photoRef.id;
+  });
+  const fields = { ...m, stopId: m.stopId || null, photoIds, by: uid, createdAt: serverTimestamp() };
+  delete fields.id; delete fields.planId;
+  batch.set(ref, fields);
+  batch.commit();
+  return ref.id;
+}
+export function deleteMemory(uid, plan, memory) {
+  const batch = writeBatch(db);
+  batch.delete(doc(planRef(uid, plan), 'memories', memory.id));
+  (memory.photoIds || []).forEach((id) => batch.delete(doc(planRef(uid, plan), 'photos', id)));
+  return batch.commit();
+}
+
+/* ---------- my piggies ---------- */
+// Mine alone, under me: the piggies, and what went in or came out of them (each a doc of its own, never
+// changed, so two phones putting money in at once both count)
+export function watchPiggy(uid, onChange) {
+  const got = { jars: null, piggyLog: null };
+  const emit = () => got.jars && got.piggyLog && onChange({ ...got });
+  const watch = (name) => onSnapshot(collection(db, 'users', uid, name), (snap) => {
+    got[name] = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    emit();
+  }, () => { got[name] = got[name] || []; emit(); });
+  const offs = [watch('jars'), watch('piggyLog')];
+  return () => offs.forEach((off) => off());
+}
+const without = (x, ...keys) => { const f = { ...x }; keys.forEach((k) => delete f[k]); return f; };
+export function addJar(uid, jar) {
+  const ref = jar.id ? doc(db, 'users', uid, 'jars', jar.id) : doc(collection(db, 'users', uid, 'jars'));
+  setDoc(ref, { ...without(jar, 'id'), createdAt: serverTimestamp() });
+  return ref.id;
+}
+export const updateJar = (uid, jarId, fields) => updateDoc(doc(db, 'users', uid, 'jars', jarId), fields);
+export function addPiggyLog(uid, entry) {
+  const ref = entry.id ? doc(db, 'users', uid, 'piggyLog', entry.id) : doc(collection(db, 'users', uid, 'piggyLog'));
+  setDoc(ref, without(entry, 'id'));
+  return ref.id;
 }
 
 /* ---------- my own: settings, saved places, PromptPay ---------- */

@@ -24,8 +24,9 @@ users/{uid}                          โปรไฟล์: name, avatar
   private/settings                   ตั้งค่า: autoCheckIn, scope, calTheme, monthBudget, promptpay (สำเนาไป groups/*/members)
   places/{id}                        ที่อยากไป (ของฉันคนเดียว) งานที่มีวันจัดก็อยู่ที่นี่: startDate, endDate, time, kind, venue
   plans/{pid}                        ทริปคนเดียว  ─┐ โครงเดียวกับทริปกลุ่ม
-    stops/ expenses/ memories/                   ─┘
-  jars/{jid}, jars/{jid}/log/{id}    กระปุกเก็บเงิน (ควรมี)
+    stops/ expenses/ memories/ photos/           ─┘
+  jars/{jid}                         กระปุกเก็บเงิน: name, goal, icon, planId?, cats { หมวด: % }
+  piggyLog/{id}                      หยอด/ใช้เงิน: jar, date, type: in | use, amount, alloc { หมวด: บาท }, note (ไม่แก้ เพิ่มอย่างเดียว)
 
 groups/{gid}                         name, icon, color, createdBy, memberIds[], archived, hidden?, joinCode?
   members/{uid}                      ข้อมูลของฉันในกลุ่ม: promptpay (ให้เพื่อนสแกนโอนคืน)
@@ -37,7 +38,8 @@ groups/{gid}                         name, icon, color, createdBy, memberIds[], 
     expenses/{eid}                   title, amount, currency, toTHB, cat, date, paidBy, splitIds[], createdBy
     payments/{xid}                   from, to, amount (บาท), status: sent | received, date, slip (มีสลิปไหม), by
     slips/{xid}                      from, to, image (JPEG ย่อขนาดแล้ว ≈ 50–150KB)   เห็นแค่ from กับ to
-    memories/{mid}                   date, stopId?, text, mood, by   (รูปภาพ: เฟสหลัง)
+    memories/{mid}                   date, stopId?, text, mood, photoIds[] (≤ 4), by
+    photos/{phid}                    memoryId, by, image (JPEG ย่อขนาดแล้ว ≈ 60–150KB) ไม่แก้ เก็บไว้ในเครื่องหลังโหลดครั้งแรก
 
 invites/{code}                       groupId, createdBy, expiresAt (≤ 30 วัน)
 ```

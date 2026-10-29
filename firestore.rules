@@ -184,11 +184,29 @@ service cloud.firestore {
           allow delete: if isMember(gid) && (me() in [resource.data.from, resource.data.to] || clearsPlan());
         }
 
-        // ความทรงจำ: ทุกคนในกลุ่มอ่านได้ แก้หรือลบได้เฉพาะของตัวเอง
+        // ความทรงจำ: ทุกคนในกลุ่มอ่านได้ แก้หรือลบได้เฉพาะของตัวเอง (คนลบทริปเก็บกวาดได้)
         match /memories/{mid} {
+          function validMemory(d) {
+            return date(d.date) && d.date != null
+              && d.text is string && d.text.size() <= 1000
+              && d.mood is string && d.mood.size() <= 20
+              && d.photoIds is list && d.photoIds.size() <= 4
+              && (d.text.size() > 0 || d.photoIds.size() > 0)
+              && (d.stopId == null || d.stopId is string);
+          }
           allow read: if isMember(gid);
-          allow create: if isMember(gid) && request.resource.data.by == me();
-          allow update, delete: if isMember(gid) && resource.data.by == me();
+          allow create: if isMember(gid) && validMemory(request.resource.data) && request.resource.data.by == me();
+          allow update: if isMember(gid) && validMemory(request.resource.data) && resource.data.by == me() && request.resource.data.by == me();
+          allow delete: if isMember(gid) && (resource.data.by == me() || clearsPlan());
+        }
+
+        // รูปในความทรงจำ: JPEG ย่อขนาดแล้ว ทีละรูป ไม่แก้ (ลบแล้วใส่ใหม่)
+        match /photos/{phid} {
+          allow read: if isMember(gid);
+          allow create: if isMember(gid) && request.resource.data.by == me()
+            && request.resource.data.memoryId is string
+            && request.resource.data.image is string && request.resource.data.image.size() < 400000;
+          allow delete: if isMember(gid) && (resource.data.by == me() || clearsPlan());
         }
       }
     }
