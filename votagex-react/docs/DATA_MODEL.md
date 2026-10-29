@@ -20,7 +20,7 @@
 ## แผนผัง
 
 ```
-users/{uid}                          โปรไฟล์: name, avatar
+users/{uid}                          โปรไฟล์: name, avatar (uid ของ Google จาก Firebase, ของ LINE = "line:<LINE id>" ดู workers/line-login)
   private/settings                   ตั้งค่า: autoCheckIn, scope, calTheme, monthBudget, promptpay (สำเนาไป groups/*/members)
   places/{id}                        ที่อยากไป (ของฉันคนเดียว) งานที่มีวันจัดก็อยู่ที่นี่: startDate, endDate, time, kind, venue
   plans/{pid}                        ทริปคนเดียว  ─┐ โครงเดียวกับทริปกลุ่ม

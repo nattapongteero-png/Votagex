@@ -1,0 +1,13 @@
+name = "votagex-line-login"
+main = "src/index.js"
+compatibility_date = "2025-09-01"
+
+[vars]
+# Channel ID of the LINE Login channel (LINE Developers console); not a secret
+LINE_CHANNEL_ID = ""
+# pages the token may be sent back to: the real site, the test site, local dev
+ALLOWED_ORIGINS = "https://votagex-7ab43.web.app,https://votagex-7ab43--test-rj97ku1a.web.app,http://localhost:5173"
+
+# secrets, set with `npx wrangler secret put <NAME>` (never written here):
+#   LINE_CHANNEL_SECRET        Channel secret of the LINE Login channel
+#   FIREBASE_SERVICE_ACCOUNT   the whole JSON key of a Firebase service account

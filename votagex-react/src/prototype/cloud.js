@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { initializeApp } from 'firebase/app';
-import { connectAuthEmulator, getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signInWithRedirect, signOut } from 'firebase/auth';
+import {
+  connectAuthEmulator, getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithCustomToken, signInWithPopup, signInWithRedirect, signOut, updateProfile,
+} from 'firebase/auth';
 import {
   arrayRemove, arrayUnion, collection, connectFirestoreEmulator, deleteDoc, deleteField, doc, getDoc,
   initializeFirestore, onSnapshot, query, serverTimestamp, setDoc, Timestamp, updateDoc, where, writeBatch,
@@ -31,6 +33,16 @@ if (cloudReady) {
   }
 }
 
+// Back from LINE (workers/line-login): #line=<Firebase custom token>&name=…&pic=…, or #line_error=…
+// Read once, then taken off the address so a reload or a shared link never carries it.
+const fromLine = (() => {
+  const h = new URLSearchParams(location.hash.slice(1));
+  if (!h.has('line') && !h.has('line_error')) return null;
+  history.replaceState(null, '', location.pathname + location.search);
+  return { token: h.get('line'), name: h.get('name') || '', pic: h.get('pic') || '', error: h.get('line_error') };
+})();
+export const lineError = fromLine?.error || null;
+
 const DEMO_KEY = 'votagex.proto.demo';
 const readDemo = () => { try { return localStorage.getItem(DEMO_KEY) === '1'; } catch { return false; } };
 
@@ -39,6 +51,7 @@ export function useSession() {
   const [state, setState] = useState(() => ({ status: cloudReady ? 'loading' : 'demo', user: null }));
   useEffect(() => {
     if (!cloudReady) return undefined;
+    if (fromLine?.token) finishLine(fromLine).then((named) => named && setState((st) => ({ ...st, named: true })));
     return onAuthStateChanged(auth, (u) => {
       if (u) setState({ status: 'in', user: u });
       else setState({ status: readDemo() ? 'demo' : 'out', user: null });
@@ -52,6 +65,25 @@ export function useSession() {
 export const signInGoogle = () => signInWithPopup(auth, new GoogleAuthProvider());
 export const signInGoogleRedirect = () => signInWithRedirect(auth, new GoogleAuthProvider());
 export const signOutCloud = () => signOut(auth);
+
+// LINE: the Worker's address (VITE_LINE_LOGIN_URL); unset, the button stays "soon".
+// It comes back to this same page (an invite link included).
+export const lineReady = cloudReady && Boolean(import.meta.env.VITE_LINE_LOGIN_URL);
+export const signInLine = () => location.assign(`${import.meta.env.VITE_LINE_LOGIN_URL}/start?return=${encodeURIComponent(location.href.split('#')[0])}`);
+// the name and photo come from LINE (friends see them), the first time and whenever they change there
+async function finishLine({ token, name, pic }) {
+  try {
+    const { user } = await signInWithCustomToken(auth, token);
+    if (name && (user.displayName !== name || user.photoURL !== (pic || null))) {
+      await updateProfile(user, pic ? { displayName: name.slice(0, 60), photoURL: pic } : { displayName: name.slice(0, 60) });
+      saveProfile(user).catch(() => {});
+      return true;
+    }
+  } catch (e) {
+    console.warn('LINE sign-in failed:', e?.code);
+  }
+  return false;
+}
 
 // my public profile (name, photo): what friends in my groups see
 export const profileOf = (u) => ({ id: u.uid, name: (u.displayName || 'ฉัน').slice(0, 60), avatar: u.photoURL || DEFAULT_AVATAR });

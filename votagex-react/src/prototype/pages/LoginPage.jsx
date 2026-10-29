@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { signInGoogle, signInGoogleRedirect } from '../cloud';
+import { lineError, lineReady, signInGoogle, signInGoogleRedirect, signInLine } from '../cloud';
 
-// First screen when not signed in: Google now, LINE soon (docs/ROADMAP.md), or look around with sample data.
+// First screen when not signed in: Google, LINE (once its Worker is set up; until then "soon"), or look around with sample data.
 // A pending invite (opened before signing in) shows what you're about to join.
 export default function LoginPage({ onDemo, invite }) {
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
+  // back from LINE without signing in: pressed cancel there, or it failed
+  const [error, setError] = useState(lineError && lineError !== 'cancel' ? 'เข้าสู่ระบบด้วย LINE ไม่สำเร็จ ลองใหม่อีกครั้ง' : '');
   const google = async () => {
     setBusy(true);
     setError('');
@@ -32,9 +33,9 @@ export default function LoginPage({ onDemo, invite }) {
           <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="#EA4335" d="M12 10.2v3.9h5.5c-.2 1.3-1.6 3.8-5.5 3.8-3.3 0-6-2.7-6-6.1s2.7-6.1 6-6.1c1.9 0 3.1.8 3.8 1.5l2.6-2.5C16.8 3.2 14.6 2.2 12 2.2 6.6 2.2 2.2 6.6 2.2 12s4.4 9.8 9.8 9.8c5.7 0 9.4-4 9.4-9.6 0-.6-.1-1.1-.2-1.6H12Z" /></svg>
           เข้าสู่ระบบด้วย Google
         </button>
-        <button className="pt-login-btn line" disabled title="เร็วๆ นี้">
+        <button className="pt-login-btn line" disabled={busy || !lineReady} title={lineReady ? undefined : 'เร็วๆ นี้'} onClick={() => { setBusy(true); signInLine(); }}>
           <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M12 3C6.5 3 2 6.6 2 11c0 3.9 3.5 7.2 8.3 7.9.3.1.8.2.9.5.1.3.1.7 0 1l-.1.9c0 .3-.2 1 .9.6 1.1-.5 6-3.5 8.2-6.1 1.5-1.6 2.2-3.3 2.2-5C22.4 6.6 17.9 3 12 3Z" /></svg>
-          เข้าสู่ระบบด้วย LINE <small>เร็วๆ นี้</small>
+          เข้าสู่ระบบด้วย LINE {!lineReady && <small>เร็วๆ นี้</small>}
         </button>
         {error && <div className="pt-login-error">{error}</div>}
         <button className="pt-login-demo" onClick={onDemo}>ดูตัวอย่างก่อน</button>

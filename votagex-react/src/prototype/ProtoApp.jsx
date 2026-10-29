@@ -88,8 +88,9 @@ export default function ProtoApp() {
   const session = useSession();
   const { pathname } = useLocation();
   const user = session.status === 'in' ? session.user : null;
-  // who "I" am, before anything below reads ME / PEOPLE
-  useMemo(() => (user ? setMe(user.uid, { [user.uid]: profileOf(user) }) : setMe('u1')), [user]);
+  // who "I" am, before anything below reads ME / PEOPLE (again once a LINE sign-in has set the name)
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- session.named: the same user, now with a name
+  useMemo(() => (user ? setMe(user.uid, { [user.uid]: profileOf(user) }) : setMe('u1')), [user, session.named]);
   const joining = /\/proto\/join\//.test(pathname);
 
   if (session.status === 'loading') return <div className="loading-screen">กำลังโหลด...</div>;
